@@ -50,14 +50,14 @@ cargo tarpaulin \
   --out Html --out Json --out Xml \
   --output-dir target/coverage \
   --skip-clean \
-  --exclude-files 'apps/desktop/src-tauri/src/main.rs' \
+  --exclude-files 'src-tauri/src/main.rs' \
   || warn "cargo tarpaulin 退出码非 0,请检查 Rust 编译错误"
 ok "Rust 报告已生成: target/coverage/tarpaulin-report.html"
 
 # 3. TypeScript 端覆盖率 ---------------------------------------------------
 info "执行 pnpm vitest coverage (前端) ..."
-(cd apps/desktop && pnpm test:coverage)
-ok "前端报告已生成: apps/desktop/coverage/index.html"
+pnpm test:coverage
+ok "前端报告已生成: coverage/index.html"
 
 # 4. 综合展示 --------------------------------------------------------------
 info "Rust 覆盖率汇总(若 tarpaulin-report.json 存在):"

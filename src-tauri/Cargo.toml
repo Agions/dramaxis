@@ -1,7 +1,98 @@
+[workspace]
+resolver = "2"
+members = [
+    ".",
+    # ── Rust 业务 crates (Multi-Agent 智能体协作体系) ──
+    # 多智能体协同引擎
+    "crates/agent",     # Director/VisualCritic/Screenwriter/VoiceArtist/SoundEngineer/QualityReviewer
+    # 基础层
+    "crates/core",      # 核心抽象·业务领域模型·错误类型·事件总线·跨 crate trait
+    # Step 1  素材导入
+    "crates/intake",    # 本地导入·元数据提取·缩略图·格式检测
+    # Step 2  智能拆条
+    "crates/detect",    # FFmpeg 场景检测·情绪峰值·关键帧·集数扫描
+    # Step 3  脚本生成
+    "crates/script",    # 11 LLM Provider·第一人称风格引擎·流式输出
+    # Step 4  TTS 配音
+    "crates/voice",     # Edge-TTS/OpenAI-TTS/GPT-SoVITS·人声克隆·情绪适配
+    # Step 5  字幕合成
+    "crates/subtitle",  # VAD端点检测·SRT/VTT/ASS·动态字幕·双语
+    # Step 6  画面对齐
+    "crates/compose",   # 节奏匹配·BGM混音·时间轴合成·DAG并行
+    # Step 7  多平台导出
+    "crates/export",    # 8平台预设·剪映草稿(优先)·封面生成·竖屏裁剪
+    # 基础设施
+    "crates/storage",   # 项目持久化·SQLite·缩略图缓存·断点续传·API Key(Keychain)
+    "crates/update",    # 自动更新引擎·版本检查·SemVer
+]
+
+[workspace.package]
+version = "1.0.1"
+edition = "2021"
+rust-version = "1.85"
+license = "MIT"
+authors = ["Agions"]
+repository = "https://github.com/agions/splicr"
+homepage = "https://splicr.dev"
+
+[workspace.dependencies]
+# Tauri 2 + 插件
+tauri = { version = "2", features = [] }
+tauri-build = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+
+# 序列化 & 类型
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# 错误处理
+thiserror = "2"
+anyhow = "1"
+
+# 异步运行时
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+futures = "0.3"
+rayon = "1.10"
+
+# HTTP 客户端
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+tokio-tungstenite = { version = "0.24", features = ["rustls-tls-webpki-roots"] }
+
+# 系统调用
+dirs = "5"
+
+# 进程 & IO
+serde_with = "3"
+walkdir = "2"
+notify = "6"
+
+# 时间
+chrono = { version = "0.4", features = ["serde"] }
+time = { version = "0.3", features = ["serde", "formatting"] }
+semver = { version = "1", features = ["serde"] }
+
+# 日志
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+# 测试
+tokio-test = "0.4"
+mockall = "0.13"
+proptest = "1.5"
+rstest = "0.25"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+unused_imports = "warn"
+dead_code = "warn"
+
 [package]
 name = "splicr"
-version = "1.0.0"
-description = "splicr v1.0.0 · 叙影 — AI 影视解说桌面应用 (Tauri 2 + Rust)"
+version = "1.0.1"
+description = "splicr v1.0.1 · 叙影 — AI 影视解说桌面应用 (Tauri 2 + Rust)"
 authors = ["Agions"]
 edition = "2021"
 rust-version = "1.85"
@@ -17,8 +108,6 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
-tauri-plugin-fs = "2"
-tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
@@ -29,26 +118,34 @@ tracing = "0.1"
 
 # ── splicr 工作流 crates ──
 # 基础层
-splicr-core    = { path = "../crates/core" }
-splicr-domain  = { path = "../crates/domain" }
+splicr-core    = { path = "crates/core" }
 # Step 1 素材导入
-splicr-intake  = { path = "../crates/intake" }
+splicr-intake  = { path = "crates/intake" }
 # Step 2 智能拆条
-splicr-detect  = { path = "../crates/detect" }
+splicr-detect  = { path = "crates/detect" }
 # Step 3 脚本生成
-splicr-script  = { path = "../crates/script" }
+splicr-script  = { path = "crates/script" }
 # Step 4 TTS 配音
-splicr-voice   = { path = "../crates/voice" }
+splicr-voice   = { path = "crates/voice" }
 # Step 5 字幕合成
-splicr-subtitle = { path = "../crates/subtitle" }
+splicr-subtitle = { path = "crates/subtitle" }
 # Step 6 画面对齐
-splicr-compose = { path = "../crates/compose" }
+splicr-compose = { path = "crates/compose" }
 # Step 7 多平台导出
-splicr-export  = { path = "../crates/export" }
+splicr-export  = { path = "crates/export" }
 # 基础设施
-splicr-storage = { path = "../crates/storage" }
-splicr-update  = { path = "../crates/update" }
-splicr-plugin  = { path = "../crates/plugin" }
-splicr-agent   = { path = "../crates/agent" }
+splicr-storage = { path = "crates/storage" }
+splicr-update  = { path = "crates/update" }
+splicr-agent   = { path = "crates/agent" }
 
-# workspace lints / profiles 在根 Cargo.toml 集中定义
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = "thin"
+opt-level = "s"
+strip = "symbols"
+
+[profile.dev]
+opt-level = 0
+debug = true
+incremental = true

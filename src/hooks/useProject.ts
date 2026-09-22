@@ -15,9 +15,8 @@
 
 import { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { pipelineIpc, projectIpc } from "../ipc/commands";
-import { useProjectStore } from "../stores/project-store";
-import type { Project } from "../ipc/types.gen";
+import { pipelineIpc, projectIpc, type Project } from "@splicr/ipc";
+import { useProjectStore } from "@splicr/core";
 
 /** 与 TanStack Query cache 中"当前项目"相关的 key(供其它页面同步读) */
 const QUERY_KEYS_CURRENT_PROJECT = [

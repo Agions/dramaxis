@@ -1,0 +1,57 @@
+# 6-Agent 电影级剧本与解说编排实战
+
+splicr 的核心灵魂在于 **Multi-Agent 智能体协同矩阵**。通过模拟专业影视工业团队的岗位分工，将传统的线性脚本生成升级为多维度多轮协同推演。
+
+---
+
+## 1. 智能体角色定义与分工矩阵
+
+```mermaid
+graph TD
+    User([用户素材与提示词]) --> Director[1. 导演 Agent (Director)]
+    Director -->|剧情梗概与节奏骨架| Screenwriter[2. 编剧 Agent (Screenwriter)]
+    Screenwriter -->|带情绪打点的分段剧本| Voice[3. 配音 Agent (Voice Artist)]
+    Screenwriter -->|台词时间戳与关键词| Editor[4. 剪辑 Agent (Editor)]
+    Voice -->|48kHz 旁白与音频切片| Compose[时间轴合成中枢]
+    Editor -->|镜头突变点与视觉吸附| Compose
+    Compose --> Colorist[5. 调色/视觉 Agent (Colorist)]
+    Compose --> Operator[6. 运营/宣发 Agent (Operator)]
+    Colorist --> Output([最终时间轴工程])
+    Operator --> Output
+```
+
+| 智能体代号 | 角色职能 | 核心算法与驱动模型 | 输出产物 |
+| :--- | :--- | :--- | :--- |
+| **Director (导演)** | 全局故事架构、节奏把控、悬念设置 | 推理模型 (DeepSeek R1 / o3-mini) | `StoryOutline` 剧情骨架与分幕计划 |
+| **Screenwriter (编剧)** | 逐幕台词创作、影视黑话融入、情绪打点 | 创作模型 (Claude 3.7 Sonnet / GPT-4o) | `ScriptSegment[]` 分段解说剧本 |
+| **Voice Artist (配音)** | 角色声线匹配、情绪语调注入、呼吸断句 | TTS 引擎 (Edge / OpenAI / GPT-SoVITS) | `AudioClip[]` 48kHz 无损旁白音频 |
+| **Editor (剪辑)** | 画面场景突变匹配、节奏气口吸附 | FFmpeg 场景突变打点 + VAD 算法 | `Timeline` 5 轨对齐多媒体工程 |
+| **Colorist (调色)** | 风格化调色、字幕动效排版、视觉高潮强化 | 样式排版引擎与 ASS 字幕渲染器 | `SubtitleTrack` 影视级动态字幕 |
+| **Operator (运营)** | 引流爆款标题、SEO 标签、分段大纲与封面建议 | 营销模型 (Qwen 2.5 Turbo / GLM-4) | `MarketingKit` 宣发与分发元数据包 |
+
+---
+
+## 2. 编排实战流程
+
+### 步骤 1：配置导演提示词与基调
+在 **Agent Studio** 面板中，您可以自定义解说风格：
+- **解说风格预设**：悬疑惊悚反转、爆笑吐槽吐槽、深度影评分析、热血高能快节奏。
+- **目标受众偏好**：抖音/快手短视频节奏（前 3 秒黄金悬念抓手）或 B站/YouTube 深度中长视频（逻辑严密、细节铺垫）。
+
+### 步骤 2：断点交互与人工介入 (Human-in-the-loop)
+splicr 支持灵活的人工审核与干预模式：
+- **自动流水线模式**：6 大智能体全自动并行运转，一气呵成直达时间轴。
+- **分步确认模式**：编剧生成脚本后，时间轴暂停等待人工修改台词、微调语气词后再交由配音与剪辑智能体继续执行。
+
+> [!TIP]
+> 在剧本编辑区中，您可以直接修改台词中的情绪标签（例如 `[紧张]`, `[低沉]`, `[高昂]`, `[调侃]`），底层配音智能体将自动匹配相应的音调与语速参数。
+
+---
+
+## 3. 常见优化建议与最佳实践
+
+1. **黄金 3 秒开篇原则**：在导演配置中勾选「强化黄金 3 秒悬念开场」，智能体会自动从视频高潮突变点截取最具冲突力的镜头前置。
+2. **BGM 智能避让参数**：默认配置开启 `-6dB` 自动避让；若解说声音较为激昂，建议将避让衰减调整为 `-8dB` 至 `-10dB`，保障人声清晰度。
+3. **模型组合推荐**：
+   - **剧本生成**：推荐选用 `Claude 3.7 Sonnet` 或 `DeepSeek V3`，文学表现力与悬念铺陈更强。
+   - **大纲推理**：推荐选用 `DeepSeek R1`，逻辑推理与长文本剧情推演更精准。

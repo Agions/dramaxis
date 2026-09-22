@@ -10,7 +10,10 @@ import {
   createRootRouteWithContext,
 } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 import { AppShell } from "@components/layout/AppShell";
+import { ErrorBoundary } from "@splicr/ui";
+import { useThemeStore } from "@splicr/core";
 
 interface RouterContext {
   queryClient: QueryClient;
@@ -34,10 +37,31 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootLayout() {
+  const theme = useThemeStore((s) => s.theme);
+
   return (
     <>
       <HeadContent />
-      <AppShell />
+      <ErrorBoundary>
+        <AppShell />
+      </ErrorBoundary>
+      <Toaster
+        theme={theme === "light" ? "light" : "dark"}
+        position="bottom-center"
+        closeButton
+        visibleToasts={5}
+        toastOptions={{
+          duration: 12000,
+          classNames: {
+            toast:
+              "!bg-surface !text-text-primary !border-2 !border-gold !rounded-2xl !px-6 !py-4 !shadow-[0_10px_36px_var(--color-gold-glow)] !backdrop-blur-2xl !text-xs !font-bold !mb-6",
+            title: "!text-sm !font-extrabold !text-text-primary",
+            description: "!text-xs !text-text-secondary !mt-1",
+            closeButton:
+              "!bg-gold !text-zinc-950 !border-none hover:!scale-110 !transition-transform",
+          },
+        }}
+      />
     </>
   );
 }

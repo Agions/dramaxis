@@ -21,18 +21,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { assetsIpc, projectIpc } from "../ipc/commands";
-import { useAssetsStore } from "../stores/assets-store";
-import { useProjectStore } from "../stores/project-store";
-import { pathToMediaFileEmpty, applyProbe } from "../lib/assets/probe";
-import type {
-  AssetEntry,
-  FfmpegProbe,
-  MediaFile,
-  Project,
-  ScanResult,
-  ThumbnailResult,
-} from "../ipc/types.gen";
+import {
+  assetsIpc,
+  projectIpc,
+  type AssetEntry,
+  type FfmpegProbe,
+  type MediaFile,
+  type Project,
+  type ScanResult,
+  type ThumbnailResult,
+} from "@splicr/ipc";
+import { useAssetsStore, useProjectStore } from "@splicr/core";
+import { pathToMediaFileEmpty, applyProbe } from "@splicr/utils";
 
 /** QueryClient 缓存中的项目记录结构 (必须与 ProjectRecord 一致) */
 interface CachedProjectRecord {
@@ -148,8 +148,13 @@ export function useAssets(): UseAssetsReturn {
       const pathIds = project.media_files.map((m) => m.path);
       setIds(pathIds);
       // ✅ 保持 ProjectRecord {path, project} 结构，避免覆盖掉 path 字段
-      const existingRec = qc.getQueryData<CachedProjectRecord>(["current-project"]);
-      const rec: CachedProjectRecord = { path: existingRec?.path ?? currentPath ?? "", project };
+      const existingRec = qc.getQueryData<CachedProjectRecord>([
+        "current-project",
+      ]);
+      const rec: CachedProjectRecord = {
+        path: existingRec?.path ?? currentPath ?? "",
+        project,
+      };
       for (const key of [
         ["current-project"],
         ["assets-current-project"],

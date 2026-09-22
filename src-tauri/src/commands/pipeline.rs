@@ -11,6 +11,7 @@ use std::sync::Arc;
 use splicr_compose::executors::PipelineDeps;
 use splicr_compose::service::{PipelineService, PipelineStatus};
 use splicr_compose::{Project, StepDef, STEPS};
+use splicr_core::error::SplicrError;
 use splicr_core::services::{ConfigService, ConfigSnapshot};
 use splicr_core::AppContext;
 use splicr_detect::Ffmpeg;
@@ -31,11 +32,11 @@ pub fn pipeline_step_defs() -> Vec<StepDef> {
 
 /// 状态快照 (前端 polling)
 #[tauri::command]
-pub async fn pipeline_status(state: State<'_, AppContext>) -> Result<PipelineStatus, String> {
+pub async fn pipeline_status(state: State<'_, AppContext>) -> Result<PipelineStatus, SplicrError> {
     let svc = state
         .service::<PipelineService>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Pipeline(e.to_string()))?;
     Ok(svc.status().await)
 }
 
@@ -46,24 +47,24 @@ pub async fn pipeline_start(
     state: State<'_, AppContext>,
     project: Project,
     workdir: Option<String>,
-) -> Result<(), String> {
+) -> Result<(), SplicrError> {
     let svc = state
         .service::<PipelineService>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Pipeline(e.to_string()))?;
 
     // 取配置
     let config_svc = state
         .service::<ConfigService>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Pipeline(e.to_string()))?;
     let config = config_svc.snapshot().await;
 
     // 构造依赖
-    let deps = build_deps(config, workdir).map_err(|e| e.to_string())?;
+    let deps = build_deps(config, workdir).map_err(|e| SplicrError::Pipeline(e.to_string()))?;
     svc.start(project, Arc::new(deps))
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Pipeline(e.to_string()))?;
 
     // 事件桥接:一次性 task,把 broadcast → Tauri event
     let mut rx = svc.subscribe();
@@ -89,22 +90,22 @@ pub async fn pipeline_start(
 
 /// 取消 (下一步边界生效)
 #[tauri::command]
-pub async fn pipeline_cancel(state: State<'_, AppContext>) -> Result<(), String> {
+pub async fn pipeline_cancel(state: State<'_, AppContext>) -> Result<(), SplicrError> {
     let svc = state
         .service::<PipelineService>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Pipeline(e.to_string()))?;
     svc.cancel();
     Ok(())
 }
 
 /// 重置回 Idle
 #[tauri::command]
-pub async fn pipeline_reset(state: State<'_, AppContext>) -> Result<(), String> {
+pub async fn pipeline_reset(state: State<'_, AppContext>) -> Result<(), SplicrError> {
     let svc = state
         .service::<PipelineService>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Pipeline(e.to_string()))?;
     svc.reset().await;
     Ok(())
 }
@@ -119,13 +120,7 @@ fn build_deps(
     let llm = match LlmProviderKind::from_str(&config.llm_provider) {
         Some(kind) => {
             let api_key = config.llm_api_key.clone().unwrap_or_default();
-            let base_url = config.llm_base_url.clone();
-            let model = config.llm_model.clone();
             let provider = factory(kind, api_key);
-            // 允许前端覆盖 base_url/model (本地 / 代理)
-            if let (Some(_), Some(_)) = (base_url.as_ref(), model.as_ref()) {
-                // 注: 11 个 Provider 大多支持 base_url/model 字段覆盖,这里不再扩展
-            }
             Some(provider)
         }
         None => None,
@@ -167,12 +162,9 @@ fn build_deps(
                 .tts_base_url
                 .clone()
                 .or_else(|| config.llm_base_url.clone())
-                .unwrap_or_else(|| "https://api.xiaomimimo.com/v1".into()),
-            model: config
-                .tts_voice
-                .clone()
-                .unwrap_or_else(|| "mimo-v2.5-tts".into()),
-            voice: config.tts_voice.clone().unwrap_or_else(|| "default".into()),
+                .unwrap_or_else(|| "https://api.minimax.chat/v1".into()),
+            model: "speech-02-hd".into(),
+            voice: config.tts_voice.clone().unwrap_or_else(|| "male-qn-qingse".into()),
         }))),
         Some(TtsProviderKind::GptSovits) => {
             Some(engine(TtsEngineConfig::GptSovits(GptSovitsOptions {
@@ -233,12 +225,8 @@ impl ProviderKindExt for TtsProviderKind {
             "edge" => Some(Self::Edge),
             "open-ai" | "openai" => Some(Self::OpenAi),
             "gpt-sovits" => Some(Self::GptSovits),
+            "mimo" => Some(Self::Mimo),
             _ => None,
         }
     }
 }
-
-// ── 抑制编译警告 ──────────────────────────────────────────────────────
-
-#[allow(dead_code)]
-fn _silence_unused(_config: ConfigSnapshot) {}

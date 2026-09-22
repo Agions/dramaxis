@@ -5,6 +5,7 @@
 
 use std::path::PathBuf;
 
+use splicr_core::error::SplicrError;
 use splicr_core::services::{ConfigService, ConfigSnapshot};
 use splicr_core::AppContext;
 use tauri::{Manager, State};
@@ -16,15 +17,15 @@ const CONFIG_FILE: &str = "config.json";
 pub async fn settings_get(
     app: tauri::AppHandle,
     state: State<'_, AppContext>,
-) -> Result<ConfigSnapshot, String> {
-    let path = config_path(&app).map_err(|e| e.to_string())?;
+) -> Result<ConfigSnapshot, SplicrError> {
+    let path = config_path(&app).map_err(|e| SplicrError::Config(e.to_string()))?;
     if let Ok(bytes) = tokio::fs::read(&path).await {
         if let Ok(snap) = serde_json::from_slice::<ConfigSnapshot>(&bytes) {
             // 同步到内存 service
             let svc = state
                 .service::<ConfigService>()
                 .await
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| SplicrError::Config(e.to_string()))?;
             svc.set_snapshot(snap.clone()).await;
             return Ok(snap);
         }
@@ -39,27 +40,26 @@ pub async fn settings_set(
     app: tauri::AppHandle,
     state: State<'_, AppContext>,
     snapshot: ConfigSnapshot,
-) -> Result<(), String> {
-    let path = config_path(&app).map_err(|e| e.to_string())?;
+) -> Result<(), SplicrError> {
+    let path = config_path(&app).map_err(|e| SplicrError::Config(e.to_string()))?;
     if let Some(parent) = path.parent() {
         tokio::fs::create_dir_all(parent)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| SplicrError::Io(e.to_string()))?;
     }
-    let bytes = serde_json::to_vec_pretty(&snapshot).map_err(|e| e.to_string())?;
+    let bytes = serde_json::to_vec_pretty(&snapshot)
+        .map_err(|e| SplicrError::Config(e.to_string()))?;
     tokio::fs::write(&path, bytes)
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Io(e.to_string()))?;
 
     let svc = state
         .service::<ConfigService>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Config(e.to_string()))?;
     svc.set_snapshot(snapshot).await;
     Ok(())
 }
-
-// ── helpers ───────────────────────────────────────────────────────────
 
 fn config_path(app: &tauri::AppHandle) -> Result<PathBuf, tauri::Error> {
     let dir = app

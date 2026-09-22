@@ -40,8 +40,8 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const COMMANDS_DIR = resolve(HERE, "../src-tauri/src/commands");
-const CRATES_DIR = resolve(HERE, "../crates");
-const TYPES_FILE = resolve(HERE, "../src/ipc/types.gen.ts");
+const CRATES_DIR = resolve(HERE, "../src-tauri/crates");
+const TYPES_FILE = resolve(HERE, "../packages/ipc/src/types.gen.ts");
 
 // ── 类型映射表 ──────────────────────────────────────────────────────
 const PRIMITIVE_MAP = {
@@ -438,7 +438,8 @@ function parseStructBody(body) {
 
   const fields = [];
   for (const seg of segments) {
-    const m = /^pub\s+(\w+)\s*:\s*(.+)$/.exec(seg);
+    const cleanSeg = seg.replace(/#\[[^\]]*\]/g, "").replace(/\/\/[^\n]*/g, "").trim();
+    const m = /^pub\s+(\w+)\s*:\s*(.+)$/.exec(cleanSeg);
     if (!m) continue;
     fields.push({
       rustName: m[1],
@@ -716,6 +717,10 @@ function main() {
   }
 
   writeFileSync(TYPES_FILE, patched, "utf8");
+  const PKG_TYPES_FILE = resolve(HERE, "../packages/ipc/src/types.gen.ts");
+  try {
+    writeFileSync(PKG_TYPES_FILE, patched, "utf8");
+  } catch {}
   console.log(`[gen-ipc] OK - 已更新 ${TYPES_FILE}`);
 }
 

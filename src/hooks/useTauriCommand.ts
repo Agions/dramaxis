@@ -11,12 +11,12 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { callIpc } from "../ipc/client";
-import type {
-  CommandArgs,
-  CommandResultOf,
-  IpcCommand,
-} from "../ipc/types.gen";
+import {
+  callIpc,
+  type CommandArgs,
+  type CommandResultOf,
+  type IpcCommand,
+} from "@splicr/ipc";
 
 export interface UseTauriCommandState<C extends IpcCommand> {
   data: CommandResultOf<C> | null;

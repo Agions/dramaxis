@@ -4,7 +4,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useTauriQuery } from "@hooks/useTauriQuery";
-import type { HelpCategory, HelpTopic, SearchHit } from "@ipc/types.gen";
+import type { HelpCategory, HelpTopic, SearchHit } from "@splicr/ipc";
 
 interface Shortcut {
   keys: string[];
@@ -69,7 +69,11 @@ export function HelpPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const { data: topics, isError, error } = useTauriQuery({
+  const {
+    data: topics,
+    isError,
+    error,
+  } = useTauriQuery({
     command: "help_topics",
     args: { category: selectedCat },
     queryKeyPrefix: "help-topics",
@@ -109,20 +113,21 @@ export function HelpPage() {
   }
 
   return (
-    <div className="h-full w-full overflow-y-auto bg-[var(--color-bg)] p-6 md:p-8 select-none font-sans">
+    <div className="h-full w-full overflow-y-auto bg-bg p-6 md:p-8 select-none font-sans">
       <div className="mx-auto max-w-6xl space-y-6">
         {/* 1. Header Banner */}
-        <div className="relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 sm:p-8 shadow-xl">
-          <div className="absolute -top-16 -right-16 h-64 w-80 bg-gradient-to-bl from-[var(--color-gold-muted)] via-[var(--color-amber-muted)] to-transparent blur-3xl pointer-events-none" />
+        <div className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 sm:p-8 shadow-xl">
+          <div className="absolute -top-16 -right-16 h-64 w-80 bg-gradient-to-bl from-gold-muted via-amber-muted to-transparent blur-3xl pointer-events-none" />
           <div className="relative z-10 space-y-3">
-            <div className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--color-gold)] uppercase">
+            <div className="text-[10px] font-mono font-bold tracking-[0.2em] text-gold uppercase">
               KNOWLEDGE BASE & ARCHITECTURE GUIDE
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-[var(--color-text-primary)]">
+            <h1 className="text-3xl font-black tracking-tight text-text-primary">
               官方帮助与技术架构指南
             </h1>
-            <p className="text-xs text-[var(--color-text-secondary)] max-w-xl">
-              探索 Rust Native Multi-Agent 影视解说引擎、5 轨毫秒级对齐与剪映草稿交付的全流程文档
+            <p className="text-xs text-text-secondary max-w-xl">
+              探索 Rust Native Multi-Agent 影视解说引擎、5
+              轨毫秒级对齐与剪映草稿交付的全流程文档
             </p>
 
             <div className="pt-2">
@@ -138,23 +143,25 @@ export function HelpPage() {
         </div>
 
         {/* 2. 快捷键矩阵快速入口 */}
-        <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3 shadow-sm">
-          <div className="flex items-center gap-2 border-b border-[var(--color-border)] pb-2.5">
+        <section className="rounded-2xl border border-border bg-surface p-5 space-y-3 shadow-sm">
+          <div className="flex items-center gap-2 border-b border-border pb-2.5">
             <span className="text-base">⌨️</span>
-            <h3 className="text-xs font-bold text-[var(--color-gold)]">全域效率快捷键速查</h3>
+            <h3 className="text-xs font-bold text-gold">全域效率快捷键速查</h3>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {SHORTCUTS.map((s, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)]/60 px-3 py-2 text-xs"
+                className="flex items-center justify-between rounded-xl border border-border bg-surface-elevated/60 px-3 py-2 text-xs"
               >
-                <span className="text-[var(--color-text-secondary)] text-[11px] truncate">{s.desc}</span>
+                <span className="text-text-secondary text-[11px] truncate">
+                  {s.desc}
+                </span>
                 <div className="flex items-center gap-1 shrink-0">
                   {s.keys.map((k, i) => (
                     <kbd
                       key={i}
-                      className="rounded bg-[var(--color-surface)] border border-[var(--color-border)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-gold)] font-bold shadow-sm"
+                      className="rounded bg-surface border border-border px-1.5 py-0.5 font-mono text-[10px] text-gold font-bold shadow-sm"
                     >
                       {k}
                     </kbd>
@@ -177,8 +184,8 @@ export function HelpPage() {
                   onClick={() => setSelectedCat(cat.value)}
                   className={`rounded-xl px-4 py-1.5 text-xs font-bold transition-all shrink-0 border ${
                     active
-                      ? "bg-[var(--color-gold-muted)] border-[var(--color-gold)] text-[var(--color-gold)] shadow-sm"
-                      : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                      ? "bg-gold-muted border-gold text-gold shadow-sm"
+                      : "border-border bg-surface text-text-secondary hover:text-text-primary"
                   }`}
                 >
                   {cat.label}
@@ -194,31 +201,35 @@ export function HelpPage() {
                   key={topic.id}
                   type="button"
                   onClick={() => setActiveTopicId(topic.id)}
-                  className="group flex flex-col justify-between rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-all hover:border-[var(--color-gold)]/60 hover:shadow-md cursor-pointer text-left"
+                  className="group flex flex-col justify-between rounded-2xl border border-border bg-surface p-4 transition-all hover:border-gold/60 hover:shadow-md cursor-pointer text-left"
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xl">{CATEGORY_ICON[topic.category] ?? "📄"}</span>
-                      <span className="rounded bg-[var(--color-surface-elevated)] border border-[var(--color-border)] px-2 py-0.5 text-[9px] font-mono text-[var(--color-gold)] font-bold">
+                      <span className="text-xl">
+                        {CATEGORY_ICON[topic.category] ?? "📄"}
+                      </span>
+                      <span className="rounded bg-surface-elevated border border-border px-2 py-0.5 text-[9px] font-mono text-gold font-bold">
                         {CATEGORY_LABEL[topic.category] ?? topic.category}
                       </span>
                     </div>
-                    <h3 className="text-xs font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-gold)] line-clamp-1">
+                    <h3 className="text-xs font-bold text-text-primary group-hover:text-gold line-clamp-1">
                       {topic.title}
                     </h3>
-                    <p className="text-[11px] text-[var(--color-text-secondary)] line-clamp-2 leading-relaxed">
+                    <p className="text-[11px] text-text-secondary line-clamp-2 leading-relaxed">
                       {topic.summary}
                     </p>
                   </div>
-                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-[var(--color-border)] text-[11px] text-[var(--color-gold)] font-bold">
+                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-border text-[11px] text-gold font-bold">
                     <span>阅读完整文档</span>
-                    <span className="transition-transform group-hover:translate-x-1">➔</span>
+                    <span className="transition-transform group-hover:translate-x-1">
+                      ➔
+                    </span>
                   </div>
                 </button>
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] p-10 text-center text-xs text-[var(--color-text-muted)]">
+            <div className="rounded-2xl border border-dashed border-border bg-surface p-10 text-center text-xs text-text-muted">
               没有匹配的主题文档
             </div>
           )}
@@ -232,20 +243,24 @@ export function HelpPage() {
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-3xl border border-[var(--color-gold)]/40 bg-[var(--color-surface)] p-6 space-y-4 shadow-2xl text-[var(--color-text-primary)]"
+              className="relative w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-3xl border border-gold/40 bg-surface p-6 space-y-4 shadow-2xl text-text-primary"
             >
-              <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
-                <h2 className="text-lg font-black text-[var(--color-text-primary)]">{activeTopic?.title ?? "文档加载中..."}</h2>
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h2 className="text-lg font-black text-text-primary">
+                  {activeTopic?.title ?? "文档加载中..."}
+                </h2>
                 <button
                   type="button"
                   onClick={() => setActiveTopicId(null)}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-surface-elevated)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-gold)] transition-colors"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-elevated border border-border text-text-secondary hover:text-text-primary hover:border-gold transition-colors"
                 >
                   ✕
                 </button>
               </div>
-              <div className="text-xs text-[var(--color-text-secondary)] leading-relaxed space-y-3 whitespace-pre-wrap font-sans">
-                {activeTopic?.content ?? activeTopic?.summary ?? "正在载入知识库内容..."}
+              <div className="text-xs text-text-secondary leading-relaxed space-y-3 whitespace-pre-wrap font-sans">
+                {activeTopic?.content ??
+                  activeTopic?.summary ??
+                  "正在载入知识库内容..."}
               </div>
             </div>
           </div>

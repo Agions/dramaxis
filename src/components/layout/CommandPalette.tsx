@@ -17,10 +17,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { useUiStore } from "@stores/ui-store";
-import { useThemeStore } from "@stores/theme-store";
-import { projectIpc, pipelineIpc } from "@ipc/commands";
-import type { MediaFile } from "@ipc/types.gen";
+import { useUiStore, useThemeStore } from "@splicr/core";
+import { projectIpc, pipelineIpc, type MediaFile } from "@splicr/ipc";
 
 interface ActionItem {
   id: string;
@@ -282,7 +280,6 @@ export function CommandPalette() {
         run: () => navigateTo("/production"),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [theme, navigate],
   );
 
@@ -311,7 +308,6 @@ export function CommandPalette() {
           },
         };
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [recents, navigate, qc],
   );
 
@@ -375,29 +371,29 @@ export function CommandPalette() {
 
       <div className="relative w-full max-w-2xl px-4 z-10">
         <Command
-          className="overflow-hidden rounded-3xl border border-[var(--color-gold)] bg-[var(--color-surface)] shadow-[0_0_36px_var(--color-gold-glow)] transition-all duration-300"
+          className="overflow-hidden rounded-3xl border border-gold bg-surface shadow-[0_0_36px_var(--color-gold-glow)] transition-all duration-300"
           shouldFilter
         >
           {/* Header Bar */}
-          <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-5 py-3.5 bg-[var(--color-surface-elevated)]/50">
-            <span className="text-xl text-[var(--color-gold)]">🔍</span>
+          <div className="flex items-center gap-3 border-b border-border px-5 py-3.5 bg-surface-elevated/50">
+            <span className="text-xl text-gold">🔍</span>
             <Command.Input
               autoFocus
               value={search}
               onValueChange={setSearch}
               placeholder="搜索 7 步解说步骤、工程、系统动作或全域命令..."
-              className="flex-1 bg-transparent text-sm font-medium text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] outline-none"
+              className="flex-1 bg-transparent text-sm font-medium text-text-primary placeholder-text-muted outline-none"
             />
             <kbd
               onClick={close}
-              className="cursor-pointer rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-[10px] font-mono font-bold text-[var(--color-text-secondary)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] transition"
+              className="cursor-pointer rounded-lg border border-border bg-bg px-2 py-1 text-[10px] font-mono font-bold text-text-secondary hover:border-gold hover:text-gold transition"
             >
               ESC
             </kbd>
           </div>
 
           <Command.List className="max-h-[55vh] overflow-y-auto px-3 py-3 space-y-2">
-            <Command.Empty className="py-12 text-center text-xs text-[var(--color-text-muted)]">
+            <Command.Empty className="py-12 text-center text-xs text-text-muted">
               未搜索到匹配的命令，请输入关键词重试...
             </Command.Empty>
 
@@ -405,7 +401,7 @@ export function CommandPalette() {
             {grouped.pages.length > 0 && (
               <Command.Group
                 heading="核心页面路由"
-                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-[var(--color-gold)]"
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-gold"
               >
                 {grouped.pages.map((item) => (
                   <PaletteItem key={item.id} item={item} />
@@ -417,7 +413,7 @@ export function CommandPalette() {
             {grouped.projects.length > 0 && (
               <Command.Group
                 heading="最近解说工程"
-                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-[var(--color-gold)]"
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-gold"
               >
                 {grouped.projects.map((item) => (
                   <PaletteItem key={item.id} item={item} />
@@ -429,7 +425,7 @@ export function CommandPalette() {
             {grouped.actions.length > 0 && (
               <Command.Group
                 heading="快捷系统动作"
-                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-[var(--color-gold)]"
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-gold"
               >
                 {grouped.actions.map((item) => (
                   <PaletteItem key={item.id} item={item} />
@@ -441,7 +437,7 @@ export function CommandPalette() {
             {grouped.pipeline.length > 0 && (
               <Command.Group
                 heading="7 步 AI 叙事流水线"
-                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-[var(--color-gold)]"
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-gold"
               >
                 {grouped.pipeline.map((item) => (
                   <PaletteItem key={item.id} item={item} />
@@ -450,23 +446,23 @@ export function CommandPalette() {
             )}
           </Command.List>
 
-          <div className="flex items-center justify-between border-t border-[var(--color-border)] px-5 py-2.5 text-[11px] font-mono text-[var(--color-text-secondary)] bg-[var(--color-surface-elevated)]/40">
+          <div className="flex items-center justify-between border-t border-border px-5 py-2.5 text-[11px] font-mono text-text-secondary bg-surface-elevated/40">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5">
-                <kbd className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--color-gold)]">
+                <kbd className="rounded-md border border-border bg-bg px-1.5 py-0.5 text-[10px] font-bold text-gold">
                   ↑↓
                 </kbd>
                 选择项目
               </span>
               <span className="flex items-center gap-1.5">
-                <kbd className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--color-gold)]">
+                <kbd className="rounded-md border border-border bg-bg px-1.5 py-0.5 text-[10px] font-bold text-gold">
                   ↵
                 </kbd>
                 执行跳转
               </span>
             </div>
             <span className="flex items-center gap-1.5">
-              <kbd className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--color-gold)]">
+              <kbd className="rounded-md border border-border bg-bg px-1.5 py-0.5 text-[10px] font-bold text-gold">
                 ⌘K / Ctrl+K
               </kbd>
               隐藏面板
@@ -484,14 +480,14 @@ function PaletteItem({ item }: { item: ActionItem }) {
       value={`${item.label} ${item.keywords ?? ""}`}
       onSelect={() => void item.run()}
       onClick={() => void item.run()}
-      className="flex cursor-pointer items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-xs text-[var(--color-text-primary)] transition-colors aria-selected:bg-[var(--color-gold-muted)] aria-selected:border aria-selected:border-[var(--color-gold)]/40 aria-selected:text-[var(--color-gold)] data-[selected=true]:bg-[var(--color-gold-muted)] data-[selected=true]:border data-[selected=true]:border-[var(--color-gold)]/40 data-[selected=true]:text-[var(--color-gold)]"
+      className="flex cursor-pointer items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-xs text-text-primary transition-colors aria-selected:bg-gold-muted aria-selected:border aria-selected:border-gold/40 aria-selected:text-gold data-[selected=true]:bg-gold-muted data-[selected=true]:border data-[selected=true]:border-gold/40 data-[selected=true]:text-gold"
     >
       <div className="flex items-center gap-3 truncate">
         <span className="text-base">{item.icon}</span>
         <span className="truncate font-semibold">{item.label}</span>
       </div>
       {item.shortcut && (
-        <kbd className="shrink-0 rounded-lg border border-[var(--color-gold)]/30 bg-[var(--color-gold-muted)] px-2 py-0.5 text-[10px] font-mono font-bold text-[var(--color-gold)]">
+        <kbd className="shrink-0 rounded-lg border border-gold/30 bg-gold-muted px-2 py-0.5 text-[10px] font-mono font-bold text-gold">
           {item.shortcut}
         </kbd>
       )}

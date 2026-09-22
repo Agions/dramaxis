@@ -1,14 +1,17 @@
 //! splicr v1.0.0 · 智能字幕与 ASS/SRT/VTT 渲染 Tauri 命令
 
+use splicr_core::error::SplicrError;
 use splicr_export::{SubtitleFormat, SubtitleItem};
 
 #[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SubtitleGenerateParams {
     pub script_text: String,
     pub format: String, // "srt" | "vtt" | "ass"
 }
 
 #[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SubtitleGenerateResult {
     pub content: String,
     pub format: String,
@@ -19,9 +22,9 @@ pub struct SubtitleGenerateResult {
 #[tauri::command]
 pub async fn subtitle_generate(
     params: SubtitleGenerateParams,
-) -> Result<SubtitleGenerateResult, String> {
+) -> Result<SubtitleGenerateResult, SplicrError> {
     if params.script_text.trim().is_empty() {
-        return Err("字幕生成文本不能为空".into());
+        return Err(SplicrError::InvalidInput("字幕生成文本不能为空".into()));
     }
 
     let lines: Vec<&str> = params
@@ -39,6 +42,7 @@ pub async fn subtitle_generate(
             .replace("[激烈冲突]", "")
             .replace("[情绪高潮]", "")
             .replace("[悬疑收尾]", "")
+            .replace("[HOOK 0~3s]", "")
             .trim()
             .to_string();
         if clean.is_empty() {
@@ -64,7 +68,7 @@ pub async fn subtitle_generate(
     };
 
     let content = splicr_export::render_subtitles(&items, sub_fmt)
-        .map_err(|e| format!("渲染字幕失败: {e}"))?;
+        .map_err(|e| SplicrError::InvalidInput(format!("渲染字幕失败: {e}")))?;
 
     let count = items.len();
 

@@ -9,11 +9,33 @@ import { Outlet, useRouterState } from "@tanstack/react-router";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { CommandPalette } from "./CommandPalette";
-import { useThemeStore } from "@stores/theme-store";
+import { useThemeStore, useSettingsStore } from "@splicr/core";
+import { settingsIpc } from "@splicr/ipc";
+import { useUpdate } from "@hooks/useUpdate";
 
 export function AppShell() {
   const theme = useThemeStore((s) => s.theme);
   const { location } = useRouterState();
+  const { silentCheck } = useUpdate();
+
+  // 挂载时从桌面原生持久化配置 config.json 单向水合 settingsStore
+  useEffect(() => {
+    void (async () => {
+      try {
+        const snap = await settingsIpc.get();
+        if (snap) {
+          useSettingsStore.getState().syncFromSnapshot(snap);
+        }
+      } catch {
+        // 非 Tauri / 测试环境静默回退
+      }
+    })();
+  }, []);
+
+  // 挂载时后台静默巡检新版本
+  useEffect(() => {
+    void silentCheck();
+  }, [silentCheck]);
 
   // 同步主题到 <html data-theme="...">
   useEffect(() => {
@@ -28,7 +50,14 @@ export function AppShell() {
   }, [theme]);
 
   return (
-    <div className="flex h-screen flex-col" style={{ background: "var(--color-bg)", color: "var(--color-text-primary)", transition: "background 200ms ease, color 200ms ease" }}>
+    <div
+      className="flex h-screen flex-col"
+      style={{
+        background: "var(--color-bg)",
+        color: "var(--color-text-primary)",
+        transition: "background 200ms ease, color 200ms ease",
+      }}
+    >
       <TopBar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar currentPath={location.pathname} />

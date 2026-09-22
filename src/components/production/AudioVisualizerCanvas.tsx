@@ -12,7 +12,10 @@ interface AudioVisualizerCanvasProps {
   height?: number;
 }
 
-export function AudioVisualizerCanvas({ isPlaying, height = 54 }: AudioVisualizerCanvasProps) {
+export function AudioVisualizerCanvas({
+  isPlaying,
+  height = 54,
+}: AudioVisualizerCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
 
@@ -36,14 +39,21 @@ export function AudioVisualizerCanvas({ isPlaying, height = 54 }: AudioVisualize
       for (let i = 0; i < barCount; i++) {
         const x = i * (barWidth + 2);
         const centerDistance = Math.abs(i - barCount / 2) / (barCount / 2);
-        
+
         let barHeight: number;
         if (isPlaying) {
-          const wave = Math.sin(i * 0.35 + phase) * Math.cos(i * 0.15 - phase * 0.5);
-          barHeight = Math.max(4, (Math.abs(wave) * 0.75 + (1 - centerDistance) * 0.25) * (h * 0.85));
+          const wave =
+            Math.sin(i * 0.35 + phase) * Math.cos(i * 0.15 - phase * 0.5);
+          barHeight = Math.max(
+            4,
+            (Math.abs(wave) * 0.75 + (1 - centerDistance) * 0.25) * (h * 0.85),
+          );
         } else {
           // 待机呼吸微弱波形
-          barHeight = Math.max(3, (Math.sin(i * 0.2 + phase) * 0.2 + 0.3) * (h * 0.35));
+          barHeight = Math.max(
+            3,
+            (Math.sin(i * 0.2 + phase) * 0.2 + 0.3) * (h * 0.35),
+          );
         }
 
         const y = (h - barHeight) / 2;
@@ -81,7 +91,7 @@ export function AudioVisualizerCanvas({ isPlaying, height = 54 }: AudioVisualize
   }, [isPlaying]);
 
   return (
-    <div className="relative w-full overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/80 p-2 shadow-inner">
+    <div className="relative w-full overflow-hidden rounded-xl border border-border bg-bg/80 p-2 shadow-inner">
       <canvas
         ref={canvasRef}
         width={480}

@@ -16,7 +16,12 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.test.{ts,tsx}", "src/**/*.spec.{ts,tsx}"],
+    include: [
+      "src/**/*.test.{ts,tsx}",
+      "src/**/*.spec.{ts,tsx}",
+      "packages/**/*.test.{ts,tsx}",
+      "packages/**/*.spec.{ts,tsx}",
+    ],
     exclude: ["node_modules", "dist", "src-tauri", ".tanstack"],
     css: false,
     // 覆盖率配置（`pnpm test:coverage`）
@@ -30,12 +35,13 @@ export default defineConfig({
         // TanStack Router 自动生成的路由表
         "src/routes/-routeTree.gen.ts",
         // IPC 类型生成
-        "src/ipc/types.gen.ts",
+        "packages/ipc/src/types.gen.ts",
         // 测试工具与 mock
         "src/**/*.test.{ts,tsx}",
         "src/**/*.spec.{ts,tsx}",
         "src/test/**",
-        // 入口文件（覆盖率无意义）
+        // 入口文件与路由顶层编排（由 E2E 覆盖）
+        "src/routes/**",
         "src/main.tsx",
         "src/App.tsx",
         "src/vite-env.d.ts",
@@ -64,15 +70,13 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(root, "./src"),
-      "@ui": path.resolve(root, "./src/components/ui"),
       "@components": path.resolve(root, "./src/components"),
       "@hooks": path.resolve(root, "./src/hooks"),
-      "@stores": path.resolve(root, "./src/stores"),
-      "@ipc": path.resolve(root, "./src/ipc"),
-      "@lib": path.resolve(root, "./src/lib"),
-      "@pages": path.resolve(root, "./src/pages"),
       "@styles": path.resolve(root, "./src/styles"),
-      "@workers": path.resolve(root, "./src/workers"),
+      "@splicr/ipc": path.resolve(root, "./packages/ipc/src"),
+      "@splicr/core": path.resolve(root, "./packages/core/src"),
+      "@splicr/ui": path.resolve(root, "./packages/ui/src"),
+      "@splicr/utils": path.resolve(root, "./packages/utils/src"),
     },
   },
 
@@ -98,7 +102,6 @@ export default defineConfig({
         manualChunks: {
           "react-vendor": ["react", "react-dom"],
           tanstack: ["@tanstack/react-query", "@tanstack/react-router"],
-          i18n: ["i18next", "react-i18next"],
         },
       },
     },

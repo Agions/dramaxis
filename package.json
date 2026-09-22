@@ -7,16 +7,20 @@
   "scripts": {
     "gen:ipc": "node scripts/gen-ipc.mjs",
     "gen:ipc:check": "node scripts/gen-ipc.mjs --check",
-    "prebuild": "pnpm gen:ipc",
-    "predev": "pnpm gen:ipc",
+    "prebuild": "node scripts/gen-ipc.mjs",
+    "predev": "node scripts/gen-ipc.mjs",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "docs:pdf": "python3 scripts/generate_manual_pdf.py",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\"",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -24,21 +28,18 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@splicr/core": "workspace:*",
+    "@splicr/ipc": "workspace:*",
+    "@splicr/ui": "workspace:*",
+    "@splicr/utils": "workspace:*",
     "@tanstack/react-query": "^5.62.0",
     "@tanstack/react-router": "^1.95.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2",
-    "@tauri-apps/plugin-fs": "^2",
-    "@tauri-apps/plugin-opener": "^2",
-    "@tauri-apps/plugin-shell": "^2",
-    "@xstate/react": "^5.0.0",
     "cmdk": "^1.0.4",
-    "i18next": "^24.2.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-i18next": "^15.4.0",
     "sonner": "^1.7.0",
-    "xstate": "^5.19.0",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
@@ -63,6 +64,7 @@
     "tailwindcss": "^4.0.0",
     "typescript": "~5.8.3",
     "vite": "^7.0.4",
+    "vitepress": "^1.6.3",
     "vitest": "^3.2.0"
   }
 }

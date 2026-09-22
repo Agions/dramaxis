@@ -1,9 +1,11 @@
 //! splicr v1.0.0 · FFmpeg 智能拆条与镜头检测 Tauri 命令
 
-use splicr_detect::{Ffmpeg, FfmpegProbe, SceneCut};
+use splicr_core::error::SplicrError;
+use splicr_detect::{Ffmpeg, FfmpegProbe, HardwareAccelerationKind, SceneCut};
 use std::path::Path;
 
 #[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DetectScenesResult {
     pub cuts: Vec<SceneCut>,
     pub total_cuts: usize,
@@ -15,10 +17,10 @@ pub struct DetectScenesResult {
 pub async fn detect_scenes(
     file_path: String,
     threshold: Option<f64>,
-) -> Result<DetectScenesResult, String> {
+) -> Result<DetectScenesResult, SplicrError> {
     let path = Path::new(&file_path);
     if !path.exists() {
-        return Err(format!("视频文件不存在: {file_path}"));
+        return Err(SplicrError::InvalidInput(format!("视频文件不存在: {file_path}")));
     }
 
     let thresh = threshold.unwrap_or(0.3);
@@ -35,20 +37,16 @@ pub async fn detect_scenes(
             probe,
         })
     } else {
-        // 无系统 FFmpeg 时的启发式时间轴规则切分 (保底体验)
-        let cuts = vec![0.0, 3.5, 8.2, 14.0, 22.1, 31.0];
-        let total = cuts.len();
-        Ok(DetectScenesResult {
-            cuts,
-            total_cuts: total,
-            probe: Some(FfmpegProbe {
-                duration_seconds: 45.0,
-                width: 1920,
-                height: 1080,
-                video_codec: Some("h264".into()),
-                audio_codec: Some("aac".into()),
-                size_bytes: 15_400_000,
-            }),
-        })
+        Err(SplicrError::Ffmpeg("FFmpeg 未安装或不在 PATH 中，请安装 FFmpeg 后重试".into()))
+    }
+}
+
+/// 探测当前系统的 GPU 硬件加速编解码器支持
+#[tauri::command]
+pub async fn detect_hardware_acceleration() -> Result<Vec<HardwareAccelerationKind>, SplicrError> {
+    if let Ok(ffmpeg) = Ffmpeg::discover() {
+        Ok(ffmpeg.probe_hardware_acceleration().await)
+    } else {
+        Err(SplicrError::Ffmpeg("FFmpeg 未安装或不在 PATH 中，请安装 FFmpeg 后重试".into()))
     }
 }

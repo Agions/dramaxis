@@ -6,68 +6,94 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap");
 @import "tailwindcss";
 
+@theme {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-elevated: var(--color-surface-elevated);
+  --color-surface-overlay: var(--color-surface-overlay);
+  --color-border: var(--color-border);
+  --color-border-focus: var(--color-border-focus);
+
+  --color-gold: var(--color-gold);
+  --color-gold-hover: var(--color-gold-hover);
+  --color-gold-muted: var(--color-gold-muted);
+  --color-gold-glow: var(--color-gold-glow);
+
+  --color-amber: var(--color-amber);
+  --color-amber-muted: var(--color-amber-muted);
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-inverse: var(--color-text-inverse);
+}
+
 /* ── 默认 (Dark Mode / 电影调光室黑金) 设计令牌 ─────────────────── */
 :root {
-  --color-bg:              #0D0D0F;   /* 全局底色 */
-  --color-surface:         #161619;   /* 卡片/面板 */
-  --color-surface-elevated:#1E1E22;   /* 悬浮/激活态 */
-  --color-surface-overlay: #252529;   /* 下拉/弹窗 */
-  --color-border:          #2A2A2F;   /* 分割线 */
-  --color-border-focus:    rgba(245,200,66,0.5);
+  --color-bg: #0d0d0f; /* 全局底色 */
+  --color-surface: #161619; /* 卡片/面板 */
+  --color-surface-elevated: #1e1e22; /* 悬浮/激活态 */
+  --color-surface-overlay: #252529; /* 下拉/弹窗 */
+  --color-border: #2a2a2f; /* 分割线 */
+  --color-border-focus: rgba(245, 200, 66, 0.5);
 
-  --color-gold:            #F5C842;   /* 暖金高亮 */
-  --color-gold-hover:      #F9D76B;
-  --color-gold-muted:      rgba(245,200,66,0.15);
-  --color-gold-glow:       rgba(245,200,66,0.25);
+  --color-gold: #f5c842; /* 暖金高亮 */
+  --color-gold-hover: #f9d76b;
+  --color-gold-muted: rgba(245, 200, 66, 0.15);
+  --color-gold-glow: rgba(245, 200, 66, 0.25);
 
-  --color-amber:           #E8933A;
-  --color-amber-muted:     rgba(232,147,58,0.15);
+  --color-amber: #e8933a;
+  --color-amber-muted: rgba(232, 147, 58, 0.15);
 
-  --color-text-primary:    #F0EDE8;   /* 奶白主字 */
-  --color-text-secondary:  #B0ACA6;   /* 灰色副字 */
-  --color-text-muted:      #6B6760;   /* 占位符/禁用字 */
-  --color-text-inverse:    #0D0D0F;
+  --color-text-primary: #f0ede8; /* 奶白主字 */
+  --color-text-secondary: #b0aca6; /* 灰色副字 */
+  --color-text-muted: #6b6760; /* 占位符/禁用字 */
+  --color-text-inverse: #0d0d0f;
 
-  --topbar-bg:             rgba(13,13,15,0.95);
-  --card-shadow:           0 4px 16px rgba(0,0,0,0.35);
+  --topbar-bg: rgba(13, 13, 15, 0.95);
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 
   color-scheme: dark;
 }
 
 /* ── 亮色主题 (Light Mode) 珍珠暖琥珀 ─────────────────── */
 html[data-theme="light"] {
-  --color-bg:              #F8F8FC;   /* 柔和珍珠浅灰底色 */
-  --color-surface:         #FFFFFF;   /* 纯白卡片 */
-  --color-surface-elevated:#F0F0F6;   /* 悬浮浅灰 */
-  --color-surface-overlay: #FFFFFF;
-  --color-border:          #E2E2E8;   /* 纤细浅灰色边框 */
-  --color-border-focus:    rgba(217,119,6,0.5);
+  --color-bg: #f8f8fc; /* 柔和珍珠浅灰底色 */
+  --color-surface: #ffffff; /* 纯白卡片 */
+  --color-surface-elevated: #f0f0f6; /* 悬浮浅灰 */
+  --color-surface-overlay: #ffffff;
+  --color-border: #e2e2e8; /* 纤细浅灰色边框 */
+  --color-border-focus: rgba(217, 119, 6, 0.5);
 
-  --color-gold:            #D97706;   /* 暖琥珀金 */
-  --color-gold-hover:      #B45309;
-  --color-gold-muted:      rgba(217,119,6,0.12);
-  --color-gold-glow:       rgba(217,119,6,0.25);
+  --color-gold: #d97706; /* 暖琥珀金 */
+  --color-gold-hover: #b45309;
+  --color-gold-muted: rgba(217, 119, 6, 0.12);
+  --color-gold-glow: rgba(217, 119, 6, 0.25);
 
-  --color-amber:           #D97706;
-  --color-amber-muted:     rgba(217,119,6,0.12);
+  --color-amber: #d97706;
+  --color-amber-muted: rgba(217, 119, 6, 0.12);
 
-  --color-text-primary:    #0F172A;   /* 石板深黑主字 */
-  --color-text-secondary:  #475569;   /* 深灰副字 */
-  --color-text-muted:      #94A3B8;   /* 柔和禁用字 */
-  --color-text-inverse:    #FFFFFF;
+  --color-text-primary: #0f172a; /* 石板深黑主字 */
+  --color-text-secondary: #475569; /* 深灰副字 */
+  --color-text-muted: #94a3b8; /* 柔和禁用字 */
+  --color-text-inverse: #ffffff;
 
-  --topbar-bg:             rgba(255,255,255,0.92);
-  --card-shadow:           0 8px 30px rgba(0,0,0,0.06);
+  --topbar-bg: rgba(255, 255, 255, 0.92);
+  --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
 
   color-scheme: light;
 }
 
 /* ── 全局基础 ─────────────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   overflow: hidden;
@@ -75,7 +101,9 @@ html, body, #root {
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 200ms ease, color 200ms ease;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
 }
 
 body {
@@ -92,16 +120,24 @@ body {
 }
 
 /* ── 滚动条 ───────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--color-surface); }
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
   border-radius: 9999px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
 
 /* ── 输入框统一适配 ────────────────────────────── */
-input, textarea {
+input,
+textarea {
   background-color: var(--color-surface-elevated);
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);
@@ -110,10 +146,13 @@ input, textarea {
   font-family: inherit;
   font-size: 14px;
   outline: none;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
 }
 
-input:focus, textarea:focus {
+input:focus,
+textarea:focus {
   border-color: var(--color-gold);
   box-shadow: 0 0 0 3px var(--color-gold-muted);
 }
@@ -155,22 +194,22 @@ select:focus {
 
 select option {
   background-color: var(--color-surface, #161619) !important;
-  color: var(--color-text-primary, #F0EDE8) !important;
+  color: var(--color-text-primary, #f0ede8) !important;
   padding: 10px 14px;
   font-size: 13px;
 }
 
 html[data-theme="light"] select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23D97706'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
-  background-color: #FFFFFF !important;
-  color: #18181B !important;
-  border-color: #D1D1D8 !important;
+  background-color: #ffffff !important;
+  color: #18181b !important;
+  border-color: #d1d1d8 !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 html[data-theme="light"] select option {
-  background-color: #FFFFFF !important;
-  color: #18181B !important;
+  background-color: #ffffff !important;
+  color: #18181b !important;
 }
 
 /* ── 文字选择 ─────────────────────────────────── */
@@ -211,3 +250,23 @@ html[data-theme="light"] .glass-card:hover {
   box-shadow: 0 0 16px var(--color-gold-glow);
 }
 
+.btn-gold {
+  background: linear-gradient(to right, var(--color-gold), var(--color-amber));
+  color: var(--color-text-inverse);
+  box-shadow: 0 0 16px var(--color-gold-glow);
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-gold:hover {
+  filter: brightness(1.1);
+}
+
+.btn-gold:active {
+  transform: scale(0.96);
+}
+
+.text-gradient-gold {
+  background: linear-gradient(to right, var(--color-gold), var(--color-amber));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

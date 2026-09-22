@@ -4,19 +4,19 @@
 
 use std::path::{Path, PathBuf};
 
-use splicr_core::domain::Project;
+use splicr_core::domain::{MediaFile, Project};
+use splicr_core::error::SplicrError;
 use splicr_core::services::ProjectService;
 use splicr_core::AppContext;
-use splicr_domain::MediaFile;
 use tauri::{Manager, State};
 
 /// 列举最近项目 (M3.2 真实从 ProjectService 取)
 #[tauri::command]
-pub async fn project_list_recent(state: State<'_, AppContext>) -> Result<Vec<String>, String> {
+pub async fn project_list_recent(state: State<'_, AppContext>) -> Result<Vec<String>, SplicrError> {
     let svc = state
         .service::<ProjectService>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Project(e.to_string()))?;
     let paths = svc.recent_projects().await;
     Ok(paths
         .into_iter()
@@ -30,21 +30,21 @@ pub async fn project_list_recent(state: State<'_, AppContext>) -> Result<Vec<Str
 pub async fn project_create_blank(
     app: tauri::AppHandle,
     state: State<'_, AppContext>,
-) -> Result<ProjectRecord, String> {
+) -> Result<ProjectRecord, SplicrError> {
     let proj = Project::default();
-    let dir = project_dir(&app).map_err(|e| e.to_string())?;
+    let dir = project_dir(&app).map_err(|e| SplicrError::Io(e.to_string()))?;
     tokio::fs::create_dir_all(&dir)
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Io(e.to_string()))?;
     let path = dir.join(format!("{}.splicr.json", proj.id));
     write_project(&path, &proj)
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Io(e.to_string()))?;
 
     let svc = state
         .service::<ProjectService>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Project(e.to_string()))?;
     svc.push_recent(path.clone()).await;
 
     Ok(ProjectRecord {
@@ -58,15 +58,18 @@ pub async fn project_create_blank(
 pub async fn project_load(
     path: String,
     state: State<'_, AppContext>,
-) -> Result<ProjectRecord, String> {
+) -> Result<ProjectRecord, SplicrError> {
     let p = PathBuf::from(&path);
-    let bytes = tokio::fs::read(&p).await.map_err(|e| e.to_string())?;
-    let proj: Project = serde_json::from_slice(&bytes).map_err(|e| format!("解析失败: {e}"))?;
+    let bytes = tokio::fs::read(&p)
+        .await
+        .map_err(|e| SplicrError::Io(e.to_string()))?;
+    let proj: Project = serde_json::from_slice(&bytes)
+        .map_err(|e| SplicrError::Project(format!("解析项目文件失败: {e}")))?;
 
     let svc = state
         .service::<ProjectService>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Project(e.to_string()))?;
     svc.push_recent(p.clone()).await;
 
     Ok(ProjectRecord {
@@ -77,14 +80,19 @@ pub async fn project_load(
 
 /// 把 Project 落盘到指定路径
 #[tauri::command]
-pub async fn project_save(path: String, project: Project) -> Result<(), String> {
+pub async fn project_save(path: String, project: Project) -> Result<(), SplicrError> {
     let p = PathBuf::from(&path);
-    write_project(&p, &project).await.map_err(|e| e.to_string())
+    write_project(&p, &project)
+        .await
+        .map_err(|e| SplicrError::Io(e.to_string()))
 }
 
 /// 删除指定路径的 Project 文件，并同步从最近工程列表中注销
 #[tauri::command]
-pub async fn project_delete(state: State<'_, AppContext>, path: String) -> Result<(), String> {
+pub async fn project_delete(
+    state: State<'_, AppContext>,
+    path: String,
+) -> Result<(), SplicrError> {
     let p = PathBuf::from(&path);
     if p.exists() {
         let _ = tokio::fs::remove_file(&p).await;
@@ -101,12 +109,14 @@ pub async fn project_add_media(
     path: String,
     project: Project,
     media: MediaFile,
-) -> Result<Project, String> {
+) -> Result<Project, SplicrError> {
     let p = PathBuf::from(&path);
     let mut proj = project;
     proj.media_files.push(media);
     proj.updated_at = chrono::Utc::now();
-    write_project(&p, &proj).await.map_err(|e| e.to_string())?;
+    write_project(&p, &proj)
+        .await
+        .map_err(|e| SplicrError::Io(e.to_string()))?;
     Ok(proj)
 }
 

@@ -35,12 +35,16 @@ export function useTauriEvent<T = unknown>(
     let mounted = true;
     (async () => {
       try {
-        unlisten = await listen<T>(event, (e) => {
+        const fn = await listen<T>(event, (e) => {
           if (mounted) handler(e);
         });
+        if (!mounted) {
+          fn();
+        } else {
+          unlisten = fn;
+        }
       } catch (e) {
         // webview only / 非 Tauri 环境:静默忽略
-        // eslint-disable-next-line no-console
         console.debug(`[useTauriEvent] listen(${event}) unavailable`, e);
       }
     })();
@@ -48,6 +52,5 @@ export function useTauriEvent<T = unknown>(
       mounted = false;
       if (unlisten) unlisten();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event, ...deps]);
 }

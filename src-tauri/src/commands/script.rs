@@ -1,9 +1,11 @@
 //! splicr v1.0.0 · AI 脚本生成 Tauri 命令
 
+use splicr_core::error::SplicrError;
 use splicr_script::{factory, LlmProviderKind, LlmRequest};
 
 #[allow(dead_code)]
 #[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ScriptGenerateParams {
     pub provider: String,
     pub api_key: Option<String>,
@@ -21,6 +23,7 @@ pub struct ScriptGenerateParams {
 }
 
 #[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ScriptGenerateResult {
     pub text: String,
     pub hook_text: Option<String>,
@@ -45,10 +48,16 @@ fn parse_provider(kind: &str) -> LlmProviderKind {
 }
 
 #[tauri::command]
-pub async fn script_generate(params: ScriptGenerateParams) -> Result<ScriptGenerateResult, String> {
+pub async fn script_generate(
+    app: tauri::AppHandle,
+    params: ScriptGenerateParams,
+) -> Result<ScriptGenerateResult, SplicrError> {
     if params.prompt.trim().is_empty() {
-        return Err("提示词不能为空".into());
+        return Err(SplicrError::InvalidInput("提示词不能为空".into()));
     }
+
+    use tauri::Emitter;
+    let _ = app.emit("script:token", "[AI 智能体初始化剧情设定...]\n");
 
     let kind = parse_provider(&params.provider);
     let api_key = params.api_key.unwrap_or_default();
@@ -62,39 +71,46 @@ pub async fn script_generate(params: ScriptGenerateParams) -> Result<ScriptGener
     let hook_guidance = if include_hook {
         match hook_strategy {
             "paradox" => "【黄金前3秒钩子：悬念悖论型】开头第1句必须抛出极具反常识的违和行为或设问（如“这个女人不仅当场释放了杀害丈夫的凶手，还宣布要嫁给他…”），用 [HOOK 0~3s] 标记。",
-            "survival" => "【黄金前3秒钩子：生死极限型】开头第1句必须制造生死倒计时与极度紧迫感（如“注意看！这个男人只剩下最后30秒生命，而唯一的解药…”），用 [HOOK 0~3s] 标记。",
-            "emotion" => "【黄金前3秒钩子：情感撕裂型】开头第1句必须直击人性痛点与撕心裂肺的抉择（如“结婚五年，妻子为了初恋的一通电话，竟然将亲生女儿抛弃在风雪中…”），用 [HOOK 0~3s] 标记。",
-            _ => "【黄金前3秒钩子：战神冲突反转型】开头第1句必须是惊天反差与身份揭秘（如“如果不是亲眼所见，谁敢相信眼前这个被当众羞辱的穷小子，真实身份竟然是统领全球的修罗殿主…”），用 [HOOK 0~3s] 标记。",
+            "survival" => "【黄金前3秒钩子：生存危机型】开头第1句必须制造生死存亡或巨大财产危机的紧迫压迫感，用 [HOOK 0~3s] 标记。",
+            "emotion" => "【黄金前3秒钩子：极致情感反差型】开头第1句必须用直击心灵的爱恨情仇反常表现牢牢抓取注意力，用 [HOOK 0~3s] 标记。",
+            _ => "【黄金前3秒钩子：激烈冲突型】开头第1句必须直接切入激烈动作对抗、撕破脸面的对峙现场，用 [HOOK 0~3s] 标记。",
         }
     } else {
         ""
     };
 
     let system_prompt = format!(
-        "你是一位顶尖短剧/影视的第一人称解说剧本创作大师。请以【第一人称沉浸式视角】（我/我们）为核心，\
-         风格定调为【{style_str}】，目标字数约 {target_words} 字。\n\
-         {hook_guidance}\n\
-         在关键高潮句前加上情绪标注，如 [情绪高潮] 或 [激烈冲突]。"
+        r#"你是一名拥有千万播放爆款短剧解说编剧与影视结构导演。
+任务目标：根据给定的视频剧情画面与要求，创作一段节奏飞快、抓耳吸睛、第一人称沉浸式的爆款解说台词文案。
+
+【核心创作法则】
+1. 风格模式：{style_str}
+2. 目标字数：严格控制在 {target_words} 字左右
+3. 语调基调：去翻译腔、去机械AI味、使用短句、高信息密度
+4. 爆款前置：{hook_guidance}
+5. 节奏控制：每隔 15~20 秒设置一次小反转或情绪高潮点（可适当使用 [激烈冲突]、[情绪高潮] 等情绪标签）
+
+请直接输出剧本正文文本，不要包含任何多余的开场白或解释。"#
     );
 
     let req = LlmRequest {
         system: system_prompt,
-        user: params.prompt,
-        model: params.model,
+        user: params.prompt.clone(),
+        model: params.model.clone(),
         max_tokens: Some(2048),
         temperature: Some(0.7),
         stream: false,
         images_base64: params.images_base64.unwrap_or_default(),
     };
 
-    let resp = generator
-        .chat(&req)
-        .await
-        .map_err(|e| format!("生成 AI 独白脚本失败: {e}"))?;
+    let resp = generator.chat(&req).await?;
 
     let text = resp.content;
     let word_count = text.chars().count();
     let estimated_duration_sec = (word_count as u32 / 4).max(10); // 约4字/秒
+
+    // 流式广播完整生成结果
+    let _ = app.emit("script:token", &text);
 
     // 提取 Hook 文本（优先匹配 [HOOK ...] 标记，若无则提取开头第 1 句高光设问）
     let hook_text = if let Some(pos) = text.find("[HOOK") {

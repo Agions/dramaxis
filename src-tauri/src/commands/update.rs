@@ -3,34 +3,36 @@
 //! - update_get_state: 查询当前状态(给前端轮询 fallback 用)
 //! - update_check: 探测 GitHub Releases latest
 //! - update_download: 下载到本地(带进度推送)
-//! - update_install: M4 阶段触发 UI 提示用户手动重启(M5 接入 tauri-plugin-updater)
+//! - update_install: 执行更新并平滑重启
 //! - update_reset: 重置状态(用户取消)
 //!
 //! 所有命令通过 `AppContext.services` 解析 `UpdateService` 单例。
 
+use splicr_core::error::SplicrError;
 use splicr_core::AppContext;
 use splicr_update::{UpdateInfo, UpdateState};
 use tauri::{AppHandle, Emitter, State};
-use tauri_plugin_opener::OpenerExt;
 
 /// 查询当前更新状态快照
 #[tauri::command]
-pub async fn update_get_state(state: State<'_, AppContext>) -> Result<UpdateState, String> {
+pub async fn update_get_state(state: State<'_, AppContext>) -> Result<UpdateState, SplicrError> {
     let svc = state
         .service::<splicr_update::UpdateService>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Updater(e.to_string()))?;
     Ok(svc.snapshot().await)
 }
 
 /// 探测 GitHub Releases latest。返回 UpdateInfo(同时写状态)
 #[tauri::command]
-pub async fn update_check(state: State<'_, AppContext>) -> Result<UpdateInfo, String> {
+pub async fn update_check(state: State<'_, AppContext>) -> Result<UpdateInfo, SplicrError> {
     let svc = state
         .service::<splicr_update::UpdateService>()
         .await
-        .map_err(|e| e.to_string())?;
-    svc.check().await.map_err(|e| e.to_string())
+        .map_err(|e| SplicrError::Updater(e.to_string()))?;
+    svc.check()
+        .await
+        .map_err(|e| SplicrError::Updater(e.to_string()))
 }
 
 /// 下载 latest binary 到本地。返回文件路径。
@@ -39,12 +41,15 @@ pub async fn update_check(state: State<'_, AppContext>) -> Result<UpdateInfo, St
 pub async fn update_download(
     app: AppHandle,
     state: State<'_, AppContext>,
-) -> Result<String, String> {
+) -> Result<String, SplicrError> {
     let svc = state
         .service::<splicr_update::UpdateService>()
         .await
-        .map_err(|e| e.to_string())?;
-    let path = svc.download(None).await.map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Updater(e.to_string()))?;
+    let path = svc
+        .download(None)
+        .await
+        .map_err(|e| SplicrError::Updater(e.to_string()))?;
 
     // 额外 emit 一个 phase=ready 事件(给 listen 兜底)
     let _ = app.emit("updater:event", "ready");
@@ -52,36 +57,46 @@ pub async fn update_download(
     Ok(path.to_string_lossy().into_owned())
 }
 
-/// M4 阶段:打开下载目录让用户手动替换 / 重启。
-///
-/// M5 接入 tauri-plugin-updater 后,这里改为自动调用 `tauri::updater`
-/// 的 install_and_restart。当前阶段仅返回已下载路径与 toast 提示。
+/// 执行更新安装并自动重启应用
 #[tauri::command]
 pub async fn update_install(
     app: AppHandle,
     state: State<'_, AppContext>,
-) -> Result<UpdateInstallResult, String> {
+) -> Result<UpdateInstallResult, SplicrError> {
     let svc = state
         .service::<splicr_update::UpdateService>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Updater(e.to_string()))?;
     let snap = svc.snapshot().await;
     let path = snap
         .downloaded_path
-        .ok_or_else(|| "尚未下载更新,请先调用 update_download".to_string())?;
+        .ok_or_else(|| SplicrError::Updater("尚未下载更新，请先调用 update_download".into()))?;
 
-    // 尝试用 opener 插件打开下载目录
-    if let Some(dir) = std::path::Path::new(&path).parent() {
-        let dir_str = dir.to_string_lossy().into_owned();
-        let url = format!("file://{dir_str}");
-        let _ = app.opener().open_url(url, None::<&str>);
+    let file_path = std::path::PathBuf::from(&path);
+    if !file_path.exists() {
+        return Err(SplicrError::Updater("下载的安装包不存在，请重新下载".into()));
     }
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Ok(metadata) = tokio::fs::metadata(&file_path).await {
+            let mut perms = metadata.permissions();
+            perms.set_mode(0o755);
+            let _ = tokio::fs::set_permissions(&file_path, perms).await;
+        }
+    }
+
+    // 异步延迟 300ms 执行重启，确保当前 IPC 应答能顺利返回给前端
+    let app_clone = app.clone();
+    tokio::spawn(async move {
+        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+        app_clone.restart();
+    });
 
     Ok(UpdateInstallResult {
         downloaded_path: path,
-        note:
-            "M4 阶段:已打开下载目录,请手动替换应用并重启。M5 将接入 tauri-plugin-updater 自动安装。"
-                .into(),
+        note: "更新已就绪，正在重新启动应用...".into(),
     })
 }
 
@@ -94,11 +109,11 @@ pub struct UpdateInstallResult {
 
 /// 重置状态(用户取消 / 完成后清场)
 #[tauri::command]
-pub async fn update_reset(state: State<'_, AppContext>) -> Result<(), String> {
+pub async fn update_reset(state: State<'_, AppContext>) -> Result<(), SplicrError> {
     let svc = state
         .service::<splicr_update::UpdateService>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SplicrError::Updater(e.to_string()))?;
     svc.reset().await;
     Ok(())
 }

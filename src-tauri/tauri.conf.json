@@ -33,6 +33,9 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "resources": [
+      "../resources/docs/*"
+    ],
     "category": "Video",
     "copyright": "© 2026  Agions",
     "shortDescription": "AI 视频叙事生成器",

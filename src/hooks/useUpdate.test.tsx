@@ -12,11 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useUpdate } from "./useUpdate";
-import type {
-  UpdateInfo,
-  UpdateInstallResult,
-  UpdateState,
-} from "../ipc/types.gen";
+import type { UpdateInfo, UpdateInstallResult, UpdateState } from "@splicr/ipc";
 
 // ─── mocks ─────────────────────────────────────────────────────────
 const getStateMock = vi.fn();
@@ -25,7 +21,7 @@ const downloadIpcMock = vi.fn();
 const installIpcMock = vi.fn();
 const resetIpcMock = vi.fn();
 
-vi.mock("../ipc/commands", () => ({
+vi.mock("@splicr/ipc", () => ({
   updateIpc: {
     getState: (...a: unknown[]) => getStateMock(...a),
     check: (...a: unknown[]) => checkIpcMock(...a),
@@ -43,17 +39,22 @@ vi.mock("@tauri-apps/api/event", () => ({
 // useUpdateStore 用 closure mock
 type StoreShape = {
   snapshot: UpdateState;
+  skippedVersions: string[];
+  hasNotification: boolean;
   setSnapshot: ReturnType<typeof vi.fn>;
   setAvailable: ReturnType<typeof vi.fn>;
   setPhase: ReturnType<typeof vi.fn>;
   setDownloadedPath: ReturnType<typeof vi.fn>;
   setError: ReturnType<typeof vi.fn>;
+  setHasNotification: ReturnType<typeof vi.fn>;
+  clearNotification: ReturnType<typeof vi.fn>;
+  skipVersion: ReturnType<typeof vi.fn>;
   reset: ReturnType<typeof vi.fn>;
 };
 
 let storeState: StoreShape;
 
-vi.mock("../stores/update-store", () => ({
+vi.mock("@splicr/core", () => ({
   useUpdateStore: (selector: (s: StoreShape) => unknown) =>
     selector(storeState),
 }));
@@ -75,6 +76,8 @@ const sampleInfo: UpdateInfo = {
   downloadUrl: "https://example.com/x.zip",
   sha256: "abc123",
   fileSizeBytes: 12_345_678,
+  isForce: false,
+  highlights: ["支持 6-Agent 协作", "全新更新器引擎"],
 };
 
 const sampleInstallResult: UpdateInstallResult = {
@@ -94,8 +97,9 @@ beforeEach(() => {
   getStateMock.mockResolvedValue(EMPTY_STATE);
   storeState = {
     snapshot: { ...EMPTY_STATE },
+    skippedVersions: [],
+    hasNotification: false,
     setSnapshot: vi.fn((s: UpdateState) => {
-      // 防御:undefined 入参视为 EMPTY_STATE (避免后续 .currentVersion 抛错)
       storeState.snapshot = s ?? { ...EMPTY_STATE };
     }),
     setAvailable: vi.fn((info: UpdateInfo | null) => {
@@ -113,6 +117,15 @@ beforeEach(() => {
     }),
     setError: vi.fn((error) => {
       storeState.snapshot = { ...storeState.snapshot, error };
+    }),
+    setHasNotification: vi.fn((val) => {
+      storeState.hasNotification = val;
+    }),
+    clearNotification: vi.fn(() => {
+      storeState.hasNotification = false;
+    }),
+    skipVersion: vi.fn((v) => {
+      storeState.skippedVersions.push(v);
     }),
     reset: vi.fn((currentVersion: string) => {
       storeState.snapshot = { ...EMPTY_STATE, currentVersion };
@@ -323,14 +336,34 @@ describe("useUpdate", () => {
       });
       return waitFor(() => expect(result.current.busy).toBe(false));
     });
+  });
 
-    it("phase=available → busy=false", () => {
-      storeState.snapshot = { ...EMPTY_STATE, phase: "available" };
-      getStateMock.mockResolvedValue(storeState.snapshot);
+  describe("进阶功能: silentCheck 与 skipCurrentVersion", () => {
+    it("silentCheck 成功调用 checkIpc 并写入 available", async () => {
+      checkIpcMock.mockResolvedValueOnce(sampleInfo);
       const { result } = renderHook(() => useUpdate(), {
         wrapper: makeWrapper(),
       });
-      return waitFor(() => expect(result.current.busy).toBe(false));
+      await act(async () => {
+        await result.current.silentCheck();
+      });
+      expect(checkIpcMock).toHaveBeenCalledTimes(1);
+      expect(storeState.setAvailable).toHaveBeenCalledWith(sampleInfo);
+    });
+
+    it("skipCurrentVersion 调用 store.skipVersion", async () => {
+      storeState.snapshot = {
+        ...EMPTY_STATE,
+        phase: "available",
+        available: sampleInfo,
+      };
+      const { result } = renderHook(() => useUpdate(), {
+        wrapper: makeWrapper(),
+      });
+      act(() => {
+        result.current.skipCurrentVersion();
+      });
+      expect(storeState.skipVersion).toHaveBeenCalledWith("3.1.0");
     });
   });
 });

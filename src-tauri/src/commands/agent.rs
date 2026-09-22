@@ -1,15 +1,22 @@
 //! Tauri 命令分组 · splicr-agent 多智能体协同服务
 
 use splicr_agent::{AgentContext, AgentEventPayload, AgentOrchestrator, BreakpointRequest};
+use splicr_core::domain::Project;
+use splicr_core::error::SplicrError;
 use splicr_core::services::{ConfigService, ConfigSnapshot};
 use splicr_core::AppContext;
-use splicr_domain::Project;
 use std::sync::Arc;
 use tauri::{Emitter, State};
 use tokio::sync::RwLock;
 
-// 内部状态管理器（非 pub struct，避免 gen-ipc 抽取为前端 TS interface）
+// 内部状态管理器
 pub struct AgentServiceState(pub Arc<RwLock<Option<AgentOrchestrator>>>);
+
+impl Default for AgentServiceState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl AgentServiceState {
     pub fn new() -> Self {
@@ -25,7 +32,7 @@ pub async fn agent_start(
     auto_mode: bool,
     app_ctx: State<'_, AppContext>,
     state: State<'_, AgentServiceState>,
-) -> Result<AgentContext, String> {
+) -> Result<AgentContext, SplicrError> {
     let mut ctx = AgentContext::new(project, auto_mode);
 
     // 自动装配当前设置中的 LLM 与 TTS 凭证至 Agent 上下文内存
@@ -60,12 +67,14 @@ pub async fn agent_start(
 pub async fn agent_step(
     step_idx: usize,
     state: State<'_, AgentServiceState>,
-) -> Result<Option<BreakpointRequest>, String> {
+) -> Result<Option<BreakpointRequest>, SplicrError> {
     let lock = state.0.read().await;
     if let Some(orch) = lock.as_ref() {
-        orch.run_step(step_idx).await.map_err(|e| e.to_string())
+        orch.run_step(step_idx)
+            .await
+            .map_err(|e| SplicrError::Pipeline(e.to_string()))
     } else {
-        Err("智能体调度器尚未初始化".to_string())
+        Err(SplicrError::Pipeline("智能体调度器尚未初始化".to_string()))
     }
 }
 
@@ -73,7 +82,7 @@ pub async fn agent_step(
 #[tauri::command]
 pub async fn agent_get_context(
     state: State<'_, AgentServiceState>,
-) -> Result<Option<AgentContext>, String> {
+) -> Result<Option<AgentContext>, SplicrError> {
     let lock = state.0.read().await;
     if let Some(orch) = lock.as_ref() {
         let ctx_lock = orch.context().await;

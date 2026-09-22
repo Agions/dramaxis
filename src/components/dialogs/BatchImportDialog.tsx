@@ -17,8 +17,8 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { toast } from "sonner";
 import { useAssets } from "@hooks/useAssets";
 import { ThumbnailImage } from "@components/common/ThumbnailImage";
-import { basename, formatBytes } from "@lib/assets/probe";
-import type { AssetEntry, AssetKind, ScanResult } from "@ipc/types.gen";
+import { basename, formatBytes } from "@splicr/utils";
+import type { AssetEntry, AssetKind, ScanResult } from "@splicr/ipc";
 
 export interface BatchImportDialogProps {
   /** 是否打开 */
@@ -182,20 +182,23 @@ export function BatchImportDialog({
       onClick={handleClose}
     >
       <div
-        className="flex max-h-[88vh] w-full max-w-5xl flex-col rounded-3xl border border-[var(--color-gold)] bg-[var(--color-surface)] shadow-[0_0_36px_var(--color-gold-glow)] overflow-hidden transition-all duration-300"
+        className="flex max-h-[88vh] w-full max-w-5xl flex-col rounded-3xl border border-gold bg-surface shadow-[0_0_36px_var(--color-gold-glow)] overflow-hidden transition-all duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 1. Modal Header */}
-        <header className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-4">
+        <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-4">
           <div className="flex items-center space-x-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#F5C842] to-[#E8933A] text-zinc-950 font-black text-lg shadow-[0_0_12px_rgba(245,200,66,0.3)]">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-gold to-amber text-zinc-950 font-black text-lg shadow-[0_0_12px_var(--color-gold-glow)]">
               S
             </div>
             <div>
-              <h2 className="text-base font-extrabold tracking-tight text-[var(--color-text-primary)]">
-                BATCH ASSET SELECTOR <span className="text-xs font-normal text-[var(--color-gold)] ml-1 font-mono">· 批量素材选择器</span>
+              <h2 className="text-base font-extrabold tracking-tight text-text-primary">
+                BATCH ASSET SELECTOR{" "}
+                <span className="text-xs font-normal text-gold ml-1 font-mono">
+                  · 批量素材选择器
+                </span>
               </h2>
-              <p className="text-[11px] text-[var(--color-text-secondary)]">
+              <p className="text-[11px] text-text-secondary">
                 极速扫描本地目录，自动提取视频与音频元数据
               </p>
             </div>
@@ -208,14 +211,14 @@ export function BatchImportDialog({
               value={searchPattern}
               onChange={(e) => setSearchPattern(e.target.value)}
               placeholder="🔎 文件名搜索..."
-              className="w-56 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1.5 text-xs text-[var(--color-text-primary)] outline-none focus:border-[var(--color-gold)]"
+              className="w-56 rounded-xl border border-border bg-bg px-3 py-1.5 text-xs text-text-primary outline-none focus:border-gold"
             />
 
             <button
               type="button"
               onClick={handleClose}
               aria-label="关闭"
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] transition"
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-border text-text-secondary hover:border-gold hover:text-gold transition"
             >
               ✕
             </button>
@@ -223,27 +226,27 @@ export function BatchImportDialog({
         </header>
 
         {/* 2. Folder Selection Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]/60 px-6 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface-elevated/60 px-6 py-3">
           <div className="flex items-center space-x-3 flex-1 min-w-0">
             <button
               type="button"
               onClick={handlePickDir}
-              className="flex items-center space-x-1.5 rounded-xl border border-[var(--color-gold)]/40 bg-[var(--color-gold-muted)] px-3.5 py-1.5 text-xs font-bold text-[var(--color-gold)] hover:border-[var(--color-gold)] shadow-sm transition"
+              className="flex items-center space-x-1.5 rounded-xl border border-gold/40 bg-gold-muted px-3.5 py-1.5 text-xs font-bold text-gold hover:border-gold shadow-sm transition"
             >
               📁 选择目录
             </button>
-            <div className="min-w-0 flex-1 truncate font-mono text-xs text-[var(--color-text-secondary)] bg-[var(--color-bg)] px-3 py-1.5 rounded-xl border border-[var(--color-border)]">
+            <div className="min-w-0 flex-1 truncate font-mono text-xs text-text-secondary bg-bg px-3 py-1.5 rounded-xl border border-border">
               {dir ?? "尚未选择本地文件夹..."}
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <label className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-xs text-text-secondary cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={recursive}
                 onChange={(e) => setRecursive(e.target.checked)}
-                className="h-4 w-4 rounded accent-[#F5C842]"
+                className="h-4 w-4 rounded accent-gold"
               />
               <span>递归扫描子目录</span>
             </label>
@@ -252,7 +255,7 @@ export function BatchImportDialog({
               type="button"
               onClick={handleScan}
               disabled={!dir || scanning}
-              className="flex items-center space-x-1 rounded-xl bg-gradient-to-r from-[#F5C842] to-[#E8933A] px-4 py-1.5 text-xs font-bold text-zinc-950 shadow-[0_2px_10px_rgba(245,200,66,0.3)] transition hover:brightness-110 disabled:opacity-40"
+              className="flex items-center space-x-1 rounded-xl bg-gradient-to-r from-gold to-amber px-4 py-1.5 text-xs font-bold text-zinc-950 shadow-[0_2px_10px_var(--color-gold-glow)] transition hover:brightness-110 disabled:opacity-40"
             >
               {scanning ? "扫描中..." : "🔍 扫描"}
             </button>
@@ -260,8 +263,8 @@ export function BatchImportDialog({
         </div>
 
         {/* 2.5 Project Name Customization Bar */}
-        <div className="flex items-center space-x-3 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-2.5">
-          <span className="text-xs font-bold text-[var(--color-gold)] flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center space-x-3 border-b border-border bg-surface px-6 py-2.5">
+          <span className="text-xs font-bold text-gold flex items-center gap-1.5 shrink-0">
             <span>🎬</span> 解说工程名称:
           </span>
           <input
@@ -269,20 +272,20 @@ export function BatchImportDialog({
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
             placeholder="自定义解说工程名称 (例：太阳神纪元 第01集)..."
-            className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-1.5 text-xs text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] outline-none focus:border-[var(--color-gold)] font-medium"
+            className="flex-1 rounded-xl border border-border bg-bg px-3.5 py-1.5 text-xs text-text-primary placeholder-text-muted outline-none focus:border-gold font-medium"
           />
         </div>
 
         {/* 3. Category Filter Tabs Bar */}
         {scanResult && scanResult.entries.length > 0 && (
-          <div className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-2.5">
+          <div className="flex items-center justify-between border-b border-border bg-surface px-6 py-2.5">
             <div className="flex items-center space-x-2 overflow-x-auto">
               <select
                 value={kindFilter}
                 onChange={(e) =>
                   setKindFilter(e.target.value as AssetKind | "all")
                 }
-                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:border-[var(--color-gold)]"
+                className="rounded-lg border border-border bg-bg px-2 py-1 text-xs font-bold text-text-primary outline-none focus:border-gold"
               >
                 <option value="all">全部类型</option>
                 {ALL_KINDS.map((k) => (
@@ -296,14 +299,16 @@ export function BatchImportDialog({
                 onClick={() => setKindFilter("all")}
                 className={`rounded-lg px-3 py-1 text-xs font-bold transition ${
                   kindFilter === "all"
-                    ? "bg-[var(--color-gold-muted)] border border-[var(--color-gold)]/40 text-[var(--color-gold)]"
-                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                    ? "bg-gold-muted border border-gold/40 text-gold"
+                    : "text-text-secondary hover:text-text-primary"
                 }`}
               >
                 ALL 全部 ({scanResult.entries.length})
               </button>
               {ALL_KINDS.map((k) => {
-                const count = scanResult.entries.filter((e) => e.kind === k).length;
+                const count = scanResult.entries.filter(
+                  (e) => e.kind === k,
+                ).length;
                 if (count === 0) return null;
                 return (
                   <button
@@ -312,8 +317,8 @@ export function BatchImportDialog({
                     onClick={() => setKindFilter(k)}
                     className={`rounded-lg px-3 py-1 text-xs font-bold transition ${
                       kindFilter === k
-                        ? "bg-[var(--color-gold-muted)] border border-[var(--color-gold)]/40 text-[var(--color-gold)]"
-                        : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                        ? "bg-gold-muted border border-gold/40 text-gold"
+                        : "text-text-secondary hover:text-text-primary"
                     }`}
                   >
                     {KIND_LABEL[k].toUpperCase()} ({count})
@@ -326,19 +331,19 @@ export function BatchImportDialog({
               <button
                 type="button"
                 onClick={selectAllVisible}
-                className="text-[11px] text-[var(--color-text-secondary)] hover:text-[var(--color-gold)] font-medium"
+                className="text-[11px] text-text-secondary hover:text-gold font-medium"
               >
                 当前页全选
               </button>
-              <span className="text-[var(--color-border)]">|</span>
+              <span className="text-border">|</span>
               <button
                 type="button"
                 onClick={deselectAllVisible}
-                className="text-[11px] text-[var(--color-text-secondary)] hover:text-[var(--color-gold)] font-medium"
+                className="text-[11px] text-text-secondary hover:text-gold font-medium"
               >
                 当前页反选
               </button>
-              <span className="text-xs font-bold text-[var(--color-gold)] bg-[var(--color-gold-muted)] px-2.5 py-0.5 rounded-full border border-[var(--color-gold)]/30 ml-2">
+              <span className="text-xs font-bold text-gold bg-gold-muted px-2.5 py-0.5 rounded-full border border-gold/30 ml-2">
                 {selected.size} / {scanResult.total} 已选
                 {scanResult.skipped > 0 ? ` · 跳过 ${scanResult.skipped}` : ""}
               </span>
@@ -361,12 +366,14 @@ export function BatchImportDialog({
 
           {!scanResult ? (
             <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--color-gold-muted)] border border-[var(--color-gold)]/30 text-[var(--color-gold)] text-3xl">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gold-muted border border-gold/30 text-gold text-3xl">
                 📂
               </div>
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-[var(--color-text-primary)]">选择一个目录开始扫描</h3>
-                <p className="text-xs text-[var(--color-text-secondary)]">
+                <h3 className="text-sm font-bold text-text-primary">
+                  选择一个目录开始扫描
+                </h3>
+                <p className="text-xs text-text-secondary">
                   点击上方「选择扫描目录」以获取本地视频、音频与字幕素材
                 </p>
               </div>
@@ -374,8 +381,10 @@ export function BatchImportDialog({
           ) : filteredEntries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center space-y-2">
               <div className="text-3xl opacity-50">🔍</div>
-              <div className="text-sm font-bold text-[var(--color-text-primary)]">未匹配到素材文件</div>
-              <div className="text-xs text-[var(--color-text-secondary)]">
+              <div className="text-sm font-bold text-text-primary">
+                未匹配到素材文件
+              </div>
+              <div className="text-xs text-text-secondary">
                 请调整搜索关键词或切换类型过滤
               </div>
             </div>
@@ -391,8 +400,8 @@ export function BatchImportDialog({
                     aria-pressed={isSelected}
                     className={`group relative flex flex-col justify-between cursor-pointer rounded-2xl border p-3 text-left transition-all duration-300 ${
                       isSelected
-                        ? "border-[var(--color-gold)] bg-[var(--color-gold-muted)] shadow-[0_0_16px_var(--color-gold-glow)] scale-[1.02]"
-                        : "border-[var(--color-border)] bg-[var(--color-bg)] hover:border-[var(--color-gold)]/40 hover:bg-[var(--color-surface-elevated)]"
+                        ? "border-gold bg-gold-muted shadow-[0_0_16px_var(--color-gold-glow)] scale-[1.02]"
+                        : "border-border bg-bg hover:border-gold/40 hover:bg-surface-elevated"
                     }`}
                   >
                     {/* Checkmark Badge */}
@@ -400,8 +409,8 @@ export function BatchImportDialog({
                       <div
                         className={`flex h-5 w-5 items-center justify-center rounded-full text-xs font-black transition ${
                           isSelected
-                            ? "bg-[var(--color-gold)] text-zinc-950 shadow-md"
-                            : "border border-[var(--color-border)] bg-[var(--color-surface)] text-transparent"
+                            ? "bg-gold text-zinc-950 shadow-md"
+                            : "border border-border bg-surface text-transparent"
                         }`}
                       >
                         ✓
@@ -409,9 +418,13 @@ export function BatchImportDialog({
                     </div>
 
                     {/* Thumbnail */}
-                    <div className="relative mb-2.5 h-28 w-full overflow-hidden rounded-xl bg-zinc-950 border border-[var(--color-border)]">
-                      <ThumbnailImage source={e.path} kind={e.kind} width={240} />
-                      <span className="absolute bottom-1.5 left-1.5 rounded-md bg-zinc-950/80 px-2 py-0.5 text-[9px] font-mono font-bold text-[var(--color-gold)] border border-[var(--color-gold)]/30">
+                    <div className="relative mb-2.5 h-28 w-full overflow-hidden rounded-xl bg-zinc-950 border border-border">
+                      <ThumbnailImage
+                        source={e.path}
+                        kind={e.kind}
+                        width={240}
+                      />
+                      <span className="absolute bottom-1.5 left-1.5 rounded-md bg-zinc-950/80 px-2 py-0.5 text-[9px] font-mono font-bold text-gold border border-gold/30">
                         {KIND_LABEL[e.kind].toUpperCase()}
                       </span>
                     </div>
@@ -419,14 +432,16 @@ export function BatchImportDialog({
                     {/* File Details */}
                     <div className="space-y-1">
                       <div
-                        className="truncate text-xs font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-gold)] transition-colors"
+                        className="truncate text-xs font-semibold text-text-primary group-hover:text-gold transition-colors"
                         title={e.path}
                       >
                         {basename(e.path)}
                       </div>
-                      <div className="flex items-center justify-between text-[10px] font-mono text-[var(--color-text-muted)]">
+                      <div className="flex items-center justify-between text-[10px] font-mono text-text-muted">
                         <span>{formatBytes(e.sizeBytes)}</span>
-                        <span className="uppercase">{e.mime?.split("/")[1] || e.kind}</span>
+                        <span className="uppercase">
+                          {e.mime?.split("/")[1] || e.kind}
+                        </span>
                       </div>
                     </div>
                   </button>
@@ -437,11 +452,11 @@ export function BatchImportDialog({
         </div>
 
         {/* 5. Modal Footer / Action Bar */}
-        <footer className="flex items-center justify-between border-t border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-4">
+        <footer className="flex items-center justify-between border-t border-border bg-surface px-6 py-4">
           {/* Dashed Dropzone */}
           <div
             onClick={handlePickDir}
-            className="flex items-center space-x-2 rounded-xl border border-dashed border-[var(--color-gold)]/40 bg-[var(--color-gold-muted)]/50 px-4 py-2 text-xs font-medium text-[var(--color-gold)] cursor-pointer hover:border-[var(--color-gold)] transition"
+            className="flex items-center space-x-2 rounded-xl border border-dashed border-gold/40 bg-gold-muted/50 px-4 py-2 text-xs font-medium text-gold cursor-pointer hover:border-gold transition"
           >
             <span>📥</span>
             <span>拖拽文件至此处 或 浏览选择...</span>
@@ -451,7 +466,7 @@ export function BatchImportDialog({
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-4 py-2 text-xs font-bold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition"
+              className="rounded-xl border border-border bg-surface-elevated px-4 py-2 text-xs font-bold text-text-secondary hover:text-text-primary transition"
             >
               取消
             </button>
@@ -459,7 +474,7 @@ export function BatchImportDialog({
               type="button"
               onClick={handleImport}
               disabled={loading || selected.size === 0}
-              className="flex items-center space-x-1.5 rounded-xl bg-gradient-to-r from-[#F5C842] to-[#E8933A] px-6 py-2 text-xs font-black text-zinc-950 shadow-[0_0_16px_rgba(245,200,66,0.3)] transition hover:brightness-110 disabled:opacity-40"
+              className="flex items-center space-x-1.5 rounded-xl bg-gradient-to-r from-gold to-amber px-6 py-2 text-xs font-black text-zinc-950 shadow-[0_0_16px_var(--color-gold-glow)] transition hover:brightness-110 disabled:opacity-40"
             >
               {loading ? "导入中..." : `📥 导入 ${selected.size} 项`}
             </button>

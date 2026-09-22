@@ -9,14 +9,18 @@
 import { useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { pipelineIpc } from "../ipc/commands";
+import {
+  pipelineIpc,
+  type PipelineState,
+  type PipelineStatus,
+  type Project,
+} from "@splicr/ipc";
 import {
   computePercent,
   deriveSteps,
   findActiveIndex,
   type PipelineStepView,
-} from "../lib/pipeline/derive";
-import type { PipelineState, PipelineStatus, Project } from "../ipc/types.gen";
+} from "@splicr/core";
 
 // PipelineStepView 类型 re-export (业务侧只引用 usePipeline 一处)
 export type { PipelineStepView };
@@ -54,11 +58,16 @@ export function usePipeline(
     let mounted = true;
     (async () => {
       try {
-        unlisten = await listen("pipeline:event", () => {
+        const fn = await listen("pipeline:event", () => {
           if (mounted) {
             void qc.invalidateQueries({ queryKey: ["pipeline-status"] });
           }
         });
+        if (!mounted) {
+          fn();
+        } else {
+          unlisten = fn;
+        }
       } catch (e) {
         // webview only: ignore
         console.debug("listen pipeline:event unavailable", e);

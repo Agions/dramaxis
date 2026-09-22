@@ -34,38 +34,45 @@
       "@/*": [
         "./src/*"
       ],
-      "@ui/*": [
-        "./src/components/ui/*"
-      ],
       "@components/*": [
         "./src/components/*"
       ],
       "@hooks/*": [
         "./src/hooks/*"
       ],
-      "@stores/*": [
-        "./src/stores/*"
-      ],
-      "@ipc/*": [
-        "./src/ipc/*"
-      ],
-      "@lib/*": [
-        "./src/lib/*"
-      ],
-      "@pages/*": [
-        "./src/pages/*"
-      ],
       "@styles/*": [
         "./src/styles/*"
       ],
-      "@workers/*": [
-        "./src/workers/*"
+      "@splicr/ipc": [
+        "./packages/ipc/src/index.ts"
+      ],
+      "@splicr/ipc/*": [
+        "./packages/ipc/src/*"
+      ],
+      "@splicr/core": [
+        "./packages/core/src/index.ts"
+      ],
+      "@splicr/core/*": [
+        "./packages/core/src/*"
+      ],
+      "@splicr/ui": [
+        "./packages/ui/src/index.ts"
+      ],
+      "@splicr/ui/*": [
+        "./packages/ui/src/*"
+      ],
+      "@splicr/utils": [
+        "./packages/utils/src/index.ts"
+      ],
+      "@splicr/utils/*": [
+        "./packages/utils/src/*"
       ]
     }
   },
   "include": [
     "src",
-    "tests"
+    "packages",
+    "e2e"
   ],
   "exclude": [
     "src-tauri",

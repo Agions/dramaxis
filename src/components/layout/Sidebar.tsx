@@ -4,8 +4,7 @@
  */
 
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { useSettingsStore } from "@stores/settings-store";
-import { t } from "@lib/i18n";
+import { useSettingsStore, useUpdateStore, t } from "@splicr/core";
 
 interface NavItem {
   to: "/" | "/production" | "/assets" | "/settings" | "/help";
@@ -16,14 +15,20 @@ interface NavItem {
 }
 
 const TOP_NAV_ITEMS: NavItem[] = [
-  { to: "/",          key: "nav.home",       icon: "🏠", hint: "工作台" },
-  { to: "/production",key: "nav.production", icon: "🎬", hint: "Agent 创作", badge: "Agent" },
-  { to: "/assets",    key: "nav.assets",     icon: "📁", hint: "资产库" },
+  { to: "/", key: "nav.home", icon: "🏠", hint: "工作台" },
+  {
+    to: "/production",
+    key: "nav.production",
+    icon: "🎬",
+    hint: "Agent 创作",
+    badge: "Agent",
+  },
+  { to: "/assets", key: "nav.assets", icon: "📁", hint: "资产库" },
 ];
 
 const BOTTOM_NAV_ITEMS: NavItem[] = [
-  { to: "/settings", key: "nav.settings",   icon: "⚙️", hint: "设置" },
-  { to: "/help",     key: "nav.help",       icon: "❓", hint: "帮助" },
+  { to: "/settings", key: "nav.settings", icon: "⚙️", hint: "设置" },
+  { to: "/help", key: "nav.help", icon: "❓", hint: "帮助" },
 ];
 
 interface SidebarProps {
@@ -32,13 +37,14 @@ interface SidebarProps {
 
 export function Sidebar({ currentPath }: SidebarProps) {
   const locale = useSettingsStore((s) => s.locale);
+  const hasNotification = useUpdateStore((s) => s.hasNotification);
   const navigate = useNavigate();
   const routerState = useRouterState();
   const activePath = routerState.location.pathname || currentPath;
 
   return (
     <aside
-      className="flex w-16 flex-col items-center justify-between border-r border-[var(--color-border)] bg-[var(--color-bg)] py-3 flex-shrink-0 z-30 select-none transition-colors duration-200"
+      className="flex w-16 flex-col items-center justify-between border-r border-border bg-bg py-3 flex-shrink-0 z-30 select-none transition-colors duration-200"
       aria-label="splicr 主导航"
     >
       {/* 1. 顶部 Brand Logo */}
@@ -46,25 +52,29 @@ export function Sidebar({ currentPath }: SidebarProps) {
         <button
           type="button"
           onClick={() => void navigate({ to: "/" })}
-          className="group relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#F5C842] to-[#E8933A] text-zinc-950 font-black text-xl shadow-[0_0_16px_rgba(245,200,66,0.3)] transition-transform duration-300 hover:scale-105"
+          className="group relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-gold to-amber text-zinc-950 font-black text-xl shadow-[0_0_16px_var(--color-gold-glow)] transition-transform duration-300 hover:scale-105"
           title="splicr 叙影 AI 视频解说"
         >
           S
           <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F5C842] opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-[#F5C842]" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-gold" />
           </span>
         </button>
 
-        <div className="h-[1px] w-8 bg-[var(--color-border)]" />
+        <div className="h-[1px] w-8 bg-border" />
 
         {/* 2. 主功能导航 */}
-        <nav className="flex flex-col space-y-1.5 w-full px-2" role="navigation">
+        <nav
+          className="flex flex-col space-y-1.5 w-full px-2"
+          role="navigation"
+        >
           {TOP_NAV_ITEMS.map((item) => {
             const active =
               item.to === "/"
                 ? activePath === "/"
-                : activePath === item.to || activePath.startsWith(item.to + "/");
+                : activePath === item.to ||
+                  activePath.startsWith(item.to + "/");
 
             return (
               <button
@@ -75,14 +85,14 @@ export function Sidebar({ currentPath }: SidebarProps) {
                 id={`sidebar-nav-${item.hint.toLowerCase()}`}
                 className={`group relative flex flex-col items-center justify-center rounded-xl py-2.5 px-1 cursor-pointer transition-all duration-200 ${
                   active
-                    ? "bg-[var(--color-gold-muted)] border border-[var(--color-gold)]/40 text-[var(--color-gold)] shadow-[0_0_12px_var(--color-gold-glow)] font-bold"
-                    : "border border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
+                    ? "bg-gold-muted border border-gold/40 text-gold shadow-[0_0_12px_var(--color-gold-glow)] font-bold"
+                    : "border border-transparent text-text-secondary hover:bg-surface-elevated hover:border-border hover:text-text-primary"
                 }`}
                 aria-current={active ? "page" : undefined}
               >
                 {/* 激活态金线指针 */}
                 {active && (
-                  <span className="absolute -left-2 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-[var(--color-gold)] shadow-[0_0_8px_var(--color-gold-glow)]" />
+                  <span className="absolute -left-2 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-gold shadow-[0_0_8px_var(--color-gold-glow)]" />
                 )}
 
                 <span className="text-xl leading-none transition-transform duration-200 group-hover:scale-110">
@@ -91,7 +101,9 @@ export function Sidebar({ currentPath }: SidebarProps) {
 
                 <span
                   className={`mt-1 text-[10px] tracking-tight ${
-                    active ? "text-[var(--color-gold)] font-bold" : "text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]"
+                    active
+                      ? "text-gold font-bold"
+                      : "text-text-secondary group-hover:text-text-primary"
                   }`}
                 >
                   {item.hint}
@@ -99,7 +111,7 @@ export function Sidebar({ currentPath }: SidebarProps) {
 
                 {/* Badge 提示 */}
                 {item.badge && !active && (
-                  <span className="absolute -top-1 -right-1 flex h-2 w-2 rounded-full bg-[var(--color-gold)]" />
+                  <span className="absolute -top-1 -right-1 flex h-2 w-2 rounded-full bg-gold" />
                 )}
               </button>
             );
@@ -109,10 +121,12 @@ export function Sidebar({ currentPath }: SidebarProps) {
 
       {/* 3. 底部系统导航 */}
       <div className="flex flex-col items-center space-y-2 w-full px-2">
-        <div className="h-[1px] w-8 bg-[var(--color-border)]" />
+        <div className="h-[1px] w-8 bg-border" />
 
         {BOTTOM_NAV_ITEMS.map((item) => {
           const active = activePath.startsWith(item.to);
+          const showUpdateBadge = item.to === "/settings" && hasNotification;
+
           return (
             <button
               key={item.to}
@@ -122,14 +136,20 @@ export function Sidebar({ currentPath }: SidebarProps) {
               id={`sidebar-nav-${item.hint.toLowerCase()}`}
               className={`group relative flex flex-col items-center justify-center w-full rounded-xl py-2 px-1 cursor-pointer transition-all duration-200 ${
                 active
-                  ? "bg-[var(--color-gold-muted)] border border-[var(--color-gold)]/40 text-[var(--color-gold)]"
-                  : "border border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-elevated)] hover:text-[var(--color-text-primary)]"
+                  ? "bg-gold-muted border border-gold/40 text-gold"
+                  : "border border-transparent text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
               }`}
             >
+              {showUpdateBadge && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-gold border-2 border-bg" />
+                </span>
+              )}
               <span className="text-lg leading-none transition-transform duration-200 group-hover:scale-110">
                 {item.icon}
               </span>
-              <span className="mt-1 text-[10px] text-[var(--color-text-secondary)] font-medium group-hover:text-[var(--color-text-primary)]">
+              <span className="mt-1 text-[10px] text-text-secondary font-medium group-hover:text-text-primary">
                 {item.hint}
               </span>
             </button>

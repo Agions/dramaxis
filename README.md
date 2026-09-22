@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="assets/logo-horizontal.png" width="640" alt="splicr 叙影 AI 视频解说创作工具" style="border-radius: 16px; box-shadow: 0 0 32px rgba(245,200,66,0.2);" />
+<img src="public/branding/logo-horizontal.png" width="640" alt="splicr 叙影 AI 视频解说创作工具" style="border-radius: 16px; box-shadow: 0 0 32px rgba(245,200,66,0.2);" />
 
 [![Version](https://img.shields.io/badge/Version-v1.0.1-F5C842?style=flat-square&logo=git&logoColor=1A1A20)](https://github.com/Agions/splicr/releases) [![Tauri](https://img.shields.io/badge/Tauri-v2.0-7C3AED?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app) [![Rust](https://img.shields.io/badge/Rust-1.85%2B-F97316?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org) [![React](https://img.shields.io/badge/React-19.0-06B6D4?style=flat-square&logo=react&logoColor=white)](https://react.dev) [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org) [![License](https://img.shields.io/badge/License-MIT-10B981?style=flat-square&logo=open-source-initiative&logoColor=white)](LICENSE)  
 [![Multi-Agent](https://img.shields.io/badge/Multi--Agent-6%20Specialists-D97706?style=flat-square&logo=openai)](https://github.com/Agions/splicr) [![LLM](https://img.shields.io/badge/LLM-11%20Providers-F5C842?style=flat-square&logo=openai&logoColor=1A1A20)](https://github.com/Agions/splicr) [![TTS](https://img.shields.io/badge/TTS-Zero--shot%20Clone-22C55E?style=flat-square&logo=microphone)](https://github.com/Agions/splicr) [![Export](https://img.shields.io/badge/Export-CapCut%20Draft-EC4899?style=flat-square&logo=video)](https://github.com/Agions/splicr)
@@ -25,11 +25,11 @@
 
 | 首页 Dashboard 工程概览 | 三栏一体化 Multi-Agent 解说工作台 |
 | :---: | :---: |
-| <img src="assets/splicr_dashboard_cover.png" width="460" alt="splicr 首页 Dashboard 界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="assets/splicr_production_cover.png" width="460" alt="splicr 三栏多智能体工作台截图" style="border-radius: 8px; border: 1px solid #27272A;" /> |
+| <img src="public/branding/splicr_dashboard_cover.png" width="460" alt="splicr 首页 Dashboard 界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/splicr_production_cover.png" width="460" alt="splicr 三栏多智能体工作台截图" style="border-radius: 8px; border: 1px solid #27272A;" /> |
 
 | 素材资产管理中心 | 11 大模型与 TTS 探针设置 |
 | :---: | :---: |
-| <img src="assets/splicr_assets_cover.png" width="460" alt="splicr 素材资产管理界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="assets/splicr_settings_cover.png" width="460" alt="splicr 模型设置表单界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> |
+| <img src="public/branding/splicr_assets_cover.png" width="460" alt="splicr 素材资产管理界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/splicr_settings_cover.png" width="460" alt="splicr 模型设置表单界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> |
 
 </div>
 
@@ -87,22 +87,25 @@ graph TD
 
 ## 🏛️ 项目结构与模块划分
 
-```
+```text
 splicr/
 ├── src/                  # React 19 + TypeScript 三栏专业工作台
-├── src-tauri/            # Tauri 2.0 桌面端入口 (Rust IPC 注册与生命周期)
-├── crates/
-│   ├── agent             # Rust Native 多智能体协作与自反思调度引擎 (Director/Screenwriter...)
-│   ├── core              # 核心基础设施 (AppContext / SplicrError / Translator)
-│   ├── domain            # 核心领域模型 (Project / Timeline / MediaFile / Track)
-│   ├── detect            # FFmpeg 智能探针 / 场景切片 / 多模态抽帧
-│   ├── script            # 11 大主流 LLM 客户端与独白脚本引擎
-│   ├── voice             # Edge-TTS / OpenAI-TTS / GPT-SoVITS 人声克隆
-│   ├── subtitle          # FFmpeg silencedetect VAD 语音端点检测与字幕生成
-│   ├── compose           # 7 步流水线状态机与 DAG 执行器
-│   ├── export            # 剪映草稿 (.draft) 原生工程导出与防重矩阵
-│   ├── storage           # 本地 SQLite / JSON 持久化存储
-│   └── update            # 跨平台自动热更新引擎
+├── packages/             # 前端 Monorepo 模块 (@splicr/ipc, @splicr/core, @splicr/ui, @splicr/utils)
+├── public/               # 运行时静态资产与品牌识别 (public/branding/)
+├── src-tauri/            # Tauri 2.0 桌面端入口 (Cargo Workspace 根工作区)
+│   ├── src/              # Tauri IPC 注册与生命周期
+│   └── crates/           # 12 个独立 Rust 业务微模块
+│       ├── agent         # Rust Native 多智能体协作与自反思调度引擎 (Director/Screenwriter...)
+│       ├── core          # 核心基础设施 (AppContext / SplicrError / Translator / 领域模型)
+│       ├── detect        # FFmpeg 智能探针 / 场景切片 / 多模态抽帧 / GPU加速探测
+│       ├── script        # 11 大主流 LLM 客户端与独白脚本引擎
+│       ├── voice         # Edge-TTS / OpenAI-TTS / GPT-SoVITS / MiniMax 人声克隆
+│       ├── subtitle      # FFmpeg silencedetect VAD 语音端点检测与字幕生成
+│       ├── compose       # 7 步流水线状态机与 DAG 执行器
+│       ├── export        # 剪映草稿 (.draft) 原生工程导出与防重矩阵
+│       ├── storage       # 本地 SQLite / JSON 持久化存储
+│       ├── plugin        # WASM 插件宿主扩展运行时
+│       └── update        # 跨平台自动热更新引擎
 └── docs/                 # VitePress 在线官方生产与开发文档中心
 ```
 
@@ -122,12 +125,12 @@ pnpm install
 pnpm tauri dev
 
 # 4. 运行全套自动化测试
-cargo test --all
+cargo test --manifest-path src-tauri/Cargo.toml --all
 pnpm test
 ```
 
 > **💡 macOS 安装提示**：若打开下载的安装包时提示 `“已损坏，无法打开”`，系 macOS Gatekeeper 安全机制对未签名文件的隔离标记，请在终端执行：  
-> `sudo xattr -rd com.apple.quarantine /Applications/splicr.app`（若为旧版本：`sudo xattr -rd com.apple.quarantine /Applications/vynaro.app`）即可正常启动。
+> `sudo xattr -rd com.apple.quarantine /Applications/splicr.app` 即可正常启动。
 
 ---
 

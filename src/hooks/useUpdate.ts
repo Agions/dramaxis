@@ -16,16 +16,27 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { updateIpc } from "../ipc/commands";
-import { useUpdateStore } from "../stores/update-store";
-import type { UpdateInstallResult, UpdateState } from "../ipc/types.gen";
+import {
+  updateIpc,
+  type UpdateInstallResult,
+  type UpdateState,
+} from "@splicr/ipc";
+import { useUpdateStore } from "@splicr/core";
 
 export interface UseUpdateReturn {
   state: UpdateState;
   check: () => Promise<void>;
+  silentCheck: () => Promise<void>;
   download: () => Promise<void>;
   install: () => Promise<UpdateInstallResult>;
   reset: () => Promise<void>;
+  skipCurrentVersion: () => void;
+  clearNotification: () => void;
+  hasNotification: boolean;
+  skippedVersions: string[];
+  isForceUpdate: boolean;
+  speedBps: number;
+  remainingSeconds: number | null;
   busy: boolean;
 }
 
@@ -36,12 +47,16 @@ export interface UseUpdateOptions {
 
 export function useUpdate(opts: UseUpdateOptions = {}): UseUpdateReturn {
   const snapshot = useUpdateStore((s) => s.snapshot);
+  const skippedVersions = useUpdateStore((s) => s.skippedVersions);
+  const hasNotification = useUpdateStore((s) => s.hasNotification);
   const setSnapshot = useUpdateStore((s) => s.setSnapshot);
   const setAvailable = useUpdateStore((s) => s.setAvailable);
   const setPhase = useUpdateStore((s) => s.setPhase);
   const setDownloadedPath = useUpdateStore((s) => s.setDownloadedPath);
   const setError = useUpdateStore((s) => s.setError);
   const resetStore = useUpdateStore((s) => s.reset);
+  const skipVersion = useUpdateStore((s) => s.skipVersion);
+  const clearNotification = useUpdateStore((s) => s.clearNotification);
 
   // 拉取后端快照 (轮询 + listen 触发 refetch)
   const { refetch } = useQuery<UpdateState>({
@@ -60,7 +75,7 @@ export function useUpdate(opts: UseUpdateOptions = {}): UseUpdateReturn {
     },
     refetchInterval: (q) => {
       const p = q.state.data?.phase;
-      return p === "downloading" || p === "checking" ? 500 : 60_000;
+      return p === "downloading" || p === "checking" ? 400 : 60_000;
     },
     staleTime: 0,
     retry: false,
@@ -72,9 +87,14 @@ export function useUpdate(opts: UseUpdateOptions = {}): UseUpdateReturn {
     let mounted = true;
     (async () => {
       try {
-        unlisten = await listen("updater:event", () => {
+        const fn = await listen("updater:event", () => {
           if (mounted) void refetch();
         });
+        if (!mounted) {
+          fn();
+        } else {
+          unlisten = fn;
+        }
       } catch (e) {
         // webview only: ignore
         console.debug("listen updater:event unavailable", e);
@@ -107,6 +127,15 @@ export function useUpdate(opts: UseUpdateOptions = {}): UseUpdateReturn {
     void refetch();
   }, [setAvailable, setError, refetch]);
 
+  const silentCheck = useCallback(async () => {
+    try {
+      const info = await updateIpc.check();
+      setAvailable(info);
+    } catch {
+      // 静默检查吞掉异常
+    }
+  }, [setAvailable]);
+
   const download = useCallback(async () => {
     setError(null);
     try {
@@ -138,8 +167,33 @@ export function useUpdate(opts: UseUpdateOptions = {}): UseUpdateReturn {
     }
   }, [resetStore, snapshot.currentVersion]);
 
+  const skipCurrentVersion = useCallback(() => {
+    if (snapshot.available?.version) {
+      skipVersion(snapshot.available.version);
+    }
+  }, [snapshot.available?.version, skipVersion]);
+
   const busy =
     snapshot.phase === "checking" || snapshot.phase === "downloading";
 
-  return { state: snapshot, check, download, install, reset, busy };
+  const isForceUpdate = Boolean(snapshot.available?.isForce);
+  const speedBps = snapshot.progress?.speedBps ?? 0;
+  const remainingSeconds = snapshot.progress?.remainingSeconds ?? null;
+
+  return {
+    state: snapshot,
+    check,
+    silentCheck,
+    download,
+    install,
+    reset,
+    skipCurrentVersion,
+    clearNotification,
+    hasNotification,
+    skippedVersions,
+    isForceUpdate,
+    speedBps,
+    remainingSeconds,
+    busy,
+  };
 }

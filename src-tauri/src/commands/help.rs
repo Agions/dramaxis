@@ -7,6 +7,7 @@
 //! `HelpRegistry::with_defaults()` 在 lib.rs 中 `.manage()` 注入,
 //! 内置 6 篇默认主题与前端 HelpPage 卡片对应。
 
+use splicr_core::error::SplicrError;
 use splicr_core::{HelpCategory, HelpRegistry, HelpTopic, SearchHit};
 use tauri::State;
 
@@ -15,10 +16,11 @@ use tauri::State;
 pub async fn help_topics(
     reg: State<'_, HelpRegistry>,
     category: Option<String>,
-) -> Result<Vec<HelpTopic>, String> {
+) -> Result<Vec<HelpTopic>, SplicrError> {
     let topics = match category {
         Some(raw) if !raw.trim().is_empty() => {
-            let cat = HelpCategory::parse(&raw).ok_or_else(|| format!("未知帮助分类: {raw}"))?;
+            let cat = HelpCategory::parse(&raw)
+                .ok_or_else(|| SplicrError::InvalidInput(format!("未知帮助分类: {raw}")))?;
             reg.list_by_category(cat)
         }
         _ => reg.list_all(),
@@ -28,8 +30,13 @@ pub async fn help_topics(
 
 /// 按 id 取单篇主题 (含 markdown 正文);不存在返回错误
 #[tauri::command]
-pub async fn help_topic_get(reg: State<'_, HelpRegistry>, id: String) -> Result<HelpTopic, String> {
-    reg.get(&id).cloned().map_err(|e| e.to_string())
+pub async fn help_topic_get(
+    reg: State<'_, HelpRegistry>,
+    id: String,
+) -> Result<HelpTopic, SplicrError> {
+    reg.get(&id)
+        .cloned()
+        .map_err(|e| SplicrError::InvalidInput(e.to_string()))
 }
 
 /// 加权全文搜索。空查询返回空列表;按得分降序、同分按 id 升序。
@@ -37,6 +44,6 @@ pub async fn help_topic_get(reg: State<'_, HelpRegistry>, id: String) -> Result<
 pub async fn help_search(
     reg: State<'_, HelpRegistry>,
     query: String,
-) -> Result<Vec<SearchHit>, String> {
+) -> Result<Vec<SearchHit>, SplicrError> {
     Ok(reg.search(&query))
 }
