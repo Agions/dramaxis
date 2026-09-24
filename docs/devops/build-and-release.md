@@ -38,6 +38,7 @@ pnpm tauri build
 ## 3. GitHub Releases 自动发布流程
 
 项目配置了 GitHub Actions 自动化工作流：
+
 1. 打上语义化版本 Tag 并推送：
    ```bash
    git tag v1.0.1

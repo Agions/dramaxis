@@ -68,7 +68,8 @@ export const useUpdateStore = create<UpdateStoreState>()((set) => ({
     set((s) => ({ snapshot: { ...s.snapshot, phase, error: null } })),
   setAvailable: (info) =>
     set((s) => {
-      const isSkipped = info && s.skippedVersions.includes(info.version) && !info.isForce;
+      const isSkipped =
+        info && s.skippedVersions.includes(info.version) && !info.isForce;
       return {
         snapshot: { ...s.snapshot, available: info },
         hasNotification: Boolean(info && !isSkipped),

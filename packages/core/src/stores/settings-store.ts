@@ -8,7 +8,11 @@
  */
 
 import { create } from "zustand";
-import type { ConfigSnapshot, LlmProviderKind, TtsProviderKind } from "@splicr/ipc";
+import type {
+  ConfigSnapshot,
+  LlmProviderKind,
+  TtsProviderKind,
+} from "@splicr/ipc";
 
 export interface SettingsState {
   locale: string;
@@ -38,7 +42,9 @@ export const useSettingsStore = create<SettingsState>()((set) => ({
       ...prev,
       initialized: true,
       locale: snapshot.language ?? prev.locale,
-      llmDefaultProvider: (snapshot.llm_provider as LlmProviderKind) ?? prev.llmDefaultProvider,
-      ttsDefaultProvider: (snapshot.tts_provider as TtsProviderKind) ?? prev.ttsDefaultProvider,
+      llmDefaultProvider:
+        (snapshot.llm_provider as LlmProviderKind) ?? prev.llmDefaultProvider,
+      ttsDefaultProvider:
+        (snapshot.tts_provider as TtsProviderKind) ?? prev.ttsDefaultProvider,
     })),
 }));

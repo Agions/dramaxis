@@ -37,9 +37,7 @@ pub struct Translator {
 impl std::fmt::Debug for Translator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let loc = self.locale();
-        f.debug_struct("Translator")
-            .field("locale", &loc)
-            .finish()
+        f.debug_struct("Translator").field("locale", &loc).finish()
     }
 }
 
@@ -65,7 +63,10 @@ impl Translator {
         en.insert("common.success".into(), "Success".into());
         en.insert("common.failed".into(), "Failed".into());
         en.insert("export.completed".into(), "Export Completed".into());
-        en.insert("detect.completed".into(), "Scene Detection Completed".into());
+        en.insert(
+            "detect.completed".into(),
+            "Scene Detection Completed".into(),
+        );
 
         t.register_messages("zh-CN", zh);
         t.register_messages("en-US", en);

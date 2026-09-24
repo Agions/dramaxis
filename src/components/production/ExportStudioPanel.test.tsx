@@ -69,7 +69,9 @@ describe("ExportStudioPanel", () => {
       />,
     );
 
-    expect(screen.getByText("剪映 PC 原生工程草稿 (.draft)")).toBeInTheDocument();
+    expect(
+      screen.getByText("剪映 PC 原生工程草稿 (.draft)"),
+    ).toBeInTheDocument();
     expect(screen.getByText("一键导出至剪映草稿库")).toBeInTheDocument();
     expect(screen.getByText("高完播率防重矩阵 (Anti-Dup)")).toBeInTheDocument();
     expect(screen.getByText("1.03x")).toBeInTheDocument();
@@ -78,7 +80,8 @@ describe("ExportStudioPanel", () => {
 
   it("点击剪映导出按钮成功触发 exportIpc.capcutDraft 并传递真实多轨数据", async () => {
     vi.mocked(exportIpc.capcutDraft).mockResolvedValueOnce({
-      draftFolder: "/Movies/JianyingPro/User Data/Projects/com.lveditor.draft/splicr_123",
+      draftFolder:
+        "/Movies/JianyingPro/User Data/Projects/com.lveditor.draft/splicr_123",
       draftId: "splicr_123",
       createdAt: "2026-09-22T10:00:00Z",
       isJianyingInstalled: true,
@@ -95,7 +98,9 @@ describe("ExportStudioPanel", () => {
         voiceAudioPath="/audio/narration.mp3"
         voiceDuration={30}
         subtitles={[{ id: "sub-1", text: "第一句台词", start: 0, duration: 3 }]}
-        sceneCuts={[{ id: 1, time: "00:00 - 00:15", tag: "开篇", emotion: "高能" }]}
+        sceneCuts={[
+          { id: 1, time: "00:00 - 00:15", tag: "开篇", emotion: "高能" },
+        ]}
       />,
     );
 

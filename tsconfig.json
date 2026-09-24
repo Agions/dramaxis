@@ -2,12 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "useDefineForClassFields": true,
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable",
-      "WebWorker"
-    ],
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
     "module": "ESNext",
     "skipLibCheck": true,
     /* Bundler mode */
@@ -31,52 +26,20 @@
     /* 路径别名 (与 vite.config.ts 保持一致, 平铺结构)
        不再使用 baseUrl 注入,paths 直接以项目根为基准 */
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@components/*": [
-        "./src/components/*"
-      ],
-      "@hooks/*": [
-        "./src/hooks/*"
-      ],
-      "@styles/*": [
-        "./src/styles/*"
-      ],
-      "@splicr/ipc": [
-        "./packages/ipc/src/index.ts"
-      ],
-      "@splicr/ipc/*": [
-        "./packages/ipc/src/*"
-      ],
-      "@splicr/core": [
-        "./packages/core/src/index.ts"
-      ],
-      "@splicr/core/*": [
-        "./packages/core/src/*"
-      ],
-      "@splicr/ui": [
-        "./packages/ui/src/index.ts"
-      ],
-      "@splicr/ui/*": [
-        "./packages/ui/src/*"
-      ],
-      "@splicr/utils": [
-        "./packages/utils/src/index.ts"
-      ],
-      "@splicr/utils/*": [
-        "./packages/utils/src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/components/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@styles/*": ["./src/styles/*"],
+      "@splicr/ipc": ["./packages/ipc/src/index.ts"],
+      "@splicr/ipc/*": ["./packages/ipc/src/*"],
+      "@splicr/core": ["./packages/core/src/index.ts"],
+      "@splicr/core/*": ["./packages/core/src/*"],
+      "@splicr/ui": ["./packages/ui/src/index.ts"],
+      "@splicr/ui/*": ["./packages/ui/src/*"],
+      "@splicr/utils": ["./packages/utils/src/index.ts"],
+      "@splicr/utils/*": ["./packages/utils/src/*"]
     }
   },
-  "include": [
-    "src",
-    "packages",
-    "e2e"
-  ],
-  "exclude": [
-    "src-tauri",
-    "dist",
-    "node_modules"
-  ]
+  "include": ["src", "packages", "e2e"],
+  "exclude": ["src-tauri", "dist", "node_modules"]
 }

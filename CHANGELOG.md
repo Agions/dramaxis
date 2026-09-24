@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-08-06
 
 ### 🚀 Major Features & Highlights
+
 - **Architectural Rewrite**: Complete modernization from legacy Python codebase to a high-performance **Tauri 2 + Rust + React 19 + TypeScript** desktop architecture.
 - **7-Step AI Video Narrative Pipeline**:
   - **Step 1 (Intake)**: Raw video file drag-and-drop intake with resolution and frame rate probe.
@@ -19,10 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Step 7 (CapCut Draft Export)**: One-click export to native CapCut project draft format (`.draft`) and short-video resolution presets.
 
 ### 🎨 UI & Design System
+
 - **Cinematic Darkroom Theme**: Sleek deep obsidian background (`#0D0D0F`) paired with warm gold accents (`#F5C842`).
 - **Streamlined Navigation**: Simplified 5-module left navigation sidebar (首页, AI 7步流, 资产库, 设置, 帮助) with zero route duplication.
 - **Chinese First**: Default interface language initialized to Chinese (`zh-CN`).
 
 ### 🛠️ Infrastructure & Quality Assurance
+
 - **Project Structure Flattening**: Simplified monorepo structure by placing frontend and desktop app core cleanly at project root.
 - **100% Test Coverage Compliance**: Passed 157 Vitest unit tests and Rust workspace check.

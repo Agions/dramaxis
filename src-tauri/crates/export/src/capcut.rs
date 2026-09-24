@@ -5,9 +5,9 @@
 //! - 组装包含 V1 视频轨、A1 旁白配音轨、SUB 逐字花字字幕轨与防重滤镜的多轨工程
 //! - 生成 draft_info.json, draft_meta_info.json 与 draft_content.json
 
-use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use splicr_core::error::{SplicrError, SplicrResult};
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

@@ -46,12 +46,14 @@ export function calculateVisibleTimeRange({
  */
 export function filterVisibleClips<T extends TimelineClipItem>(
   clips: T[],
-  range: VisibleTimeRange
+  range: VisibleTimeRange,
 ): T[] {
   return clips.filter((clip) => {
     const clipDuration = Math.max(0, clip.out_seconds - clip.in_seconds);
     const clipEnd = clip.start_seconds + clipDuration;
     // 片段与视口存在交集
-    return clipEnd >= range.startSeconds && clip.start_seconds <= range.endSeconds;
+    return (
+      clipEnd >= range.startSeconds && clip.start_seconds <= range.endSeconds
+    );
   });
 }

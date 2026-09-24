@@ -8,11 +8,7 @@
  * - formatBytes: B/KB/MB/GB / 0 / 负数 / NaN / Infinity / 边界四舍五入
  */
 import { describe, expect, it } from "vitest";
-import {
-  applyProbe,
-  basename,
-  pathToMediaFileEmpty,
-} from "./probe";
+import { applyProbe, basename, pathToMediaFileEmpty } from "./probe";
 import { formatBytes } from "./bytes";
 import type { FfmpegProbe, MediaFile } from "@splicr/ipc";
 

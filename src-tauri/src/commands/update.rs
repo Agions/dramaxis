@@ -74,7 +74,9 @@ pub async fn update_install(
 
     let file_path = std::path::PathBuf::from(&path);
     if !file_path.exists() {
-        return Err(SplicrError::Updater("下载的安装包不存在，请重新下载".into()));
+        return Err(SplicrError::Updater(
+            "下载的安装包不存在，请重新下载".into(),
+        ));
     }
 
     #[cfg(unix)]

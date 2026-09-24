@@ -57,7 +57,7 @@ help:
 # ── 构建 ───────────────────────────────────────────────────────
 build:
 	$(step) Rust workspace release 构建...
-	cargo build --workspace --release
+	cargo build --manifest-path src-tauri/Cargo.toml --all --release
 	$(step) 前端 production 构建...
 	pnpm build
 
@@ -70,30 +70,30 @@ build-tauri:
 # ── 测试 ───────────────────────────────────────────────────────
 test:
 	$(step) Rust 单元 + 集成测试...
-	cargo test --workspace
+	cargo test --manifest-path src-tauri/Cargo.toml --all
 	$(step) 前端 Vitest 单元测试...
 	pnpm test
 
 test-cov: coverage
 
 rust-test:
-	cargo test --workspace
+	cargo test --manifest-path src-tauri/Cargo.toml --all
 
 rust-test-verbose:
-	cargo test --workspace -- --nocapture
+	cargo test --manifest-path src-tauri/Cargo.toml --all -- --nocapture
 
 # ── Lint / Format / Coverage ───────────────────────────────────
 lint:
-	$(step) cargo clippy --workspace --all-targets...
-	cargo clippy --workspace --all-targets -- -D warnings
-	$(step) cargo fmt --all -- --check...
-	cargo fmt --all -- --check
+	$(step) cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets...
+	cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
+	$(step) cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check...
+	cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
 	$(step) pnpm lint...
 	pnpm lint
 
 format:
-	$(step) cargo fmt --all...
-	cargo fmt --all
+	$(step) cargo fmt --manifest-path src-tauri/Cargo.toml --all...
+	cargo fmt --manifest-path src-tauri/Cargo.toml --all
 	$(step) pnpm format...
 	pnpm format
 
@@ -102,7 +102,7 @@ coverage:
 
 # ── 文档 ────────────────────────────────────────────────────────────
 docs:
-	cd docs && npm run docs:build
+	pnpm docs:build
 
 # ── 清理 ────────────────────────────────────────────────────────────
 clean:

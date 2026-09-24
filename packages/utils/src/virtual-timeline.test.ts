@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { calculateVisibleTimeRange, filterVisibleClips } from "./virtual-timeline";
+import {
+  calculateVisibleTimeRange,
+  filterVisibleClips,
+} from "./virtual-timeline";
 
 describe("virtual-timeline", () => {
   it("应准确计算当前视口的时间跨度", () => {

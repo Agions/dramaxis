@@ -7,6 +7,7 @@
 ## 1. 基础依赖清单
 
 确保已安装以下开发工具链：
+
 - **Node.js**：v20.x 或 v22.x (LTS)
 - **pnpm**：v9.x 及以上 (`corepack enable pnpm`)
 - **Rust**：1.82.0 及以上稳定版 (`rustup update stable`)

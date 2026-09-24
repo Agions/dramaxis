@@ -47,7 +47,10 @@ fn build_tts_engine(params: &VoicePreviewParams) -> Box<dyn splicr_voice::TtsEng
                 .base_url
                 .clone()
                 .unwrap_or_else(|| "https://api.minimax.chat/v1".into()),
-            model: params.model.clone().unwrap_or_else(|| "speech-02-hd".into()),
+            model: params
+                .model
+                .clone()
+                .unwrap_or_else(|| "speech-02-hd".into()),
             voice: params
                 .voice
                 .clone()

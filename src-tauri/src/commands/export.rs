@@ -199,12 +199,14 @@ pub async fn export_render_video(
 
     // 4.2 动态微缩放
     let current_v = if (zoom - 1.0).abs() > 0.001 {
-        let (tw, th) = if is_landscape { (1920, 1080) } else { (1080, 1920) };
+        let (tw, th) = if is_landscape {
+            (1920, 1080)
+        } else {
+            (1080, 1920)
+        };
         let zw = (((tw as f64) * zoom) as u32 / 2) * 2;
         let zh = (((th as f64) * zoom) as u32 / 2) * 2;
-        filter_complex.push_str(&format!(
-            "[vbase]scale={zw}:{zh},crop={tw}:{th}[vzoomed];"
-        ));
+        filter_complex.push_str(&format!("[vbase]scale={zw}:{zh},crop={tw}:{th}[vzoomed];"));
         "[vzoomed]"
     } else {
         "[vbase]"
@@ -212,7 +214,10 @@ pub async fn export_render_video(
 
     // 4.3 字幕烧录
     let v_final_tag = if let Some(ref srt) = temp_srt {
-        let escaped = srt.to_string_lossy().replace(':', "\\:").replace('\'', "\\'");
+        let escaped = srt
+            .to_string_lossy()
+            .replace(':', "\\:")
+            .replace('\'', "\\'");
         filter_complex.push_str(&format!(
             "{current_v}subtitles='{escaped}':force_style='FontSize=22,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=2'[vsub];"
         ));
@@ -251,11 +256,7 @@ pub async fn export_render_video(
     };
 
     // 5. 拼装 FFmpeg 参数并执行
-    let mut args: Vec<String> = vec![
-        "-y".into(),
-        "-i".into(),
-        params.video_path.clone(),
-    ];
+    let mut args: Vec<String> = vec!["-y".into(), "-i".into(), params.video_path.clone()];
 
     if let Some(voice) = &voice_path_str {
         args.push("-i".into());

@@ -1,414 +1,443 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <title>Splicr 用户使用手册</title>
-  <style>
-    @page {
-      size: A4;
-      margin: 18mm 16mm 18mm 16mm;
-      @bottom-right {
-        content: counter(page);
-        font-size: 9pt;
-        color: #888;
+  <head>
+    <meta charset="UTF-8" />
+    <title>Splicr 用户使用手册</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 18mm 16mm 18mm 16mm;
+        @bottom-right {
+          content: counter(page);
+          font-size: 9pt;
+          color: #888;
+        }
       }
-    }
-    
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-      color: #1F2937;
-      background: #FFFFFF;
-      line-height: 1.65;
-      font-size: 10.5pt;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
 
-    /* ── 封面设计 ── */
-    .cover {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 60px 40px;
-      background: linear-gradient(135deg, #0D0D0F 0%, #1A1A22 60%, #141418 100%);
-      color: #F3F4F6;
-      page-break-after: always;
-      border-radius: 12px;
-      position: relative;
-      overflow: hidden;
-    }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    .cover::after {
-      content: "";
-      position: absolute;
-      top: -50px;
-      right: -50px;
-      width: 320px;
-      height: 320px;
-      background: radial-gradient(circle, rgba(245, 200, 66, 0.25) 0%, transparent 70%);
-      pointer-events: none;
-    }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        color: #1f2937;
+        background: #ffffff;
+        line-height: 1.65;
+        font-size: 10.5pt;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
 
-    .cover-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
+      /* ── 封面设计 ── */
+      .cover {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 60px 40px;
+        background: linear-gradient(
+          135deg,
+          #0d0d0f 0%,
+          #1a1a22 60%,
+          #141418 100%
+        );
+        color: #f3f4f6;
+        page-break-after: always;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+      }
 
-    .cover-logo {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg, #F5C842, #E8933A);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      font-size: 22px;
-      color: #0D0D0F;
-      box-shadow: 0 0 20px rgba(245, 200, 66, 0.4);
-    }
+      .cover::after {
+        content: "";
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 320px;
+        height: 320px;
+        background: radial-gradient(
+          circle,
+          rgba(245, 200, 66, 0.25) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+      }
 
-    .cover-brand {
-      font-size: 16pt;
-      font-weight: 800;
-      letter-spacing: 1px;
-      color: #F5C842;
-    }
+      .cover-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
 
-    .cover-body {
-      margin-top: 40px;
-    }
+      .cover-logo {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, #f5c842, #e8933a);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 22px;
+        color: #0d0d0f;
+        box-shadow: 0 0 20px rgba(245, 200, 66, 0.4);
+      }
 
-    .cover-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      background: rgba(245, 200, 66, 0.15);
-      border: 1px solid rgba(245, 200, 66, 0.4);
-      color: #F5C842;
-      border-radius: 20px;
-      font-size: 9pt;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      margin-bottom: 20px;
-    }
+      .cover-brand {
+        font-size: 16pt;
+        font-weight: 800;
+        letter-spacing: 1px;
+        color: #f5c842;
+      }
 
-    .cover-title {
-      font-size: 32pt;
-      font-weight: 900;
-      line-height: 1.25;
-      margin-bottom: 16px;
-      background: linear-gradient(to right, #FFFFFF, #E5E7EB, #F5C842);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+      .cover-body {
+        margin-top: 40px;
+      }
 
-    .cover-subtitle {
-      font-size: 14pt;
-      color: #9CA3AF;
-      max-width: 520px;
-      line-height: 1.5;
-    }
+      .cover-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: rgba(245, 200, 66, 0.15);
+        border: 1px solid rgba(245, 200, 66, 0.4);
+        color: #f5c842;
+        border-radius: 20px;
+        font-size: 9pt;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: 20px;
+      }
 
-    .cover-footer {
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding-top: 24px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 9pt;
-      color: #6B7280;
-    }
+      .cover-title {
+        font-size: 32pt;
+        font-weight: 900;
+        line-height: 1.25;
+        margin-bottom: 16px;
+        background: linear-gradient(to right, #ffffff, #e5e7eb, #f5c842);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
 
-    .cover-footer span {
-      color: #D1D5DB;
-      font-weight: 600;
-    }
+      .cover-subtitle {
+        font-size: 14pt;
+        color: #9ca3af;
+        max-width: 520px;
+        line-height: 1.5;
+      }
 
-    /* ── 正文排版 ── */
-    .page {
-      padding: 10px 0;
-      page-break-after: always;
-    }
+      .cover-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 24px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 9pt;
+        color: #6b7280;
+      }
 
-    .page:last-child {
-      page-break-after: auto;
-    }
+      .cover-footer span {
+        color: #d1d5db;
+        font-weight: 600;
+      }
 
-    h1, h2, h3, h4 {
-      color: #111827;
-      font-weight: 700;
-    }
+      /* ── 正文排版 ── */
+      .page {
+        padding: 10px 0;
+        page-break-after: always;
+      }
 
-    h1 {
-      font-size: 20pt;
-      border-bottom: 2px solid #F5C842;
-      padding-bottom: 8px;
-      margin-top: 24px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+      .page:last-child {
+        page-break-after: auto;
+      }
 
-    h1::before {
-      content: "";
-      display: inline-block;
-      width: 6px;
-      height: 22px;
-      background: #F5C842;
-      border-radius: 3px;
-    }
+      h1,
+      h2,
+      h3,
+      h4 {
+        color: #111827;
+        font-weight: 700;
+      }
 
-    h2 {
-      font-size: 13pt;
-      margin-top: 18px;
-      margin-bottom: 10px;
-      color: #374151;
-      border-left: 3px solid #D97706;
-      padding-left: 10px;
-    }
+      h1 {
+        font-size: 20pt;
+        border-bottom: 2px solid #f5c842;
+        padding-bottom: 8px;
+        margin-top: 24px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-    h3 {
-      font-size: 11pt;
-      margin-top: 14px;
-      margin-bottom: 6px;
-      color: #4B5563;
-    }
+      h1::before {
+        content: "";
+        display: inline-block;
+        width: 6px;
+        height: 22px;
+        background: #f5c842;
+        border-radius: 3px;
+      }
 
-    p {
-      margin-bottom: 10px;
-      color: #374151;
-      text-align: justify;
-    }
+      h2 {
+        font-size: 13pt;
+        margin-top: 18px;
+        margin-bottom: 10px;
+        color: #374151;
+        border-left: 3px solid #d97706;
+        padding-left: 10px;
+      }
 
-    /* ── 强调卡片与警示框 ── */
-    .callout {
-      background: #FDF8E7;
-      border-left: 4px solid #F5C842;
-      padding: 12px 16px;
-      border-radius: 0 8px 8px 0;
-      margin: 14px 0;
-      font-size: 9.5pt;
-    }
+      h3 {
+        font-size: 11pt;
+        margin-top: 14px;
+        margin-bottom: 6px;
+        color: #4b5563;
+      }
 
-    .callout-title {
-      font-weight: 700;
-      color: #92400E;
-      margin-bottom: 4px;
-    }
+      p {
+        margin-bottom: 10px;
+        color: #374151;
+        text-align: justify;
+      }
 
-    .callout-info {
-      background: #EFF6FF;
-      border-left: 4px solid #3B82F6;
-    }
+      /* ── 强调卡片与警示框 ── */
+      .callout {
+        background: #fdf8e7;
+        border-left: 4px solid #f5c842;
+        padding: 12px 16px;
+        border-radius: 0 8px 8px 0;
+        margin: 14px 0;
+        font-size: 9.5pt;
+      }
 
-    .callout-info .callout-title {
-      color: #1E40AF;
-    }
+      .callout-title {
+        font-weight: 700;
+        color: #92400e;
+        margin-bottom: 4px;
+      }
 
-    /* ── 表格样式 ── */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 14px 0;
-      font-size: 9pt;
-    }
+      .callout-info {
+        background: #eff6ff;
+        border-left: 4px solid #3b82f6;
+      }
 
-    th, td {
-      border: 1px solid #E5E7EB;
-      padding: 8px 12px;
-      text-align: left;
-    }
+      .callout-info .callout-title {
+        color: #1e40af;
+      }
 
-    th {
-      background-color: #F9FAFB;
-      font-weight: 700;
-      color: #374151;
-    }
+      /* ── 表格样式 ── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0;
+        font-size: 9pt;
+      }
 
-    tr:nth-child(even) {
-      background-color: #FAFAFA;
-    }
+      th,
+      td {
+        border: 1px solid #e5e7eb;
+        padding: 8px 12px;
+        text-align: left;
+      }
 
-    kbd {
-      background: #1F2937;
-      color: #F5C842;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 8.5pt;
-      font-weight: 600;
-      border: 1px solid #374151;
-    }
+      th {
+        background-color: #f9fafb;
+        font-weight: 700;
+        color: #374151;
+      }
 
-    code {
-      background: #F3F4F6;
-      color: #D97706;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 9pt;
-    }
+      tr:nth-child(even) {
+        background-color: #fafafa;
+      }
 
-    pre {
-      background: #111827;
-      color: #F3F4F6;
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin: 12px 0;
-      font-size: 8.5pt;
-      overflow-x: auto;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      line-height: 1.5;
-    }
+      kbd {
+        background: #1f2937;
+        color: #f5c842;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 8.5pt;
+        font-weight: 600;
+        border: 1px solid #374151;
+      }
 
-    /* ── 流程图小部件 ── */
-    .steps-container {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin: 14px 0;
-    }
+      code {
+        background: #f3f4f6;
+        color: #d97706;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 9pt;
+      }
 
-    .step-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 10px 14px;
-      background: #F9FAFB;
-      border: 1px solid #E5E7EB;
-      border-radius: 8px;
-    }
+      pre {
+        background: #111827;
+        color: #f3f4f6;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin: 12px 0;
+        font-size: 8.5pt;
+        overflow-x: auto;
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        line-height: 1.5;
+      }
 
-    .step-num {
-      width: 24px;
-      height: 24px;
-      background: #D97706;
-      color: #FFFFFF;
-      font-weight: 700;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 9pt;
-      flex-shrink: 0;
-    }
+      /* ── 流程图小部件 ── */
+      .steps-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 14px 0;
+      }
 
-    .step-content strong {
-      display: block;
-      color: #111827;
-      font-size: 9.5pt;
-      margin-bottom: 2px;
-    }
+      .step-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 14px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+      }
 
-    .step-content p {
-      margin-bottom: 0;
-      font-size: 8.5pt;
-      color: #4B5563;
-    }
+      .step-num {
+        width: 24px;
+        height: 24px;
+        background: #d97706;
+        color: #ffffff;
+        font-weight: 700;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9pt;
+        flex-shrink: 0;
+      }
 
-    /* ── 目录样式 ── */
-    .toc {
-      background: #F9FAFB;
-      border: 1px solid #E5E7EB;
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin: 16px 0 24px 0;
-    }
+      .step-content strong {
+        display: block;
+        color: #111827;
+        font-size: 9.5pt;
+        margin-bottom: 2px;
+      }
 
-    .toc-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px dashed #E5E7EB;
-      font-size: 9.5pt;
-    }
+      .step-content p {
+        margin-bottom: 0;
+        font-size: 8.5pt;
+        color: #4b5563;
+      }
 
-    .toc-item:last-child {
-      border-bottom: none;
-    }
+      /* ── 目录样式 ── */
+      .toc {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 16px 0 24px 0;
+      }
 
-    .toc-item a {
-      color: #1F2937;
-      text-decoration: none;
-      font-weight: 500;
-    }
+      .toc-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px dashed #e5e7eb;
+        font-size: 9.5pt;
+      }
 
-    .toc-page {
-      color: #9CA3AF;
-      font-weight: 600;
-    }
-  </style>
-</head>
-<body>
+      .toc-item:last-child {
+        border-bottom: none;
+      }
 
-  <!-- 封面 -->
-  <div class="cover">
-    <div class="cover-header">
-      <div class="cover-logo">S</div>
-      <div class="cover-brand">SPLICR</div>
+      .toc-item a {
+        color: #1f2937;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .toc-page {
+        color: #9ca3af;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 封面 -->
+    <div class="cover">
+      <div class="cover-header">
+        <div class="cover-logo">S</div>
+        <div class="cover-brand">SPLICR</div>
+      </div>
+      <div class="cover-body">
+        <div class="cover-badge">v1.0.1 官方正式版指南</div>
+        <div class="cover-title">用户使用手册与<br />多智能体创作指南</div>
+        <div class="cover-subtitle">
+          基于 Tauri 2.0 与 Rust Native 原生引擎的 AI 影视解说工业化生产桌面平台
+        </div>
+      </div>
+      <div class="cover-footer">
+        <div>发布主体：<span>Splicr Architecture Team</span></div>
+        <div>适用平台：<span>macOS / Windows / Linux</span></div>
+        <div>更新日期：<span>2026 年 9 月</span></div>
+      </div>
     </div>
-    <div class="cover-body">
-      <div class="cover-badge">v1.0.1 官方正式版指南</div>
-      <div class="cover-title">用户使用手册与<br>多智能体创作指南</div>
-      <div class="cover-subtitle">基于 Tauri 2.0 与 Rust Native 原生引擎的 AI 影视解说工业化生产桌面平台</div>
-    </div>
-    <div class="cover-footer">
-      <div>发布主体：<span>Splicr Architecture Team</span></div>
-      <div>适用平台：<span>macOS / Windows / Linux</span></div>
-      <div>更新日期：<span>2026 年 9 月</span></div>
-    </div>
-  </div>
 
-  <!-- 正文第一页：概述与环境配置 -->
-  <div class="page">
-    <h1>1. 系统概述与前置环境配置</h1>
-    <p><strong>Splicr</strong> 是一套专为影视解说、短视频二创与纪录片解说量身打造的<strong>桌面级工业化多智能体创作引擎</strong>。本软件融合了前沿的 LLM 剧情推理、48kHz 高清神经配音、自研卡拉OK动态字幕渲染以及剪映（CapCut）草稿工程一键互通技术。</p>
+    <!-- 正文第一页：概述与环境配置 -->
+    <div class="page">
+      <h1>1. 系统概述与前置环境配置</h1>
+      <p>
+        <strong>Splicr</strong>
+        是一套专为影视解说、短视频二创与纪录片解说量身打造的<strong>桌面级工业化多智能体创作引擎</strong>。本软件融合了前沿的
+        LLM 剧情推理、48kHz
+        高清神经配音、自研卡拉OK动态字幕渲染以及剪映（CapCut）草稿工程一键互通技术。
+      </p>
 
-    <div class="callout">
-      <div class="callout-title">核心设计理念</div>
-      Splicr 坚持“单一真相源”、“本地原生高性能”与“创作者断点协同 (HITL)”原则。所有视频切片与音频合成均在本地高效处理，配置文件均落盘至本地系统原生目录，保障创作数据的绝对隐私与资产安全。
-    </div>
+      <div class="callout">
+        <div class="callout-title">核心设计理念</div>
+        Splicr 坚持“单一真相源”、“本地原生高性能”与“创作者断点协同
+        (HITL)”原则。所有视频切片与音频合成均在本地高效处理，配置文件均落盘至本地系统原生目录，保障创作数据的绝对隐私与资产安全。
+      </div>
 
-    <h2>1.1 操作系统运行要求</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>平台名称</th>
-          <th>最低支持版本</th>
-          <th>推荐硬件架构</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>macOS</strong></td>
-          <td>macOS 12 (Monterey) 及以上</td>
-          <td>Apple Silicon M1/M2/M3/M4 (原生 Metal/VideoToolbox 加速)</td>
-        </tr>
-        <tr>
-          <td><strong>Windows</strong></td>
-          <td>Windows 10 / 11 (64-bit)</td>
-          <td>Intel 8代+ / AMD Ryzen 3000+ (支持 NVENC / QSV 硬件加速)</td>
-        </tr>
-        <tr>
-          <td><strong>Linux</strong></td>
-          <td>Ubuntu 22.04 LTS / Debian 12</td>
-          <td>支持 VA-API 硬件解码管道</td>
-        </tr>
-      </tbody>
-    </table>
+      <h2>1.1 操作系统运行要求</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>平台名称</th>
+            <th>最低支持版本</th>
+            <th>推荐硬件架构</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>macOS</strong></td>
+            <td>macOS 12 (Monterey) 及以上</td>
+            <td>Apple Silicon M1/M2/M3/M4 (原生 Metal/VideoToolbox 加速)</td>
+          </tr>
+          <tr>
+            <td><strong>Windows</strong></td>
+            <td>Windows 10 / 11 (64-bit)</td>
+            <td>Intel 8代+ / AMD Ryzen 3000+ (支持 NVENC / QSV 硬件加速)</td>
+          </tr>
+          <tr>
+            <td><strong>Linux</strong></td>
+            <td>Ubuntu 22.04 LTS / Debian 12</td>
+            <td>支持 VA-API 硬件解码管道</td>
+          </tr>
+        </tbody>
+      </table>
 
-    <h2>1.2 必备核心外部依赖：FFmpeg 5.0+</h2>
-    <p>Splicr 的音视频探针分析、智能场景切片提取与多轨流式封装深度依托系统中的 <code>ffmpeg</code> 与 <code>ffprobe</code> 二进制工具。初次使用前请确保已完成安装：</p>
-    
-    <pre><code># macOS (推荐通过 Homebrew 一键安装)
+      <h2>1.2 必备核心外部依赖：FFmpeg 5.0+</h2>
+      <p>
+        Splicr 的音视频探针分析、智能场景切片提取与多轨流式封装深度依托系统中的
+        <code>ffmpeg</code> 与
+        <code>ffprobe</code> 二进制工具。初次使用前请确保已完成安装：
+      </p>
+
+      <pre><code># macOS (推荐通过 Homebrew 一键安装)
 brew install ffmpeg
 
 # Windows (推荐通过 WinGet 或 Scoop 安装)
@@ -416,175 +445,240 @@ winget install Gyan.FFmpeg
 
 # 验证安装是否成功（在命令行中执行）
 ffmpeg -version</code></pre>
-  </div>
+    </div>
 
-  <!-- 正文第二页：快速上手流程 -->
-  <div class="page">
-    <h1>2. 核心创作流水线与五步上手实操</h1>
-    <p>Splicr 提供标准化的 7 步多智能体生产流水线，使一部原本需要半天的影视解说作品在 5 分钟内高质量完成初稿编排与剪辑对齐。</p>
+    <!-- 正文第二页：快速上手流程 -->
+    <div class="page">
+      <h1>2. 核心创作流水线与五步上手实操</h1>
+      <p>
+        Splicr 提供标准化的 7
+        步多智能体生产流水线，使一部原本需要半天的影视解说作品在 5
+        分钟内高质量完成初稿编排与剪辑对齐。
+      </p>
 
-    <div class="steps-container">
-      <div class="step-item">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <strong>批量导入原片素材</strong>
-          <p>点击顶部栏「批量导入素材」或按快捷键 <code>Cmd+N</code>。支持同时将整部电影或剧集多集视频文件批量导入素材库，系统自动进行音视频流探针解析。</p>
+      <div class="steps-container">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>批量导入原片素材</strong>
+            <p>
+              点击顶部栏「批量导入素材」或按快捷键
+              <code>Cmd+N</code
+              >。支持同时将整部电影或剧集多集视频文件批量导入素材库，系统自动进行音视频流探针解析。
+            </p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>触发 AI 场景切片 (Scene Detection)</strong>
+            <p>
+              在素材列表点击「智能切片」，底层 Rust
+              原生引擎将通过帧差变化算法自动提取高能分镜切片，生成结构化镜头列表并标定入出点。
+            </p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>编剧智能体生成分镜解说文案</strong>
+            <p>
+              进入「智能生产工作台」，在右侧面板设定叙事风格（如“反转悬疑”、“幽默吐槽”），LLM
+              自动按照镜头节奏分句编写剧情解说词并精准对齐镜头。
+            </p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <strong>配音工作室选择声线并合成</strong>
+            <p>
+              选择 Edge-TTS 免费声线或 MiniMax 48kHz
+              超拟真影视声线，点击「生成整轨配音」。引擎自动生成分段音频并在时间轴上吸附对齐。
+            </p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <strong>一键导出剪映专业草稿 (CapCut Draft)</strong>
+            <p>
+              点击右上角「导出剪映草稿」，系统自动在剪映本地草稿目录写入完整的工程文件。打开剪映即可看到排布完毕的视频轨道、解说音频与双语字幕！
+            </p>
+          </div>
         </div>
       </div>
-      <div class="step-item">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <strong>触发 AI 场景切片 (Scene Detection)</strong>
-          <p>在素材列表点击「智能切片」，底层 Rust 原生引擎将通过帧差变化算法自动提取高能分镜切片，生成结构化镜头列表并标定入出点。</p>
-        </div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <strong>编剧智能体生成分镜解说文案</strong>
-          <p>进入「智能生产工作台」，在右侧面板设定叙事风格（如“反转悬疑”、“幽默吐槽”），LLM 自动按照镜头节奏分句编写剧情解说词并精准对齐镜头。</p>
-        </div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <strong>配音工作室选择声线并合成</strong>
-          <p>选择 Edge-TTS 免费声线或 MiniMax 48kHz 超拟真影视声线，点击「生成整轨配音」。引擎自动生成分段音频并在时间轴上吸附对齐。</p>
-        </div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">5</div>
-        <div class="step-content">
-          <strong>一键导出剪映专业草稿 (CapCut Draft)</strong>
-          <p>点击右上角「导出剪映草稿」，系统自动在剪映本地草稿目录写入完整的工程文件。打开剪映即可看到排布完毕的视频轨道、解说音频与双语字幕！</p>
-        </div>
+
+      <h2>2.1 人机协同断点机制 (Human-in-the-Loop)</h2>
+      <p>
+        在多智能体自主执行时，系统设计了优雅的创作者断点机制。当智能体完成阶段性生成（如初版剧本文案或关键帧匹配）后，将暂停等待创作者确认或输入微调反馈（Feedback），确认满意后再继续后续音频与合成步骤，避免盲目全自动带来的失控偏离。
+      </p>
+    </div>
+
+    <!-- 正文第三页：配置与高级功能 -->
+    <div class="page">
+      <h1>3. 模型密钥配置与高级导出技巧</h1>
+
+      <h2>3.1 大语言模型配置 (LLM Providers)</h2>
+      <p>
+        进入应用设置中心（快捷键 <code>Cmd+,</code> /
+        <code>Ctrl+,</code>）中的「模型与密钥」面板：
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>推荐模型服务商</th>
+            <th>推荐默认模型</th>
+            <th>特色优势与使用场景</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>DeepSeek</strong></td>
+            <td><code>deepseek-chat</code></td>
+            <td>国内访问零延迟，影视剧情梳理逻辑极强，极具性价比</td>
+          </tr>
+          <tr>
+            <td><strong>OpenAI</strong></td>
+            <td><code>gpt-4o</code> / <code>gpt-4o-mini</code></td>
+            <td>文案文学造诣高，镜头切分精准，支持各类海外题材</td>
+          </tr>
+          <tr>
+            <td><strong>通义千问 (Qwen)</strong></td>
+            <td><code>qwen-plus</code> / <code>qwen-max</code></td>
+            <td>长文本理解与中文俗语、古装武侠题材解说极其地道</td>
+          </tr>
+          <tr>
+            <td><strong>本地私有化 (Ollama)</strong></td>
+            <td><code>custom (自定义 Base URL)</code></td>
+            <td>完全离线内网运行，无需联网密钥，适合高敏感素材处理</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>3.2 语音合成引擎配置 (TTS Engines)</h2>
+      <p>Splicr 支持免费与商业顶尖音色的灵活搭配：</p>
+      <ul
+        style="
+          margin-left: 20px;
+          font-size: 9.5pt;
+          color: #374151;
+          margin-bottom: 12px;
+        "
+      >
+        <li style="margin-bottom: 6px">
+          <strong>Edge-TTS</strong>：无需 API
+          Key，开箱即用，推荐云希（<code>zh-CN-YunxiNeural</code>）与云健（<code>zh-CN-YunjianNeural</code>），适合快速出片。
+        </li>
+        <li style="margin-bottom: 6px">
+          <strong>MiniMax (Mimo)</strong>：填入 API Key 即可调用 48kHz
+          影院级超拟真人声（如
+          <code>male-qn-qingse</code>），换气声、重音语调自然生动。
+        </li>
+        <li style="margin-bottom: 6px">
+          <strong>GPT-SoVITS</strong>：支持导入 5 秒真实参考音频（Reference
+          Audio），1:1 像素级复刻创作者本人的专属声音声线。
+        </li>
+      </ul>
+
+      <h2>3.3 剪映草稿互通技术规范</h2>
+      <div class="callout callout-info">
+        <div class="callout-title">跨软件零损耗互通</div>
+        Splicr 生成的草稿直接符合剪映专业版的
+        <code>draft_content.json</code>
+        协议标准。包含独立的视频轨道（切片片段）、解说主音频轨道与字幕轨道。打开剪映客户端后，草稿箱将直接显示工程缩略图，创作者可随时在剪映中套用花字滤镜、特效贴纸或混音推子。
       </div>
     </div>
 
-    <h2>2.1 人机协同断点机制 (Human-in-the-Loop)</h2>
-    <p>在多智能体自主执行时，系统设计了优雅的创作者断点机制。当智能体完成阶段性生成（如初版剧本文案或关键帧匹配）后，将暂停等待创作者确认或输入微调反馈（Feedback），确认满意后再继续后续音频与合成步骤，避免盲目全自动带来的失控偏离。</p>
-  </div>
+    <!-- 正文第四页：快捷键与常见问答 -->
+    <div class="page">
+      <h1>4. 全局快捷键与常见问题排查 (FAQ)</h1>
 
-  <!-- 正文第三页：配置与高级功能 -->
-  <div class="page">
-    <h1>3. 模型密钥配置与高级导出技巧</h1>
-    
-    <h2>3.1 大语言模型配置 (LLM Providers)</h2>
-    <p>进入应用设置中心（快捷键 <code>Cmd+,</code> / <code>Ctrl+,</code>）中的「模型与密钥」面板：</p>
-    <table>
-      <thead>
-        <tr>
-          <th>推荐模型服务商</th>
-          <th>推荐默认模型</th>
-          <th>特色优势与使用场景</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>DeepSeek</strong></td>
-          <td><code>deepseek-chat</code></td>
-          <td>国内访问零延迟，影视剧情梳理逻辑极强，极具性价比</td>
-        </tr>
-        <tr>
-          <td><strong>OpenAI</strong></td>
-          <td><code>gpt-4o</code> / <code>gpt-4o-mini</code></td>
-          <td>文案文学造诣高，镜头切分精准，支持各类海外题材</td>
-        </tr>
-        <tr>
-          <td><strong>通义千问 (Qwen)</strong></td>
-          <td><code>qwen-plus</code> / <code>qwen-max</code></td>
-          <td>长文本理解与中文俗语、古装武侠题材解说极其地道</td>
-        </tr>
-        <tr>
-          <td><strong>本地私有化 (Ollama)</strong></td>
-          <td><code>custom (自定义 Base URL)</code></td>
-          <td>完全离线内网运行，无需联网密钥，适合高敏感素材处理</td>
-        </tr>
-      </tbody>
-    </table>
+      <h2>4.1 生产力快捷键速查表</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>操作快捷键 (macOS / Windows)</th>
+            <th>功能定义</th>
+            <th>工作场景</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><kbd>Space</kbd> (空格键)</td>
+            <td>播放 / 暂停监视器</td>
+            <td>全局监视器画面与音频播放切换</td>
+          </tr>
+          <tr>
+            <td><kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd></td>
+            <td>全局命令面板 (Command Palette)</td>
+            <td>快速模糊搜索工程、切换页面与触发指令</td>
+          </tr>
+          <tr>
+            <td><kbd>⌘N</kbd> / <kbd>Ctrl+N</kbd></td>
+            <td>新建创作工程</td>
+            <td>启动新解说项目向导</td>
+          </tr>
+          <tr>
+            <td><kbd>⌘R</kbd> / <kbd>Ctrl+R</kbd></td>
+            <td>直达生产流水线</td>
+            <td>快速进入生产工作台排练页面</td>
+          </tr>
+          <tr>
+            <td><kbd>⌘E</kbd> / <kbd>Ctrl+E</kbd></td>
+            <td>导出当前工程</td>
+            <td>呼出 CapCut 草稿导出与自定义封装面板</td>
+          </tr>
+          <tr>
+            <td><kbd>⌘,</kbd> / <kbd>Ctrl+,</kbd></td>
+            <td>打开系统偏好设置</td>
+            <td>配置主题、语言、大模型与音频密钥</td>
+          </tr>
+          <tr>
+            <td><kbd>⌘/</kbd> / <kbd>Ctrl+/</kbd></td>
+            <td>调出帮助与技术支持</td>
+            <td>查阅知识库话题与操作指导</td>
+          </tr>
+        </tbody>
+      </table>
 
-    <h2>3.2 语音合成引擎配置 (TTS Engines)</h2>
-    <p>Splicr 支持免费与商业顶尖音色的灵活搭配：</p>
-    <ul style="margin-left: 20px; font-size: 9.5pt; color: #374151; margin-bottom: 12px;">
-      <li style="margin-bottom: 6px;"><strong>Edge-TTS</strong>：无需 API Key，开箱即用，推荐云希（<code>zh-CN-YunxiNeural</code>）与云健（<code>zh-CN-YunjianNeural</code>），适合快速出片。</li>
-      <li style="margin-bottom: 6px;"><strong>MiniMax (Mimo)</strong>：填入 API Key 即可调用 48kHz 影院级超拟真人声（如 <code>male-qn-qingse</code>），换气声、重音语调自然生动。</li>
-      <li style="margin-bottom: 6px;"><strong>GPT-SoVITS</strong>：支持导入 5 秒真实参考音频（Reference Audio），1:1 像素级复刻创作者本人的专属声音声线。</li>
-    </ul>
+      <h2>4.2 常见问题速查 (FAQ)</h2>
 
-    <h2>3.3 剪映草稿互通技术规范</h2>
-    <div class="callout callout-info">
-      <div class="callout-title">跨软件零损耗互通</div>
-      Splicr 生成的草稿直接符合剪映专业版的 <code>draft_content.json</code> 协议标准。包含独立的视频轨道（切片片段）、解说主音频轨道与字幕轨道。打开剪映客户端后，草稿箱将直接显示工程缩略图，创作者可随时在剪映中套用花字滤镜、特效贴纸或混音推子。
+      <h3>Q1: 启动后场景切片一直无进度或提示错误？</h3>
+      <p>
+        <strong>排查方案</strong>：请确认电脑已安装 FFmpeg 并且
+        <code>ffmpeg</code> 位于全局环境变量
+        <code>PATH</code> 中。安装完成后必须<strong
+          >完全退出并重新启动 Splicr</strong
+        >，以使系统环境变量生效。
+      </p>
+
+      <h3>Q2: 导出剪映草稿后，剪映打开提示“媒体文件丢失”？</h3>
+      <p>
+        <strong>排查方案</strong>：Splicr
+        为保障处理速度并节省磁盘空间，对原始素材采用路径软链接引用。导出剪映草稿后，请切勿移动、重命名或删除原视频文件。
+      </p>
+
+      <h3>Q3: 暗色与亮色主题如何切换？</h3>
+      <p>
+        <strong>排查方案</strong>：点击顶部导航栏右上角的太阳/月亮图标，或按
+        <kbd>⌘K</kbd>
+        调出命令面板输入“切换主题”，即可在黑金调光室模式与珍珠暖白模式间瞬时切换，支持跟随系统外观自适应。
+      </p>
+
+      <div
+        style="
+          margin-top: 40px;
+          padding: 20px;
+          border-top: 1px solid #e5e7eb;
+          text-align: center;
+          color: #9ca3af;
+          font-size: 8.5pt;
+        "
+      >
+        Splicr v1.0.1 工业级影视解说引擎 · 版权所有 © 2026 Agions ·
+        祝您创作丰收！
+      </div>
     </div>
-  </div>
-
-  <!-- 正文第四页：快捷键与常见问答 -->
-  <div class="page">
-    <h1>4. 全局快捷键与常见问题排查 (FAQ)</h1>
-
-    <h2>4.1 生产力快捷键速查表</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>操作快捷键 (macOS / Windows)</th>
-          <th>功能定义</th>
-          <th>工作场景</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><kbd>Space</kbd> (空格键)</td>
-          <td>播放 / 暂停监视器</td>
-          <td>全局监视器画面与音频播放切换</td>
-        </tr>
-        <tr>
-          <td><kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd></td>
-          <td>全局命令面板 (Command Palette)</td>
-          <td>快速模糊搜索工程、切换页面与触发指令</td>
-        </tr>
-        <tr>
-          <td><kbd>⌘N</kbd> / <kbd>Ctrl+N</kbd></td>
-          <td>新建创作工程</td>
-          <td>启动新解说项目向导</td>
-        </tr>
-        <tr>
-          <td><kbd>⌘R</kbd> / <kbd>Ctrl+R</kbd></td>
-          <td>直达生产流水线</td>
-          <td>快速进入生产工作台排练页面</td>
-        </tr>
-        <tr>
-          <td><kbd>⌘E</kbd> / <kbd>Ctrl+E</kbd></td>
-          <td>导出当前工程</td>
-          <td>呼出 CapCut 草稿导出与自定义封装面板</td>
-        </tr>
-        <tr>
-          <td><kbd>⌘,</kbd> / <kbd>Ctrl+,</kbd></td>
-          <td>打开系统偏好设置</td>
-          <td>配置主题、语言、大模型与音频密钥</td>
-        </tr>
-        <tr>
-          <td><kbd>⌘/</kbd> / <kbd>Ctrl+/</kbd></td>
-          <td>调出帮助与技术支持</td>
-          <td>查阅知识库话题与操作指导</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h2>4.2 常见问题速查 (FAQ)</h2>
-    
-    <h3>Q1: 启动后场景切片一直无进度或提示错误？</h3>
-    <p><strong>排查方案</strong>：请确认电脑已安装 FFmpeg 并且 <code>ffmpeg</code> 位于全局环境变量 <code>PATH</code> 中。安装完成后必须<strong>完全退出并重新启动 Splicr</strong>，以使系统环境变量生效。</p>
-
-    <h3>Q2: 导出剪映草稿后，剪映打开提示“媒体文件丢失”？</h3>
-    <p><strong>排查方案</strong>：Splicr 为保障处理速度并节省磁盘空间，对原始素材采用路径软链接引用。导出剪映草稿后，请切勿移动、重命名或删除原视频文件。</p>
-
-    <h3>Q3: 暗色与亮色主题如何切换？</h3>
-    <p><strong>排查方案</strong>：点击顶部导航栏右上角的太阳/月亮图标，或按 <kbd>⌘K</kbd> 调出命令面板输入“切换主题”，即可在黑金调光室模式与珍珠暖白模式间瞬时切换，支持跟随系统外观自适应。</p>
-
-    <div style="margin-top: 40px; padding: 20px; border-top: 1px solid #E5E7EB; text-align: center; color: #9CA3AF; font-size: 8.5pt;">
-      Splicr v1.0.1 工业级影视解说引擎 · 版权所有 © 2026 Agions · 祝您创作丰收！
-    </div>
-  </div>
-
-</body>
+  </body>
 </html>

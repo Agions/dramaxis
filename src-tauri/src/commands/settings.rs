@@ -47,8 +47,8 @@ pub async fn settings_set(
             .await
             .map_err(|e| SplicrError::Io(e.to_string()))?;
     }
-    let bytes = serde_json::to_vec_pretty(&snapshot)
-        .map_err(|e| SplicrError::Config(e.to_string()))?;
+    let bytes =
+        serde_json::to_vec_pretty(&snapshot).map_err(|e| SplicrError::Config(e.to_string()))?;
     tokio::fs::write(&path, bytes)
         .await
         .map_err(|e| SplicrError::Io(e.to_string()))?;

@@ -9,7 +9,9 @@ vi.mock("@splicr/ipc", () => ({
 
 describe("useTauriCommand", () => {
   it("初始化状态具有默认值并在 reset 时重置", async () => {
-    const { result } = renderHook(() => useTauriCommand("project_create_blank" as any));
+    const { result } = renderHook(() =>
+      useTauriCommand("project_create_blank" as any),
+    );
 
     expect(result.current.state).toEqual({
       data: null,
@@ -36,7 +38,9 @@ describe("useTauriCommand", () => {
   });
 
   it("当 callIpc 抛出异常时捕获 error", async () => {
-    const { result } = renderHook(() => useTauriCommand("project_create_blank" as any));
+    const { result } = renderHook(() =>
+      useTauriCommand("project_create_blank" as any),
+    );
 
     (ipcModule.callIpc as any).mockRejectedValueOnce(new Error("IPC failed"));
 

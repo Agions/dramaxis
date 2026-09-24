@@ -154,7 +154,10 @@ export const exportIpc = {
 } as const;
 
 export const detectIpc = {
-  scenes: (filePath: string, threshold?: number | null): Promise<DetectScenesResult> =>
+  scenes: (
+    filePath: string,
+    threshold?: number | null,
+  ): Promise<DetectScenesResult> =>
     callIpc("detect_scenes", { filePath, threshold: threshold ?? null }),
 } as const;
 
@@ -230,7 +233,6 @@ export const scriptIpc = {
 // 聚合 facade
 // ─────────────────────────────────────────────────────────────────────────
 
-
 // ─────────────────────────────────────────────────────────────────────────
 // agent · 多智能体协同引擎
 // ─────────────────────────────────────────────────────────────────────────
@@ -240,8 +242,7 @@ export const agentIpc = {
     callIpc("agent_start", { project, autoMode }),
   step: (stepIdx: number): Promise<BreakpointRequest | null> =>
     callIpc("agent_step", { stepIdx }),
-  getContext: (): Promise<AgentContext | null> =>
-    callIpc("agent_get_context"),
+  getContext: (): Promise<AgentContext | null> => callIpc("agent_get_context"),
 } as const;
 
 export const ipc = {

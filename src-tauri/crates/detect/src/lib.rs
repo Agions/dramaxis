@@ -95,7 +95,10 @@ impl Ffmpeg {
     /// 探测当前机器支持的 GPU 硬件编解码加速器
     pub async fn probe_hardware_acceleration(&self) -> Vec<HardwareAccelerationKind> {
         let mut supported = Vec::new();
-        if let Ok(output) = self.run_raw(&self.ffmpeg_bin, &["-encoders"], None, None).await {
+        if let Ok(output) = self
+            .run_raw(&self.ffmpeg_bin, &["-encoders"], None, None)
+            .await
+        {
             let lower = output.to_lowercase();
             if lower.contains("h264_videotoolbox") || lower.contains("hevc_videotoolbox") {
                 supported.push(HardwareAccelerationKind::VideoToolbox);

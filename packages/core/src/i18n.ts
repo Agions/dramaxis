@@ -34,7 +34,8 @@ export const TRANSLATIONS: Record<Locale, Record<string, string>> = {
 
     // 首页 Dashboard
     "home.welcome_title": "splicr 叙影 AI 视频叙事工作室",
-    "home.welcome_subtitle": "打造下一部爆款电影级短剧与影视解说作品 · Rust Native 多智能体协作引擎",
+    "home.welcome_subtitle":
+      "打造下一部爆款电影级短剧与影视解说作品 · Rust Native 多智能体协作引擎",
     "home.recent_title": "最近视频解说工程",
     "home.see_all": "查看资产库 →",
     "home.no_project": "暂无历史解说工程",
@@ -67,7 +68,8 @@ export const TRANSLATIONS: Record<Locale, Record<string, string>> = {
 
     // 设置页 (大模型与引擎中心)
     "settings.title": "大模型与引擎中心",
-    "settings.subtitle": "配置 11 大 AI LLM 大模型 Key、TTS 语音合成引擎与 FFmpeg 渲染路径",
+    "settings.subtitle":
+      "配置 11 大 AI LLM 大模型 Key、TTS 语音合成引擎与 FFmpeg 渲染路径",
     "settings.tab_llm": "🤖 大语言模型 (LLM)",
     "settings.tab_tts": "🎙️ TTS 语音合成",
     "settings.tab_ffmpeg": "⚙️ FFmpeg 渲染引擎",
@@ -101,19 +103,26 @@ export const TRANSLATIONS: Record<Locale, Record<string, string>> = {
 
     // 制作流水线 7 步标题与副标题
     "step.intake.title": "Step 1: 原始视频与素材导入",
-    "step.intake.desc": "选择或拖拽本地解说视频，系统将自动进行格式校验与分辨率分析。",
+    "step.intake.desc":
+      "选择或拖拽本地解说视频，系统将自动进行格式校验与分辨率分析。",
     "step.detect.title": "Step 2: AI 智能拆条与镜头检测",
-    "step.detect.desc": "结合 FFmpeg 镜头切换探测算法，精准分割精彩剧情高光切片。",
+    "step.detect.desc":
+      "结合 FFmpeg 镜头切换探测算法，精准分割精彩剧情高光切片。",
     "step.script.title": "Step 3: AI 第一人称解说脚本编排",
-    "step.script.desc": "以主角第一人称心理视角组织叙事，打造强钩子、高情绪沉浸感的爆款文案。",
+    "step.script.desc":
+      "以主角第一人称心理视角组织叙事，打造强钩子、高情绪沉浸感的爆款文案。",
     "step.voice.title": "Step 4: TTS 语音合成与人声克隆",
-    "step.voice.desc": "多引擎 TTS 自然配音，支持 Edge-TTS 免密钥合成与 GPT-SoVITS 零样本人声克隆。",
+    "step.voice.desc":
+      "多引擎 TTS 自然配音，支持 Edge-TTS 免密钥合成与 GPT-SoVITS 零样本人声克隆。",
     "step.subtitle.title": "Step 5: 智能字幕识别与动态特效",
-    "step.subtitle.desc": "基于 VAD 语音端点检测生成精准时间轴字幕，支持花字与双语对照。",
+    "step.subtitle.desc":
+      "基于 VAD 语音端点检测生成精准时间轴字幕，支持花字与双语对照。",
     "step.compose.title": "Step 6: 画面与音频精确对齐",
-    "step.compose.desc": "多轨时间轴可视化，智能对齐叙事高潮帧与背景音乐混音比例。",
+    "step.compose.desc":
+      "多轨时间轴可视化，智能对齐叙事高潮帧与背景音乐混音比例。",
     "step.export.title": "Step 7: 多平台预设与剪映草稿导出",
-    "step.export.desc": "一键导出剪映工程草稿 (.draft) 及各大短视频平台标准分辨率。",
+    "step.export.desc":
+      "一键导出剪映工程草稿 (.draft) 及各大短视频平台标准分辨率。",
 
     // Step 4 Voice 专门词条
     "voice.voice_select": "音色选择",
@@ -163,11 +172,13 @@ export const TRANSLATIONS: Record<Locale, Record<string, string>> = {
 
     // Home Dashboard
     "home.welcome_title": "splicr AI Narrative Video Studio",
-    "home.welcome_subtitle": "Create cinematic short drama monologues & video commentary with automated 7-step pipeline",
+    "home.welcome_subtitle":
+      "Create cinematic short drama monologues & video commentary with automated 7-step pipeline",
     "home.recent_title": "Recent Video Projects",
     "home.see_all": "View Assets Hub →",
     "home.no_project": "No Recent Projects",
-    "home.no_project_sub": "Click below to create your first 7-step AI narrative project",
+    "home.no_project_sub":
+      "Click below to create your first 7-step AI narrative project",
     "home.create_project": "➕ New Narrative Project",
     "home.project_file_tag": "Project File · Local Processing",
     "home.pipeline_title": "7-Step AI Narrative Pipeline",
@@ -179,7 +190,8 @@ export const TRANSLATIONS: Record<Locale, Record<string, string>> = {
 
     // Projects Page
     "assets.title": "Projects & Media Hub",
-    "assets.subtitle": "Manage narrative projects, HD media assets, AI scripts and export drafts",
+    "assets.subtitle":
+      "Manage narrative projects, HD media assets, AI scripts and export drafts",
     "assets.stat_projects": "Total Projects",
     "assets.stat_media": "Video & Audio Files",
     "assets.stat_scripts": "AI Narrative Scripts",
@@ -196,7 +208,8 @@ export const TRANSLATIONS: Record<Locale, Record<string, string>> = {
 
     // Settings Page
     "settings.title": "LLM & Engine Center",
-    "settings.subtitle": "Configure 11 LLM Provider Keys, TTS Voice Engines, and FFmpeg Render Paths",
+    "settings.subtitle":
+      "Configure 11 LLM Provider Keys, TTS Voice Engines, and FFmpeg Render Paths",
     "settings.tab_llm": "🤖 LLM Providers",
     "settings.tab_tts": "🎙️ TTS Synthesis",
     "settings.tab_ffmpeg": "⚙️ FFmpeg Engine",
@@ -217,7 +230,8 @@ export const TRANSLATIONS: Record<Locale, Record<string, string>> = {
 
     // Help Center
     "help.title": "Help Center & Tutorials",
-    "help.subtitle": "Access 7-step AI narrative workflow guides, shortcuts and troubleshooting FAQs",
+    "help.subtitle":
+      "Access 7-step AI narrative workflow guides, shortcuts and troubleshooting FAQs",
     "help.search_placeholder": "🔎 Search tutorials, FAQs or keywords...",
     "help.all_cat": "All",
     "help.guide": "Guides",
@@ -230,19 +244,26 @@ export const TRANSLATIONS: Record<Locale, Record<string, string>> = {
 
     // Pipeline Steps
     "step.intake.title": "Step 1: Raw Video & Media Intake",
-    "step.intake.desc": "Import local video assets for format validation and resolution analysis.",
+    "step.intake.desc":
+      "Import local video assets for format validation and resolution analysis.",
     "step.detect.title": "Step 2: Scene Cut & Highlight Detection",
-    "step.detect.desc": "FFmpeg-based scene transition detection for keyframe highlight extraction.",
+    "step.detect.desc":
+      "FFmpeg-based scene transition detection for keyframe highlight extraction.",
     "step.script.title": "Step 3: AI Monologue Script Writing",
-    "step.script.desc": "Craft first-person perspective narrative scripts with high emotional hooks.",
+    "step.script.desc":
+      "Craft first-person perspective narrative scripts with high emotional hooks.",
     "step.voice.title": "Step 4: TTS Voice Synth & Audio Audition",
-    "step.voice.desc": "Multi-engine TTS voice synthesis with Edge-TTS and GPT-SoVITS voice cloning.",
+    "step.voice.desc":
+      "Multi-engine TTS voice synthesis with Edge-TTS and GPT-SoVITS voice cloning.",
     "step.subtitle.title": "Step 5: Subtitle Sync & Karaoke FX",
-    "step.subtitle.desc": "VAD endpoint detection for subtitle timing and dynamic word highlighting.",
+    "step.subtitle.desc":
+      "VAD endpoint detection for subtitle timing and dynamic word highlighting.",
     "step.compose.title": "Step 6: Timeline Sync & BGM Mixing",
-    "step.compose.desc": "Multi-track timeline alignment for video frames and background audio.",
+    "step.compose.desc":
+      "Multi-track timeline alignment for video frames and background audio.",
     "step.export.title": "Step 7: Multi-Platform & CapCut Draft Export",
-    "step.export.desc": "Export CapCut project drafts (.draft) and multi-platform presets.",
+    "step.export.desc":
+      "Export CapCut project drafts (.draft) and multi-platform presets.",
 
     // Step 4 Voice
     "voice.voice_select": "Voice Selection",

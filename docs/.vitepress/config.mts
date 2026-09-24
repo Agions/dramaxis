@@ -72,7 +72,6 @@ export default defineConfig({
             { text: 'splicr-compose (5 轨毫秒级磁吸)', link: '/crates/splicr-compose' },
             { text: 'splicr-export (剪映二进制/转码)', link: '/crates/splicr-export' },
             { text: 'splicr-storage (资产扫描与持久化)', link: '/crates/splicr-storage' },
-            { text: 'splicr-plugin (WASM 沙箱扩展运行时)', link: '/crates/splicr-plugin' },
             { text: 'splicr-update (断点续传/自更新)', link: '/crates/splicr-update' }
           ]
         }
@@ -92,7 +91,7 @@ export default defineConfig({
         {
           text: '🔌 Tauri IPC 契约字典',
           items: [
-            { text: '全量 44 个 IPC 指令字典', link: '/api/commands-dictionary' },
+            { text: '全量 46 个 IPC 指令字典', link: '/api/commands-dictionary' },
             { text: '实时事件监听矩阵 (Event Matrix)', link: '/api/events-matrix' }
           ]
         }

@@ -20,7 +20,9 @@ pub async fn detect_scenes(
 ) -> Result<DetectScenesResult, SplicrError> {
     let path = Path::new(&file_path);
     if !path.exists() {
-        return Err(SplicrError::InvalidInput(format!("视频文件不存在: {file_path}")));
+        return Err(SplicrError::InvalidInput(format!(
+            "视频文件不存在: {file_path}"
+        )));
     }
 
     let thresh = threshold.unwrap_or(0.3);
@@ -37,7 +39,9 @@ pub async fn detect_scenes(
             probe,
         })
     } else {
-        Err(SplicrError::Ffmpeg("FFmpeg 未安装或不在 PATH 中，请安装 FFmpeg 后重试".into()))
+        Err(SplicrError::Ffmpeg(
+            "FFmpeg 未安装或不在 PATH 中，请安装 FFmpeg 后重试".into(),
+        ))
     }
 }
 
@@ -47,6 +51,8 @@ pub async fn detect_hardware_acceleration() -> Result<Vec<HardwareAccelerationKi
     if let Ok(ffmpeg) = Ffmpeg::discover() {
         Ok(ffmpeg.probe_hardware_acceleration().await)
     } else {
-        Err(SplicrError::Ffmpeg("FFmpeg 未安装或不在 PATH 中，请安装 FFmpeg 后重试".into()))
+        Err(SplicrError::Ffmpeg(
+            "FFmpeg 未安装或不在 PATH 中，请安装 FFmpeg 后重试".into(),
+        ))
     }
 }

@@ -34,7 +34,8 @@ interface ThemeState {
 const safeStorage = {
   getItem: (name: string) => {
     try {
-      return typeof localStorage !== "undefined" && typeof localStorage.getItem === "function"
+      return typeof localStorage !== "undefined" &&
+        typeof localStorage.getItem === "function"
         ? localStorage.getItem(name)
         : null;
     } catch {
@@ -43,7 +44,10 @@ const safeStorage = {
   },
   setItem: (name: string, value: string) => {
     try {
-      if (typeof localStorage !== "undefined" && typeof localStorage.setItem === "function") {
+      if (
+        typeof localStorage !== "undefined" &&
+        typeof localStorage.setItem === "function"
+      ) {
         localStorage.setItem(name, value);
       }
     } catch {
@@ -52,7 +56,10 @@ const safeStorage = {
   },
   removeItem: (name: string) => {
     try {
-      if (typeof localStorage !== "undefined" && typeof localStorage.removeItem === "function") {
+      if (
+        typeof localStorage !== "undefined" &&
+        typeof localStorage.removeItem === "function"
+      ) {
         localStorage.removeItem(name);
       }
     } catch {

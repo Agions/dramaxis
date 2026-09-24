@@ -305,7 +305,8 @@ pub fn render_subtitles(
         format: sub_format,
         language: "zh".into(),
     };
-    splicr_subtitle::formats::serialize(&track).map_err(|e| ExportError::SubtitleFormatError(e.to_string()))
+    splicr_subtitle::formats::serialize(&track)
+        .map_err(|e| ExportError::SubtitleFormatError(e.to_string()))
 }
 
 #[cfg(test)]

@@ -4,17 +4,27 @@ import { MultiTrackTimeline } from "./MultiTrackTimeline";
 
 describe("MultiTrackTimeline", () => {
   it("空状态时展示待命占位骨架", () => {
-    render(<MultiTrackTimeline videoClips={[]} voiceClips={[]} hookClip={null} />);
+    render(
+      <MultiTrackTimeline videoClips={[]} voiceClips={[]} hookClip={null} />,
+    );
     expect(screen.getByText("多轨时间轴待命")).toBeInTheDocument();
     expect(
-      screen.getByText(/导入素材或启动 Multi-Agent 智能体将实时排布 5 轨视听流/),
+      screen.getByText(
+        /导入素材或启动 Multi-Agent 智能体将实时排布 5 轨视听流/,
+      ),
     ).toBeInTheDocument();
   });
 
   it("挂载视频分镜、高光钩子、配音音轨与字幕时完整渲染各轨道色块", () => {
     const videoClips = [
       { id: "v-1", title: "开篇悬念", start: 0, duration: 15, emotion: "高能" },
-      { id: "v-2", title: "冲突爆发", start: 15, duration: 25, emotion: "紧张" },
+      {
+        id: "v-2",
+        title: "冲突爆发",
+        start: 15,
+        duration: 25,
+        emotion: "紧张",
+      },
     ];
     const hookClip = {
       title: "0~3s 黄金留存 Hook",
@@ -23,11 +33,21 @@ describe("MultiTrackTimeline", () => {
       style: "dramatic",
     };
     const voiceClips = [
-      { id: "a-1", text: "我叫林渊，三年前那场大火...", start: 0, duration: 28 },
+      {
+        id: "a-1",
+        text: "我叫林渊，三年前那场大火...",
+        start: 0,
+        duration: 28,
+      },
     ];
     const subtitleClips = [
       { id: "sub-1", text: "我叫林渊", start: 0, duration: 3 },
-      { id: "sub-2", text: "三年前那场大火彻底改变了命运", start: 3, duration: 4.5 },
+      {
+        id: "sub-2",
+        text: "三年前那场大火彻底改变了命运",
+        start: 3,
+        duration: 4.5,
+      },
     ];
 
     render(
@@ -59,7 +79,9 @@ describe("MultiTrackTimeline", () => {
     // 配音与字幕切片
     expect(screen.getByText(/我叫林渊，三年前那场大火/)).toBeInTheDocument();
     expect(screen.getByText("我叫林渊")).toBeInTheDocument();
-    expect(screen.getByText("三年前那场大火彻底改变了命运")).toBeInTheDocument();
+    expect(
+      screen.getByText("三年前那场大火彻底改变了命运"),
+    ).toBeInTheDocument();
   });
 
   it("点击时间轴主网格区域时计算相对比例并触发 onSeek 回调", () => {

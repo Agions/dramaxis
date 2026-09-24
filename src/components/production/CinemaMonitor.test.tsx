@@ -9,7 +9,9 @@ vi.mock("@tauri-apps/api/core", () => ({
 describe("CinemaMonitor", () => {
   beforeEach(() => {
     // 模拟 HTMLMediaElement.prototype.play 和 pause
-    vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(() => Promise.resolve());
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(() =>
+      Promise.resolve(),
+    );
     vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
   });
 

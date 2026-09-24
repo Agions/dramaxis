@@ -6,12 +6,12 @@
 
 ## 1. 核心事件列表
 
-| 事件通道 (Channel) | 载荷类型 (Payload) | 触发时机 | 前端处理建议 |
-| :--- | :--- | :--- | :--- |
-| `updater:event` | `UpdateEvent` 或 `string` | 下载进度更新、状态阶段切换、校验就绪 | 更新 `useUpdateStore`，刷新网速进度条 |
-| `agent:progress` | `AgentEventPayload` | 智能体步骤切换、流式生成 Token | 更新 `AgentStudioRack` 步骤指示器 |
-| `pipeline:step` | `StepDef` | 5 轨合成各阶段（VAD/对齐/避让）完成 | 更新全屏进度浮层 |
-| `pipeline:error` | `{ message: string }` | 依赖缺失或转码异常 | 弹出 Sonner 警告 Toast 并暂停流水线 |
+| 事件通道 (Channel) | 载荷类型 (Payload)        | 触发时机                             | 前端处理建议                          |
+| :----------------- | :------------------------ | :----------------------------------- | :------------------------------------ |
+| `updater:event`    | `UpdateEvent` 或 `string` | 下载进度更新、状态阶段切换、校验就绪 | 更新 `useUpdateStore`，刷新网速进度条 |
+| `agent:progress`   | `AgentEventPayload`       | 智能体步骤切换、流式生成 Token       | 更新 `AgentStudioRack` 步骤指示器     |
+| `pipeline:step`    | `StepDef`                 | 5 轨合成各阶段（VAD/对齐/避让）完成  | 更新全屏进度浮层                      |
+| `pipeline:error`   | `{ message: string }`     | 依赖缺失或转码异常                   | 弹出 Sonner 警告 Toast 并暂停流水线   |
 
 ---
 

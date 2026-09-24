@@ -25,7 +25,10 @@ export interface ThumbnailImageProps {
   /** 直接传入的缩略图文件路径或 URL (可选) */
   thumbnailUrl?: string | null;
   /** 异步缩略图生成/提取委托函数 (可选) */
-  fetchThumbnail?: (source: string, width: number) => Promise<{ thumbnailPath: string }>;
+  fetchThumbnail?: (
+    source: string,
+    width: number,
+  ) => Promise<{ thumbnailPath: string }>;
 }
 
 const KIND_ICON: Record<string, string> = {
@@ -53,9 +56,11 @@ export function ThumbnailImage({
   thumbnailUrl,
   fetchThumbnail,
 }: ThumbnailImageProps) {
-  const [thumbPath, setThumbPath] = useState<string | null>(thumbnailUrl ?? null);
+  const [thumbPath, setThumbPath] = useState<string | null>(
+    thumbnailUrl ?? null,
+  );
   const [state, setState] = useState<"loading" | "ready" | "error">(
-    thumbnailUrl ? "ready" : fetchThumbnail ? "loading" : "ready"
+    thumbnailUrl ? "ready" : fetchThumbnail ? "loading" : "ready",
   );
 
   useEffect(() => {

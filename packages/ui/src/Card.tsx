@@ -16,7 +16,9 @@ export function Card({
   return (
     <div
       className={`rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-all duration-200 ${
-        glow ? "shadow-[0_0_24px_var(--color-gold-glow)] border-[var(--color-gold)]/40" : "shadow-sm"
+        glow
+          ? "shadow-[0_0_24px_var(--color-gold-glow)] border-[var(--color-gold)]/40"
+          : "shadow-sm"
       } ${
         interactive
           ? "cursor-pointer hover:border-[var(--color-gold)]/50 hover:bg-[var(--color-surface-elevated)] hover:translate-y-[-1px] active:translate-y-[0px]"

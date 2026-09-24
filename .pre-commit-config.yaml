@@ -9,9 +9,9 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.1
     hooks:
-      - id: ruff          # lint,自动 fix
+      - id: ruff # lint,自动 fix
         args: [--fix]
-      - id: ruff-format   # 替代 isort + black
+      - id: ruff-format # 替代 isort + black
 
   # ── Rust 主线 ──────────────────────────────────────────
   # 13 领域 crate + Tauri entry,workspace 统一格式化

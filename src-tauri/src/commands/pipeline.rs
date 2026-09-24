@@ -164,7 +164,10 @@ fn build_deps(
                 .or_else(|| config.llm_base_url.clone())
                 .unwrap_or_else(|| "https://api.minimax.chat/v1".into()),
             model: "speech-02-hd".into(),
-            voice: config.tts_voice.clone().unwrap_or_else(|| "male-qn-qingse".into()),
+            voice: config
+                .tts_voice
+                .clone()
+                .unwrap_or_else(|| "male-qn-qingse".into()),
         }))),
         Some(TtsProviderKind::GptSovits) => {
             Some(engine(TtsEngineConfig::GptSovits(GptSovitsOptions {

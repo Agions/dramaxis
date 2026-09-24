@@ -89,10 +89,7 @@ pub async fn project_save(path: String, project: Project) -> Result<(), SplicrEr
 
 /// 删除指定路径的 Project 文件，并同步从最近工程列表中注销
 #[tauri::command]
-pub async fn project_delete(
-    state: State<'_, AppContext>,
-    path: String,
-) -> Result<(), SplicrError> {
+pub async fn project_delete(state: State<'_, AppContext>, path: String) -> Result<(), SplicrError> {
     let p = PathBuf::from(&path);
     if p.exists() {
         let _ = tokio::fs::remove_file(&p).await;
