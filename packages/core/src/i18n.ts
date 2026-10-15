@@ -16,7 +16,7 @@ export const TRANSLATIONS: Record<Locale, Record<string, string>> = {
     // 顶栏
     "topbar.help": "帮助与支持",
     "topbar.docs": "官方文档",
-    "topbar.about": "关于 splicr",
+    "topbar.about": "关于 Dramaxis",
     "topbar.search_placeholder": "搜索全域命令与解说工程...",
     "topbar.search_title": "打开命令面板 ⌘K",
     "topbar.connected": "已连接",
@@ -33,7 +33,7 @@ export const TRANSLATIONS: Record<Locale, Record<string, string>> = {
     "action.enter": "进入制作工作台 →",
 
     // 首页 Dashboard
-    "home.welcome_title": "splicr 叙影 AI 视频叙事工作室",
+    "home.welcome_title": "Dramaxis 剧枢 · 电影级 AI 视频叙事与解说工作室",
     "home.welcome_subtitle":
       "打造下一部爆款电影级短剧与影视解说作品 · Rust Native 多智能体协作引擎",
     "home.recent_title": "最近视频解说工程",
@@ -154,7 +154,7 @@ export const TRANSLATIONS: Record<Locale, Record<string, string>> = {
     // TopBar
     "topbar.help": "Help & Support",
     "topbar.docs": "Documentation",
-    "topbar.about": "About splicr",
+    "topbar.about": "About Dramaxis",
     "topbar.search_placeholder": "Search commands & projects...",
     "topbar.search_title": "Open Command Palette ⌘K",
     "topbar.connected": "Connected",
@@ -171,7 +171,7 @@ export const TRANSLATIONS: Record<Locale, Record<string, string>> = {
     "action.enter": "Enter Workbench →",
 
     // Home Dashboard
-    "home.welcome_title": "splicr AI Narrative Video Studio",
+    "home.welcome_title": "Dramaxis AI Narrative Video Studio",
     "home.welcome_subtitle":
       "Create cinematic short drama monologues & video commentary with automated 7-step pipeline",
     "home.recent_title": "Recent Video Projects",

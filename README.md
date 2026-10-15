@@ -2,20 +2,41 @@
 
 <div align="center">
 
-<img src="public/branding/logo-horizontal.png" width="640" alt="splicr 叙影 AI 视频解说创作工具" style="border-radius: 16px; box-shadow: 0 0 32px rgba(245,200,66,0.2);" />
+<img src="public/branding/logo-horizontal.png" width="640" alt="Dramaxis 剧枢 AI 视频叙事与影视解说创作平台" style="border-radius: 16px; box-shadow: 0 0 32px rgba(245,200,66,0.2);" />
 
-[![Version](https://img.shields.io/badge/Version-v1.0.1-F5C842?style=flat-square&logo=git&logoColor=1A1A20)](https://github.com/Agions/splicr/releases) [![Tauri](https://img.shields.io/badge/Tauri-v2.0-7C3AED?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app) [![Rust](https://img.shields.io/badge/Rust-1.85%2B-F97316?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org) [![React](https://img.shields.io/badge/React-19.0-06B6D4?style=flat-square&logo=react&logoColor=white)](https://react.dev) [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org) [![License](https://img.shields.io/badge/License-MIT-10B981?style=flat-square&logo=open-source-initiative&logoColor=white)](LICENSE)  
-[![Multi-Agent](https://img.shields.io/badge/Multi--Agent-6%20Specialists-D97706?style=flat-square&logo=openai)](https://github.com/Agions/splicr) [![LLM](https://img.shields.io/badge/LLM-11%20Providers-F5C842?style=flat-square&logo=openai&logoColor=1A1A20)](https://github.com/Agions/splicr) [![TTS](https://img.shields.io/badge/TTS-Zero--shot%20Clone-22C55E?style=flat-square&logo=microphone)](https://github.com/Agions/splicr) [![Export](https://img.shields.io/badge/Export-CapCut%20Draft-EC4899?style=flat-square&logo=video)](https://github.com/Agions/splicr)
+# 🎬 Dramaxis (剧枢)
+
+> **电影级多智能体影视叙事与智能解说创作平台 · 本地优先 · 6 大智能体编导群 · 4 步工坊向导 · 5 轨毫秒级剪辑 · 剪映/CapCut 草稿深度互通 · 8 大平台消重发布矩阵**
+
+[![Version](https://img.shields.io/badge/Version-v1.1.0-F5C842?style=flat-square&logo=git&logoColor=1A1A20)](https://github.com/Agions/splicr/releases)
+[![Merged](https://img.shields.io/badge/Merger-Fablr%20%2B%20splicr-10B981?style=flat-square&logo=git)](https://github.com/Agions/splicr)
+[![Tauri](https://img.shields.io/badge/Tauri-v2.0-7C3AED?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app)
+[![Rust](https://img.shields.io/badge/Rust-1.85%2B-F97316?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org)
+[![React](https://img.shields.io/badge/React-19.0-06B6D4?style=flat-square&logo=react&logoColor=white)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![License](https://img.shields.io/badge/License-MIT-10B981?style=flat-square&logo=open-source-initiative&logoColor=white)](LICENSE)  
+[![Multi-Agent](https://img.shields.io/badge/Multi--Agent-6%20Specialists-D97706?style=flat-square&logo=openai)](https://github.com/Agions/splicr)
+[![LLM](https://img.shields.io/badge/LLM-11%20Providers-F5C842?style=flat-square&logo=openai&logoColor=1A1A20)](https://github.com/Agions/splicr)
+[![TTS](https://img.shields.io/badge/TTS-Zero--shot%20Clone-22C55E?style=flat-square&logo=microphone)](https://github.com/Agions/splicr)
+[![Export](https://img.shields.io/badge/Export-CapCut%20Draft-EC4899?style=flat-square&logo=video)](https://github.com/Agions/splicr)
 
 </div>
 
 ---
 
+> 🚀 **重大双核升级公告 (PROJECT MERGER & REBRANDING)**  
+> **Dramaxis（剧枢）** 是由原 **Fablr（剧工）** 与 **splicr（叙影）** 全面融合、重组升级的全新一代开源旗舰项目！  
+> - **原 Fablr 核心资产注入**：4 步工坊向导工作流（素材拆条、剧本研磨、剪辑合成、消重矩阵）、本地 Whisper 字幕提取、SSML 情感音色精标与 8 大主流平台消重矩阵。  
+> - **原 splicr 核心底座赋能**：Rust Native 6 大智能体编导群（导演、编剧、调音、混音、质检）、5 轨毫秒级磁性对齐、React 19 + Tauri 2 电影调光室工作台与剪映原生工程交付。  
+> 原 Fablr 仓库已正式废弃并全量迁移至本仓库统一迭代维护。
+
+---
+
 ## 🎬 核心定位与设计理念
 
-**splicr（叙影）** 是一款基于 **Rust Native 多智能体架构 + Tauri 2 + React 19** 深度研发的电影级桌面端 AI 视频叙事与解说生成引擎。
+**Dramaxis（剧枢）** 是一款基于 **Rust Native 多智能体架构 + Tauri 2 + React 19** 深度研发的电影级桌面端 AI 视频叙事与智能解说创作平台。
 
-专为短剧拆条、影视解说、自媒体故事化创作者打造。通过 **三栏一体化专业集成工作台 (Integrated Cinema Studio)** 与 **6 大多智能体团队协作体系 (Multi-Agent Team)**，一键完成素材多模态抽帧、第一人称高潮独白撰写、人声克隆合成、5 轨毫秒级对齐与剪映工程草稿（`.draft`）原生交付。
+专为微短剧二次创作、影视解说、高光混剪及自媒体故事化创作者打造。通过 **三栏一体化专业集成工作台 (Integrated Cinema Studio)**、**4 大沉浸式创作工坊** 与 **6 大多智能体团队协作体系 (Multi-Agent Team)**，一键完成素材多模态抽帧、黄金 3 秒 Hook、第一人称高潮独白撰写、人声克隆合成、5 轨毫秒级对齐与剪映工程草稿（`.draft`）原生交付。
 
 ---
 
@@ -66,6 +87,35 @@ graph TD
 | **🎙️ 声乐调音师 (VoiceArtistAgent)**     | 角色音色匹配、Edge-TTS / GPT-SoVITS 深度克隆与 48kHz 音频生成                       |
 | **🎛️ 混音剪辑师 (SoundEngineerAgent)**   | 5 轨磁性时间轴毫秒级对齐（偏差 <18ms）与 BGM 智能闪避混流 (-18%)                    |
 | **🔍 质量验收员 (QualityReviewerAgent)** | 审查多轨时间轴结构、违禁词扫描、草稿完整性与最终交付核验 (Score: 98/100)            |
+
+---
+
+## 🏭 四大核心创作工坊工作流 (Stage-Gate Workshops)
+
+融合 Fablr 核心交互哲学，Dramaxis 提供从长视频素材拆解到全网矩阵合规分发的清晰闭环：
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      Dramaxis (剧枢) 全链路创作工坊                           │
+├───────────────────┬───────────────────┬───────────────────┬─────────────────┤
+│ 1. 素材拆条工坊    │ 2. 剧本研磨工坊    │ 3. 剪辑合成工作台  │ 4. 消重发布中心 │
+│   (Asset Hub)     │  (Script Studio)  │    (Workspace)    │  (Export Hub)   │
+│ · 场景/镜头拆解   │ · 🪝 黄金3秒 Hook  │ · 📝 剧本/以文剪片│ · 5级指纹消重   │
+│ · 台词/情感检索   │ · 📖 主线/反转卡片│ · 🎬 5轨多轨时间轴│ · 发布合规体检  │
+│ · AI高光热力图    │ · ⏱️ TTS时长估算   │ · 导出剪映标准草稿│ · 8大平台矩阵分发│
+└───────────────────┴───────────────────┴───────────────────┴─────────────────┘
+```
+
+### 🌐 8 大短视频/影视平台矩阵预设与消重合规
+
+内置专为国内自媒体与出海短剧优化的平台预设：
+- 🇨🇳 **抖音 (Douyin)**：`1080x1920` (9:16) / 8000k 码率 / 智能闪避音画
+- 🇨🇳 **快手 (Kuaishou)**：`1080x1920` (9:16) / 6000k 码率
+- 🇨🇳 **小红书 (RED)**：`1080x1440` (3:4) 黄金比例封面与微调色温
+- 🇨🇳 **微信视频号 (Channels)**：`1080x1920` (9:16) 长视频自适应
+- 🇨🇳 **哔哩哔哩 (Bilibili)**：`1920x1080` (16:9) 高码率横屏解说
+- 🌏 **TikTok**：`1080x1920` (9:16) / 60fps 高清出海规格
+- 🌏 **YouTube & YouTube Shorts**：支持单集 60s 竖屏或完整中长剧集横屏发布
 
 ---
 

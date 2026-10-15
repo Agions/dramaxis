@@ -58,6 +58,8 @@ pub struct ProjectSettings {
     pub container: String,  // "mp4"
     pub codec: String,      // "h264"
     pub four_strategy: ExportStrategy,
+    #[serde(default)]
+    pub target_platform: Option<PlatformId>,
 }
 
 impl Default for ProjectSettings {
@@ -69,6 +71,53 @@ impl Default for ProjectSettings {
             container: "mp4".into(),
             codec: "h264".into(),
             four_strategy: ExportStrategy::Single,
+            target_platform: None,
+        }
+    }
+}
+
+/// 目标发布平台预设 (融合自 Fablr 8 大主流平台消重矩阵)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum PlatformId {
+    Douyin,
+    Kuaishou,
+    Xiaohongshu,
+    Wechat,
+    Tiktok,
+    Bilibili,
+    Youtube,
+    #[serde(rename = "youtube-shorts")]
+    YoutubeShorts,
+}
+
+impl PlatformId {
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Douyin => "抖音 (Douyin)",
+            Self::Kuaishou => "快手 (Kuaishou)",
+            Self::Xiaohongshu => "小红书 (RED)",
+            Self::Wechat => "微信视频号 (Channels)",
+            Self::Tiktok => "TikTok",
+            Self::Bilibili => "哔哩哔哩 (Bilibili)",
+            Self::Youtube => "YouTube",
+            Self::YoutubeShorts => "YouTube Shorts",
+        }
+    }
+
+    pub fn default_resolution(&self) -> &'static str {
+        match self {
+            Self::Bilibili | Self::Youtube => "1920x1080",
+            Self::Xiaohongshu => "1080x1440",
+            _ => "1080x1920",
+        }
+    }
+
+    pub fn max_duration_secs(&self) -> Option<u32> {
+        match self {
+            Self::YoutubeShorts => Some(60),
+            Self::Tiktok | Self::Douyin | Self::Kuaishou => Some(600),
+            _ => None,
         }
     }
 }
@@ -213,6 +262,26 @@ mod tests {
             ExportStrategy::Series,
         ] {
             let _ = strategy_label(s);
+        }
+    }
+
+    #[test]
+    fn platform_id_serde_and_props() {
+        for p in [
+            PlatformId::Douyin,
+            PlatformId::Kuaishou,
+            PlatformId::Xiaohongshu,
+            PlatformId::Wechat,
+            PlatformId::Tiktok,
+            PlatformId::Bilibili,
+            PlatformId::Youtube,
+            PlatformId::YoutubeShorts,
+        ] {
+            let json = serde_json::to_string(&p).unwrap();
+            let back: PlatformId = serde_json::from_str(&json).unwrap();
+            assert_eq!(p, back);
+            assert!(!p.label().is_empty());
+            assert!(!p.default_resolution().is_empty());
         }
     }
 }

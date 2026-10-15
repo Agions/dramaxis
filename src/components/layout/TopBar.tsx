@@ -73,10 +73,10 @@ export function TopBar() {
         </div>
         <div className="leading-tight">
           <div className="text-base font-bold tracking-wide text-gold">
-            splicr
+            Dramaxis
           </div>
           <div className="text-[10px] tracking-widest uppercase text-text-muted">
-            叙影 · v{version ?? "1.0.1"}
+            剧枢 · v{version ?? "1.1.0"}
           </div>
         </div>
       </div>

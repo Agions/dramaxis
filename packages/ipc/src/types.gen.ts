@@ -334,25 +334,25 @@ export interface IpcContracts {
 // Rust 端 SystemInfo (pub struct, rename_all = "camelCase")
 export interface AppSystemInfo {
   ffmpegAvailable: boolean;
-  ffmpegVersion: string | null;
+  ffmpegVersion?: string | null;
 }
 
 // Rust 端 DetectScenesResult (pub struct, rename_all = "camelCase")
 export interface DetectScenesResult {
   cuts: number[];
   totalCuts: number;
-  probe: FfmpegProbe | null;
+  probe?: FfmpegProbe | null;
 }
 
 // Rust 端 RenderVideoParams (pub struct, rename_all = "camelCase")
 export interface RenderVideoParams {
   videoPath: string;
-  voicePath: string | null;
+  voicePath?: string | null;
   subtitles: CapcutSubtitleItem[];
-  platformPreset: string | null;
-  antiDupZoom: number | null;
-  enableAmbientBlur: boolean | null;
-  outputPath: string | null;
+  platformPreset?: string | null;
+  antiDupZoom?: number | null;
+  enableAmbientBlur?: boolean | null;
+  outputPath?: string | null;
 }
 
 // Rust 端 RenderVideoResult (pub struct, rename_all = "camelCase")
@@ -378,22 +378,22 @@ export interface ProjectRecord {
 // Rust 端 ScriptGenerateParams (pub struct, rename_all = "camelCase")
 export interface ScriptGenerateParams {
   provider: string;
-  apiKey: string | null;
-  baseUrl: string | null;
-  model: string | null;
+  apiKey?: string | null;
+  baseUrl?: string | null;
+  model?: string | null;
   prompt: string;
-  style: string | null;
-  emotionDensity: number | null;
-  wordCountTarget: number | null;
-  hookStyle: string | null;
-  includeHook: boolean | null;
-  imagesBase64: string[] | null;
+  style?: string | null;
+  emotionDensity?: number | null;
+  wordCountTarget?: number | null;
+  hookStyle?: string | null;
+  includeHook?: boolean | null;
+  imagesBase64?: string[] | null;
 }
 
 // Rust 端 ScriptGenerateResult (pub struct, rename_all = "camelCase")
 export interface ScriptGenerateResult {
   text: string;
-  hookText: string | null;
+  hookText?: string | null;
   wordCount: number;
   estimatedDurationSec: number;
 }
@@ -422,13 +422,13 @@ export interface UpdateInstallResult {
 export interface VoicePreviewParams {
   text: string;
   provider: string;
-  voice: string | null;
+  voice?: string | null;
   ratePercent: number;
-  apiKey: string | null;
-  baseUrl: string | null;
-  model: string | null;
-  refAudioPath: string | null;
-  promptText: string | null;
+  apiKey?: string | null;
+  baseUrl?: string | null;
+  model?: string | null;
+  refAudioPath?: string | null;
+  promptText?: string | null;
 }
 
 // Rust 端 VoicePreviewResult (pub struct, rename_all = "camelCase")
@@ -453,10 +453,10 @@ export interface AgentContext {
 export interface AgentMessage {
   id: string;
   sender: AgentRole;
-  receiver: AgentRole | null;
-  thought: string | null;
-  action: string | null;
-  observation: string | null;
+  receiver?: AgentRole | null;
+  thought?: string | null;
+  action?: string | null;
+  observation?: string | null;
   timestamp: number;
 }
 
@@ -522,7 +522,7 @@ export interface PipelineStatus {
   state: PipelineState;
   stepStatuses: StepStatus[];
   currentStep: number;
-  projectName: string | null;
+  projectName?: string | null;
 }
 
 // Rust 端 Project (pub struct)
@@ -547,14 +547,15 @@ export interface ProjectSettings {
   container: string;
   codec: string;
   four_strategy: ExportStrategy;
+  target_platform?: PlatformId | null;
 }
 
 // Rust 端 MediaFile (pub struct)
 export interface MediaFile {
   path: string;
   duration_seconds: number;
-  resolution: string | null;
-  codec: string | null;
+  resolution?: string | null;
+  codec?: string | null;
   file_size_bytes: number;
   import_time: string;
 }
@@ -578,7 +579,7 @@ export interface Clip {
   start_seconds: number;
   in_seconds: number;
   out_seconds: number;
-  volume: number | null;
+  volume?: number | null;
 }
 
 // Rust 端 ScriptSegment (pub struct)
@@ -586,11 +587,11 @@ export interface ScriptSegment {
   id: string;
   step_index: number;
   text: string;
-  emotion: string | null;
-  start_seconds: number | null;
-  end_seconds: number | null;
-  is_hook: boolean | null;
-  hook_style: string | null;
+  emotion?: string | null;
+  start_seconds?: number | null;
+  end_seconds?: number | null;
+  is_hook?: boolean | null;
+  hook_style?: string | null;
 }
 
 // Rust 端 ExportRecord (pub struct)
@@ -599,9 +600,19 @@ export interface ExportRecord {
   strategy: ExportStrategy;
   output_path: string;
   started_at: string;
-  finished_at: string | null;
+  finished_at?: string | null;
   success: boolean;
 }
+
+// Rust 端 PlatformId (pub enum, rename_all = "kebab-case")
+export type PlatformId =
+  | "douyin"
+  | "kuaishou"
+  | "xiaohongshu"
+  | "wechat"
+  | "tiktok"
+  | "bilibili"
+  | "youtube";
 
 // Rust 端 TrackKind (pub enum, rename_all = "kebab-case")
 export type TrackKind =
@@ -627,7 +638,7 @@ export type TtsProviderKind =
 export interface HelpTopic {
   id: string;
   title: string;
-  summary: string | null;
+  summary?: string | null;
   category: HelpCategory;
   keywords: string[];
   content: string;
@@ -663,15 +674,15 @@ export interface ConfigSnapshot {
   llm_provider: string;
   auto_update: boolean;
   first_run: boolean;
-  llm_api_key: string | null;
-  llm_base_url: string | null;
-  llm_model: string | null;
-  tts_provider: string | null;
-  tts_api_key: string | null;
-  tts_base_url: string | null;
-  tts_voice: string | null;
-  tts_ref_audio_path: string | null;
-  tts_prompt_text: string | null;
+  llm_api_key?: string | null;
+  llm_base_url?: string | null;
+  llm_model?: string | null;
+  tts_provider?: string | null;
+  tts_api_key?: string | null;
+  tts_base_url?: string | null;
+  tts_voice?: string | null;
+  tts_ref_audio_path?: string | null;
+  tts_prompt_text?: string | null;
 }
 
 // Rust 端 FfmpegProbe (pub struct, rename_all = "camelCase")
@@ -679,8 +690,8 @@ export interface FfmpegProbe {
   durationSeconds: number;
   width: number;
   height: number;
-  videoCodec: string | null;
-  audioCodec: string | null;
+  videoCodec?: string | null;
+  audioCodec?: string | null;
   sizeBytes: number;
 }
 
@@ -703,15 +714,15 @@ export interface CapcutSubtitleItem {
 // Rust 端 CapcutDraftOptions (pub struct, rename_all = "camelCase")
 export interface CapcutDraftOptions {
   projectName: string;
-  videoPath: string | null;
-  videoDurationSeconds: number | null;
+  videoPath?: string | null;
+  videoDurationSeconds?: number | null;
   sceneCuts: number[];
-  voicePath: string | null;
-  voiceDurationSeconds: number | null;
+  voicePath?: string | null;
+  voiceDurationSeconds?: number | null;
   subtitles: CapcutSubtitleItem[];
-  antiDupZoom: number | null;
-  enableAmbientBlur: boolean | null;
-  targetDir: string | null;
+  antiDupZoom?: number | null;
+  enableAmbientBlur?: boolean | null;
+  targetDir?: string | null;
 }
 
 // Rust 端 CapcutDraftResult (pub struct, rename_all = "camelCase")
@@ -762,7 +773,7 @@ export type SubtitleFormat =
 // Rust 端 PlanOptions (pub struct)
 export interface PlanOptions {
   base_name: string;
-  series_context: string | null;
+  series_context?: string | null;
   episode_template: string;
 }
 
@@ -770,9 +781,9 @@ export interface PlanOptions {
 export interface OutputPlan {
   name: string;
   ordered_sources: string[];
-  episode_number: number | null;
-  episode_label: string | null;
-  series_context: string | null;
+  episode_number?: number | null;
+  episode_label?: string | null;
+  series_context?: string | null;
 }
 
 // Rust 端 AssetEntry (pub struct, rename_all = "camelCase")
@@ -813,7 +824,7 @@ export interface SubtitleEntry {
   start_ms: number;
   end_ms: number;
   text: string;
-  emotion_tag: string | null;
+  emotion_tag?: string | null;
 }
 
 // Rust 端 SubtitleTrack (pub struct)
@@ -839,11 +850,11 @@ export interface SpeechSegment {
 // Rust 端 UpdateInfo (pub struct, rename_all = "camelCase")
 export interface UpdateInfo {
   version: string;
-  releaseDate: string | null;
-  notes: string | null;
-  downloadUrl: string | null;
-  sha256: string | null;
-  fileSizeBytes: number | null;
+  releaseDate?: string | null;
+  notes?: string | null;
+  downloadUrl?: string | null;
+  sha256?: string | null;
+  fileSizeBytes?: number | null;
   isForce: boolean;
   highlights: string[];
 }
@@ -854,17 +865,17 @@ export interface UpdateProgress {
   totalBytes: number;
   percent: number;
   speedBps: number;
-  remainingSeconds: number | null;
+  remainingSeconds?: number | null;
 }
 
 // Rust 端 UpdateState (pub struct, rename_all = "camelCase")
 export interface UpdateState {
   phase: UpdatePhase;
   currentVersion: string;
-  available: UpdateInfo | null;
-  progress: UpdateProgress | null;
-  error: string | null;
-  downloadedPath: string | null;
+  available?: UpdateInfo | null;
+  progress?: UpdateProgress | null;
+  error?: string | null;
+  downloadedPath?: string | null;
 }
 
 // Rust 端 UpdatePhase (pub enum, rename_all = "snake_case")

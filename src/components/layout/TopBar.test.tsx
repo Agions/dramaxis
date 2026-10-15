@@ -28,7 +28,7 @@ describe("TopBar", () => {
   it("正确渲染应用 Logo、版本号与后端连接指示器", () => {
     render(<TopBar />);
 
-    expect(screen.getByText("splicr")).toBeInTheDocument();
+    expect(screen.getByText("Dramaxis")).toBeInTheDocument();
     expect(screen.getByText(/v1\.2\.0/)).toBeInTheDocument();
     expect(screen.getByText("已连接")).toBeInTheDocument();
   });

@@ -556,7 +556,13 @@ function renderTypes(items) {
   const lines = [];
   for (const it of items) {
     if (it.kind === "struct") {
-      const fields = it.fields.map((f) => `  ${f.name}: ${f.type};`).join("\n");
+      const fields = it.fields
+        .map((f) => {
+          const isOpt = f.type.endsWith(" | null");
+          const prop = isOpt ? `${f.name}?` : f.name;
+          return `  ${prop}: ${f.type};`;
+        })
+        .join("\n");
       lines.push(
         `// Rust 端 ${it.rustName} (pub struct${it.renameAll ? `, rename_all = "${it.renameAll}"` : ""})`,
         `export interface ${it.tsName} {`,

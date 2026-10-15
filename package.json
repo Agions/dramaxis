@@ -1,9 +1,9 @@
 {
-  "name": "splicr",
+  "name": "dramaxis",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.1.0",
   "type": "module",
-  "description": "splicr v1.0.1 · Rust Native 多智能体影视解说创作桌面引擎 (Tauri 2 + Rust + React 19)",
+  "description": "Dramaxis (剧枢) · 电影级多智能体影视叙事与智能解说创作平台 (Tauri 2 + Rust + React 19)",
   "scripts": {
     "gen:ipc": "node scripts/gen-ipc.mjs",
     "gen:ipc:check": "node scripts/gen-ipc.mjs --check",
