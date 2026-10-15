@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  title: 'splicr 官方架构与开发文档',
+  title: 'Dramaxis (剧枢) 官方架构与开发文档',
   description: '工业级 Rust Native + Multi-Agent 短剧 AI 叙事与视频工程自动化生产桌面引擎',
   lang: 'zh-CN',
   base: '/',
@@ -11,12 +11,12 @@ export default defineConfig({
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }],
     ['meta', { name: 'theme-color', content: '#F5C842' }],
-    ['meta', { name: 'keywords', content: 'splicr, AI视频解说, Multi-Agent, Tauri 2, Rust, FFmpeg, 剪映草稿' }]
+    ['meta', { name: 'keywords', content: 'Dramaxis, 剧枢, AI视频解说, Multi-Agent, Tauri 2, Rust, FFmpeg, 剪映草稿, 消重矩阵' }]
   ],
 
   themeConfig: {
     logo: '/logo.svg',
-    siteTitle: 'splicr Docs',
+    siteTitle: 'Dramaxis Docs',
 
     nav: [
       { text: '📖 指南与实战', link: '/guide/getting-started', activeMatch: '/guide/' },
@@ -26,11 +26,11 @@ export default defineConfig({
       { text: '🔌 IPC 契约字典', link: '/api/commands-dictionary', activeMatch: '/api/' },
       { text: '🛠️ DevOps 与交付', link: '/devops/local-development', activeMatch: '/devops/' },
       {
-        text: 'v1.0.1',
+        text: 'v1.1.0',
         items: [
-          { text: 'Changelog 更新日志', link: 'https://github.com/qingshanyanyu/splicr/releases' },
-          { text: 'GitHub 源码仓库', link: 'https://github.com/qingshanyanyu/splicr' },
-          { text: '问题反馈 (Issues)', link: 'https://github.com/qingshanyanyu/splicr/issues' }
+          { text: 'Changelog 更新日志', link: 'https://github.com/Agions/dramaxis/releases' },
+          { text: 'GitHub 源码仓库', link: 'https://github.com/Agions/dramaxis' },
+          { text: '问题反馈 (Issues)', link: 'https://github.com/Agions/dramaxis/issues' }
         ]
       }
     ],
@@ -134,12 +134,12 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/qingshanyanyu/splicr' }
+      { icon: 'github', link: 'https://github.com/Agions/dramaxis' }
     ],
 
     footer: {
       message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2026 splicr Studio. Built with Rust & Tauri 2.0.'
+      copyright: 'Copyright © 2026 Dramaxis Studio. Built with Rust & Tauri 2.0.'
     },
 
     outline: {

@@ -1,6 +1,6 @@
 # 本地开发与环境准备 (Local Development)
 
-本文档介绍如何在本地机器上快速搭建 splicr 全栈开发环境。
+本文档介绍如何在本地机器上快速搭建 Dramaxis 全栈开发环境。
 
 ---
 
@@ -20,8 +20,8 @@
 
 ```bash
 # 1. 克隆代码仓库
-git clone https://github.com/qingshanyanyu/splicr.git
-cd splicr
+git clone https://github.com/Agions/dramaxis.git
+cd dramaxis
 
 # 2. 安装前端与 packages 依赖
 pnpm install

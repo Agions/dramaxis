@@ -2,12 +2,12 @@
 layout: home
 
 hero:
-  name: "splicr 文档中心"
-  text: "工业级 Multi-Agent AI 视频解说与工程化引擎"
+  name: "Dramaxis 文档中心"
+  text: "电影级 Multi-Agent 短剧 AI 叙事与智能解说平台"
   tagline: 基于 Tauri 2.0 + Rust 原生微模块 (12 Crates) + React 19 / TypeScript 的自动化短剧与解说生产桌面工厂
   image:
     src: /logo.svg
-    alt: splicr Logo
+    alt: Dramaxis Logo
   actions:
     - theme: brand
       text: 🚀 快速上手
@@ -29,15 +29,15 @@ features:
   - icon: ✂️
     title: 剪映 PC 端原生草稿直出
     details: 告别漫长视频重编码，直接生成剪映标准工程草稿 (.draft)，在剪映中打开即可实现 100% 无损二次精修。
+  - icon: 🛡️
+    title: 8 大主流平台消重矩阵
+    details: 融合 Fablr 核心技术，内置抖音、快手、小红书、TikTok、YouTube 等消重预设与随机化滤镜算法。
   - icon: 🤖
     title: 11 大最新大模型矩阵适配
     details: 原生集成 Claude 3.7、GPT-4o、DeepSeek V3/R1、Qwen 2.5、Gemini 2.0 等最新行业顶级模型。
   - icon: 🎙️
     title: 48kHz 影视级配音与音色克隆
     details: 整合 GPT-SoVITS 零样本音色克隆与 Edge/OpenAI TTS，支持角色情绪自动染色与音高语速微调。
-  - icon: 🛡️
-    title: 工业级安全与自更新
-    details: 系统 Keychain 敏感 Key 物理隔离，内置断点续传、滑动窗口测速与 SHA-256 校验原生自更新机制。
 ---
 
 ## 快速导航 (Quick Navigation)
