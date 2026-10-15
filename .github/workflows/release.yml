@@ -42,12 +42,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            .
             src-tauri -> target
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - uses: actions/setup-node@v4
         with:
@@ -70,8 +69,8 @@ jobs:
         with:
           projectPath: .
           tagName: ${{ github.ref_name }}
-          releaseName: "splicr ${{ github.ref_name }}"
-          releaseBody: "splicr v1.0.0 Official Release. See CHANGELOG.md for release notes."
+          releaseName: "Dramaxis ${{ github.ref_name }}"
+          releaseBody: "Dramaxis ${{ github.ref_name }} Official Release. See CHANGELOG.md for release notes."
           releaseDraft: false
           prerelease: false
           args: --target ${{ matrix.target }}

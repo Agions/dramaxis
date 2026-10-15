@@ -23,14 +23,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install Docs Dependencies & Build
-        run: |
-          cd docs
-          npm install
-          npm run docs:build
+          cache: pnpm
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build VitePress Docs
+        run: pnpm docs:build
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/.vitepress/dist
