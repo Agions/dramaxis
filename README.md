@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="public/branding/logo-horizontal.png" width="640" alt="Dramaxis 剧枢 AI 视频叙事与影视解说创作平台" style="border-radius: 16px; box-shadow: 0 0 32px rgba(245,200,66,0.2);" />
+<img src="public/branding/logo-horizontal.svg" width="680" alt="Dramaxis 剧枢 电影级多智能体影视叙事与智能解说平台" style="border-radius: 16px; box-shadow: 0 0 32px rgba(245,200,66,0.2);" />
 
 # 🎬 Dramaxis (剧枢)
 
@@ -44,13 +44,13 @@
 
 <div align="center">
 
-|                                                                     首页 Dashboard 工程概览                                                                      |                                                                三栏一体化 Multi-Agent 解说工作台                                                                 |
+|                                                                     工坊 1: 控制台仪表盘 (Home Dashboard)                                                                      |                                                                工坊 2: 素材拆条工坊 (Asset Hub)                                                                 |
 | :--------------------------------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="public/branding/splicr_dashboard_cover.png" width="460" alt="splicr 首页 Dashboard 界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/splicr_production_cover.png" width="460" alt="splicr 三栏多智能体工作台截图" style="border-radius: 8px; border: 1px solid #27272A;" /> |
+| <img src="public/branding/dramaxis_home_dashboard.jpg" width="460" alt="Dramaxis 首页仪表盘界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/dramaxis_asset_hub.jpg" width="460" alt="Dramaxis 素材拆条工坊界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> |
 
-|                                                                      素材资产管理中心                                                                      |                                                                   11 大模型与 TTS 探针设置                                                                   |
+|                                                                      工坊 3: 剧本研磨工坊 (Script Studio)                                                                      |                                                                   工坊 4: 音画剪辑工作台 (Workspace)                                                                   |
 | :--------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="public/branding/splicr_assets_cover.png" width="460" alt="splicr 素材资产管理界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/splicr_settings_cover.png" width="460" alt="splicr 模型设置表单界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> |
+| <img src="public/branding/dramaxis_script_studio.jpg" width="460" alt="Dramaxis 剧本研磨工坊界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/dramaxis_workspace.jpg" width="460" alt="Dramaxis 剪辑工作台界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> |
 
 </div>
 
