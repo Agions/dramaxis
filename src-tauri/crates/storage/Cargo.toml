@@ -1,5 +1,5 @@
 [package]
-name = "splicr-storage"
+name = "dramaxis-storage"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,8 +13,8 @@ description = "素材资产管理: 扫描/元数据抽取/缩略图生成/搜索
 workspace = true
 
 [dependencies]
-splicr-core = { path = "../core" }
-splicr-detect = { path = "../detect" }
+dramaxis-core = { path = "../core" }
+dramaxis-detect = { path = "../detect" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }

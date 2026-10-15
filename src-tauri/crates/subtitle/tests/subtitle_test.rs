@@ -1,6 +1,6 @@
-use splicr_subtitle::dynamic::{process_entries, to_karaoke_ass};
-use splicr_subtitle::formats::{serialize, to_ass, to_srt, to_vtt};
-use splicr_subtitle::{SubtitleEntry, SubtitleFormat, SubtitleTrack};
+use dramaxis_subtitle::dynamic::{process_entries, to_karaoke_ass};
+use dramaxis_subtitle::formats::{serialize, to_ass, to_srt, to_vtt};
+use dramaxis_subtitle::{SubtitleEntry, SubtitleFormat, SubtitleTrack};
 
 fn sample_track(format: SubtitleFormat) -> SubtitleTrack {
     SubtitleTrack {

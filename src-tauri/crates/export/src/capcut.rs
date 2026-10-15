@@ -6,7 +6,7 @@
 //! - 生成 draft_info.json, draft_meta_info.json 与 draft_content.json
 
 use serde::{Deserialize, Serialize};
-use splicr_core::error::{SplicrError, SplicrResult};
+use dramaxis_core::error::{SplicrError, SplicrResult};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -93,7 +93,7 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
         detected_root
     };
 
-    let draft_id = format!("splicr_draft_{}", chrono::Utc::now().timestamp_millis());
+    let draft_id = format!("dramaxis_draft_{}", chrono::Utc::now().timestamp_millis());
     let draft_folder = base_dir.join(&draft_id);
 
     std::fs::create_dir_all(&draft_folder)

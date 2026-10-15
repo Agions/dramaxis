@@ -1,5 +1,5 @@
 [package]
-name = "splicr-detect"
+name = "dramaxis-detect"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,8 +10,8 @@ homepage.workspace = true
 description = "FFmpeg 包装: 命令行调用 + 进度解析 + 探针"
 
 [dependencies]
-splicr-core = { path = "../core" }
-splicr-subtitle = { path = "../subtitle" }
+dramaxis-core = { path = "../core" }
+dramaxis-subtitle = { path = "../subtitle" }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

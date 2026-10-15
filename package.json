@@ -29,10 +29,10 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@splicr/core": "workspace:*",
-    "@splicr/ipc": "workspace:*",
-    "@splicr/ui": "workspace:*",
-    "@splicr/utils": "workspace:*",
+    "@dramaxis/core": "workspace:*",
+    "@dramaxis/ipc": "workspace:*",
+    "@dramaxis/ui": "workspace:*",
+    "@dramaxis/utils": "workspace:*",
     "@tanstack/react-query": "^5.62.0",
     "@tanstack/react-router": "^1.95.0",
     "@tauri-apps/api": "^2",

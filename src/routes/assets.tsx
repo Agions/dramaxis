@@ -11,9 +11,9 @@ import {
   type MediaFile,
   type Project,
   type ProjectRecord,
-} from "@splicr/ipc";
+} from "@dramaxis/ipc";
 import { useAssets } from "@hooks/useAssets";
-import { useProjectStore, useSettingsStore, t } from "@splicr/core";
+import { useProjectStore, useSettingsStore, t } from "@dramaxis/core";
 import { BatchImportDialog } from "@components/dialogs/BatchImportDialog";
 import { AssetExplorerToolbar } from "@components/assets/AssetExplorerToolbar";
 import { AssetMediaGrid } from "@components/assets/AssetMediaGrid";

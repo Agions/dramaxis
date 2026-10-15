@@ -1,5 +1,5 @@
 [package]
-name = "splicr-compose"
+name = "dramaxis-compose"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -19,16 +19,16 @@ parking_lot = "0.12"
 thiserror = { workspace = true }
 tracing = { workspace = true }
 
-[dependencies.splicr-core]
+[dependencies.dramaxis-core]
 path = "../core"
 
-[dependencies.splicr-script]
+[dependencies.dramaxis-script]
 path = "../script"
 
-[dependencies.splicr-voice]
+[dependencies.dramaxis-voice]
 path = "../voice"
 
-[dependencies.splicr-detect]
+[dependencies.dramaxis-detect]
 path = "../detect"
 
 [lints]

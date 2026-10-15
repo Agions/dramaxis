@@ -879,6 +879,209 @@ dependencies = [
 ]
 
 [[package]]
+name = "dramaxis"
+version = "1.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "dramaxis-agent",
+ "dramaxis-compose",
+ "dramaxis-core",
+ "dramaxis-detect",
+ "dramaxis-export",
+ "dramaxis-intake",
+ "dramaxis-script",
+ "dramaxis-storage",
+ "dramaxis-subtitle",
+ "dramaxis-update",
+ "dramaxis-voice",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "dramaxis-agent"
+version = "1.0.1"
+dependencies = [
+ "async-trait",
+ "base64 0.22.1",
+ "chrono",
+ "dramaxis-compose",
+ "dramaxis-core",
+ "dramaxis-detect",
+ "dramaxis-export",
+ "dramaxis-script",
+ "dramaxis-subtitle",
+ "dramaxis-voice",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "dramaxis-compose"
+version = "1.0.1"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "dramaxis-core",
+ "dramaxis-detect",
+ "dramaxis-script",
+ "dramaxis-voice",
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "dramaxis-core"
+version = "1.0.1"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "dirs 5.0.1",
+ "semver",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "dramaxis-detect"
+version = "1.0.1"
+dependencies = [
+ "dramaxis-core",
+ "dramaxis-subtitle",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "dramaxis-export"
+version = "1.0.1"
+dependencies = [
+ "chrono",
+ "dirs 5.0.1",
+ "dramaxis-core",
+ "dramaxis-subtitle",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "dramaxis-intake"
+version = "1.0.1"
+dependencies = [
+ "dramaxis-core",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "dramaxis-script"
+version = "1.0.1"
+dependencies = [
+ "async-trait",
+ "dramaxis-core",
+ "futures",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "dramaxis-storage"
+version = "1.0.1"
+dependencies = [
+ "dirs 5.0.1",
+ "dramaxis-core",
+ "dramaxis-detect",
+ "mime_guess",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+ "walkdir",
+]
+
+[[package]]
+name = "dramaxis-subtitle"
+version = "1.0.1"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "dramaxis-core",
+ "rstest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "tokio",
+ "tokio-test",
+ "tracing",
+]
+
+[[package]]
+name = "dramaxis-update"
+version = "1.0.1"
+dependencies = [
+ "anyhow",
+ "dramaxis-core",
+ "futures",
+ "hex",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tauri",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "dramaxis-voice"
+version = "1.0.1"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "dramaxis-core",
+ "futures",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "tokio",
+ "tokio-tungstenite",
+ "tracing",
+]
+
+[[package]]
 name = "dtoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3668,209 +3871,6 @@ dependencies = [
  "gobject-sys",
  "libc",
  "system-deps",
-]
-
-[[package]]
-name = "splicr"
-version = "1.0.1"
-dependencies = [
- "anyhow",
- "chrono",
- "serde",
- "serde_json",
- "splicr-agent",
- "splicr-compose",
- "splicr-core",
- "splicr-detect",
- "splicr-export",
- "splicr-intake",
- "splicr-script",
- "splicr-storage",
- "splicr-subtitle",
- "splicr-update",
- "splicr-voice",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-opener",
- "thiserror 2.0.20",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "splicr-agent"
-version = "1.0.1"
-dependencies = [
- "async-trait",
- "base64 0.22.1",
- "chrono",
- "serde",
- "serde_json",
- "splicr-compose",
- "splicr-core",
- "splicr-detect",
- "splicr-export",
- "splicr-script",
- "splicr-subtitle",
- "splicr-voice",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "splicr-compose"
-version = "1.0.1"
-dependencies = [
- "async-trait",
- "chrono",
- "parking_lot",
- "serde",
- "serde_json",
- "splicr-core",
- "splicr-detect",
- "splicr-script",
- "splicr-voice",
- "thiserror 2.0.20",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "splicr-core"
-version = "1.0.1"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "dirs 5.0.1",
- "semver",
- "serde",
- "serde_json",
- "thiserror 2.0.20",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "splicr-detect"
-version = "1.0.1"
-dependencies = [
- "serde",
- "serde_json",
- "splicr-core",
- "splicr-subtitle",
- "thiserror 2.0.20",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "splicr-export"
-version = "1.0.1"
-dependencies = [
- "chrono",
- "dirs 5.0.1",
- "serde",
- "serde_json",
- "splicr-core",
- "splicr-subtitle",
- "thiserror 2.0.20",
-]
-
-[[package]]
-name = "splicr-intake"
-version = "1.0.1"
-dependencies = [
- "serde",
- "serde_json",
- "splicr-core",
- "thiserror 2.0.20",
-]
-
-[[package]]
-name = "splicr-script"
-version = "1.0.1"
-dependencies = [
- "async-trait",
- "futures",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "splicr-core",
- "thiserror 2.0.20",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "splicr-storage"
-version = "1.0.1"
-dependencies = [
- "dirs 5.0.1",
- "mime_guess",
- "serde",
- "serde_json",
- "sha2",
- "splicr-core",
- "splicr-detect",
- "thiserror 2.0.20",
- "tokio",
- "tracing",
- "walkdir",
-]
-
-[[package]]
-name = "splicr-subtitle"
-version = "1.0.1"
-dependencies = [
- "anyhow",
- "async-trait",
- "rstest",
- "serde",
- "serde_json",
- "splicr-core",
- "thiserror 2.0.20",
- "tokio",
- "tokio-test",
- "tracing",
-]
-
-[[package]]
-name = "splicr-update"
-version = "1.0.1"
-dependencies = [
- "anyhow",
- "futures",
- "hex",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "sha2",
- "splicr-core",
- "tauri",
- "thiserror 2.0.20",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "splicr-voice"
-version = "1.0.1"
-dependencies = [
- "async-trait",
- "chrono",
- "futures",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "splicr-core",
- "thiserror 2.0.20",
- "tokio",
- "tokio-tungstenite",
- "tracing",
 ]
 
 [[package]]

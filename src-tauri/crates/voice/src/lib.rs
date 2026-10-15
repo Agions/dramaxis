@@ -1,4 +1,4 @@
-//! splicr-voice v1.0.0  · TTS 配音与语音克隆引擎
+//! dramaxis-voice v1.0.0  · TTS 配音与语音克隆引擎
 //!
 //! ## 责任范围
 //! 3 个 TTS 引擎的统一抽象与实现:
@@ -17,12 +17,12 @@ use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use futures::{SinkExt, StreamExt};
-use splicr_core::error::{SplicrError, SplicrResult};
+use dramaxis_core::error::{SplicrError, SplicrResult};
 use tokio_tungstenite::tungstenite::Message;
 
 // 同时保留两个常用名称,方便业务侧 import 习惯
-pub use splicr_core::error::TtsProviderKind;
-pub use splicr_core::error::TtsProviderKind as ProviderKind;
+pub use dramaxis_core::error::TtsProviderKind;
+pub use dramaxis_core::error::TtsProviderKind as ProviderKind;
 
 // ════════════════════════════════════════════════════════════════════════
 // 请求 / 结果 / trait

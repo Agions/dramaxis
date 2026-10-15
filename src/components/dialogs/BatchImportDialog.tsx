@@ -17,8 +17,8 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { toast } from "sonner";
 import { useAssets } from "@hooks/useAssets";
 import { ThumbnailImage } from "@components/common/ThumbnailImage";
-import { basename, formatBytes } from "@splicr/utils";
-import type { AssetEntry, AssetKind, ScanResult } from "@splicr/ipc";
+import { basename, formatBytes } from "@dramaxis/utils";
+import type { AssetEntry, AssetKind, ScanResult } from "@dramaxis/ipc";
 
 export interface BatchImportDialogProps {
   /** 是否打开 */

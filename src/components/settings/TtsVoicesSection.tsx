@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { voiceIpc, type ConfigSnapshot } from "@splicr/ipc";
-import { Badge, Card } from "@splicr/ui";
+import { voiceIpc, type ConfigSnapshot } from "@dramaxis/ipc";
+import { Badge, Card } from "@dramaxis/ui";
 import { toast } from "sonner";
 
 export interface TtsMeta {

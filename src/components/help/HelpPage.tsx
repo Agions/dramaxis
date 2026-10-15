@@ -4,7 +4,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useTauriQuery } from "@hooks/useTauriQuery";
-import type { HelpCategory, HelpTopic, SearchHit } from "@splicr/ipc";
+import type { HelpCategory, HelpTopic, SearchHit } from "@dramaxis/ipc";
 
 interface Shortcut {
   keys: string[];

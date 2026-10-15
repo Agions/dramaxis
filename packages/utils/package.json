@@ -1,5 +1,5 @@
 {
-  "name": "@splicr/utils",
+  "name": "@dramaxis/utils",
   "version": "1.0.1",
   "type": "module",
   "main": "./src/index.ts",

@@ -16,7 +16,7 @@ import {
   type CommandArgs,
   type CommandResultOf,
   type IpcCommand,
-} from "@splicr/ipc";
+} from "@dramaxis/ipc";
 
 export interface UseTauriCommandState<C extends IpcCommand> {
   data: CommandResultOf<C> | null;

@@ -1,4 +1,4 @@
-//! splicr-pipeline · PipelineService (运行时编排门面)
+//! dramaxis-pipeline · PipelineService (运行时编排门面)
 //!
 //! ## 职责
 //! - 持有 [`Pipeline`] 状态机 + 当前项目 + 后台任务句柄

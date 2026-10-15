@@ -15,7 +15,7 @@
  */
 
 import { create } from "zustand";
-import type { Project } from "@splicr/ipc";
+import type { Project } from "@dramaxis/ipc";
 
 interface ProjectState {
   /** 当前打开的项目 (domain) */

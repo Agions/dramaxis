@@ -4,10 +4,10 @@
 
 use std::path::{Path, PathBuf};
 
-use splicr_core::domain::{MediaFile, Project};
-use splicr_core::error::SplicrError;
-use splicr_core::services::ProjectService;
-use splicr_core::AppContext;
+use dramaxis_core::domain::{MediaFile, Project};
+use dramaxis_core::error::SplicrError;
+use dramaxis_core::services::ProjectService;
+use dramaxis_core::AppContext;
 use tauri::{Manager, State};
 
 /// 列举最近项目 (M3.2 真实从 ProjectService 取)
@@ -36,7 +36,7 @@ pub async fn project_create_blank(
     tokio::fs::create_dir_all(&dir)
         .await
         .map_err(|e| SplicrError::Io(e.to_string()))?;
-    let path = dir.join(format!("{}.splicr.json", proj.id));
+    let path = dir.join(format!("{}.dramaxis.json", proj.id));
     write_project(&path, &proj)
         .await
         .map_err(|e| SplicrError::Io(e.to_string()))?;

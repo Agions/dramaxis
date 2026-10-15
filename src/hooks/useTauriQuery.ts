@@ -14,7 +14,7 @@ import {
   type UseQueryOptions,
   type UseQueryResult,
 } from "@tanstack/react-query";
-import type { CommandResultOf, IpcCommand, SplicrError } from "@splicr/ipc";
+import type { CommandResultOf, IpcCommand, SplicrError } from "@dramaxis/ipc";
 
 export interface UseTauriQueryOptions<C extends IpcCommand> extends Omit<
   UseQueryOptions<CommandResultOf<C>, SplicrError, CommandResultOf<C>>,

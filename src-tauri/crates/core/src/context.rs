@@ -1,4 +1,4 @@
-//! splicr-core · AppContext
+//! dramaxis-core · AppContext
 //!
 //! 全应用单一状态对象,通过 `app.manage(AppContext::new())` 注入 Tauri State,
 //! 每个 Tauri Command 用 `state: State<'_, AppContext>` 即可拿到。

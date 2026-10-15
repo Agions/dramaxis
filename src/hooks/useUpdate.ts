@@ -20,8 +20,8 @@ import {
   updateIpc,
   type UpdateInstallResult,
   type UpdateState,
-} from "@splicr/ipc";
-import { useUpdateStore } from "@splicr/core";
+} from "@dramaxis/ipc";
+import { useUpdateStore } from "@dramaxis/core";
 
 export interface UseUpdateReturn {
   state: UpdateState;

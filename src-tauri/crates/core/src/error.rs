@@ -1,4 +1,4 @@
-//! splicr-core · 统一错误类型
+//! dramaxis-core · 统一错误类型
 //!
 //! 实现了 `serde::Serialize` 让 Tauri IPC 能直接传回前端 (前端拿到的是结构化 JSON)。
 
@@ -7,6 +7,8 @@ use thiserror::Error;
 
 /// 全应用统一 Result 别名。
 pub type SplicrResult<T> = Result<T, SplicrError>;
+pub type DramaxisResult<T> = Result<T, DramaxisError>;
+pub type DramaxisError = SplicrError;
 
 /// 全应用统一错误。9 类变体覆盖所有业务失败路径。
 ///
@@ -73,7 +75,7 @@ impl From<std::io::Error> for SplicrError {
     }
 }
 
-/// LLM 提供商标识 (与 `splicr-llm::LlmManager` 中定义的 11 个 provider 一一对应)。
+/// LLM 提供商标识 (与 `dramaxis-llm::LlmManager` 中定义的 11 个 provider 一一对应)。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum LlmProviderKind {

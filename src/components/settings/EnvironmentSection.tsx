@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
-import type { ConfigSnapshot } from "@splicr/ipc";
-import { Badge, Card, Switch } from "@splicr/ui";
-import { useSettingsStore, useThemeStore, type Theme } from "@splicr/core";
+import type { ConfigSnapshot } from "@dramaxis/ipc";
+import { Badge, Card, Switch } from "@dramaxis/ui";
+import { useSettingsStore, useThemeStore, type Theme } from "@dramaxis/core";
 
 interface EnvironmentSectionProps {
   form: ConfigSnapshot;

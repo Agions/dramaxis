@@ -1,4 +1,4 @@
-//! splicr-storage v1.0.0  · 素材资产管理服务
+//! dramaxis-storage v1.0.0  · 素材资产管理服务
 //!
 //! ## 责任范围
 //! - `assets_scan`        : 扫描目录,按 MIME 白名单返回可导入素材
@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use walkdir::WalkDir;
 
-use splicr_detect::{parse_probe_json, Ffmpeg, FfmpegProbe};
+use dramaxis_detect::{parse_probe_json, Ffmpeg, FfmpegProbe};
 
 // ════════════════════════════════════════════════════════════════════════
 // 错误
@@ -37,8 +37,8 @@ pub enum AssetError {
     Thumbnail(String),
     #[error("IO: {0}")]
     Io(#[from] std::io::Error),
-    #[error("splicr 错误: {0}")]
-    Core(#[from] splicr_core::error::SplicrError),
+    #[error("dramaxis 错误: {0}")]
+    Core(#[from] dramaxis_core::error::SplicrError),
 }
 
 pub type AssetResult<T> = Result<T, AssetError>;
@@ -156,7 +156,7 @@ fn thumb_cache_dir() -> AssetResult<PathBuf> {
     let base = dirs::cache_dir()
         .or_else(dirs::data_local_dir)
         .ok_or_else(|| AssetError::Io(std::io::Error::other("无法获取 cache dir")))?;
-    let dir = base.join("splicr").join("thumb");
+    let dir = base.join("dramaxis").join("thumb");
     std::fs::create_dir_all(&dir)?;
     Ok(dir)
 }

@@ -30,9 +30,9 @@ import {
   type Project,
   type ScanResult,
   type ThumbnailResult,
-} from "@splicr/ipc";
-import { useAssetsStore, useProjectStore } from "@splicr/core";
-import { pathToMediaFileEmpty, applyProbe } from "@splicr/utils";
+} from "@dramaxis/ipc";
+import { useAssetsStore, useProjectStore } from "@dramaxis/core";
+import { pathToMediaFileEmpty, applyProbe } from "@dramaxis/utils";
 
 /** QueryClient 缓存中的项目记录结构 (必须与 ProjectRecord 一致) */
 interface CachedProjectRecord {

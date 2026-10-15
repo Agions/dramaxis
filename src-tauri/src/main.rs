@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    splicr_lib::run()
+    dramaxis_lib::run()
 }

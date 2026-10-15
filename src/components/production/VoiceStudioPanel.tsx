@@ -5,7 +5,7 @@
 import { memo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { toast } from "sonner";
-import { voiceIpc } from "@splicr/ipc";
+import { voiceIpc } from "@dramaxis/ipc";
 
 interface VoiceStudioPanelProps {
   voiceEngine: string;

@@ -1,7 +1,7 @@
-//! splicr v1.0.0 · FFmpeg 智能拆条与镜头检测 Tauri 命令
+//! dramaxis v1.1.0 · FFmpeg 智能拆条与镜头检测 Tauri 命令
 
-use splicr_core::error::SplicrError;
-use splicr_detect::{Ffmpeg, FfmpegProbe, HardwareAccelerationKind, SceneCut};
+use dramaxis_core::error::SplicrError;
+use dramaxis_detect::{Ffmpeg, FfmpegProbe, HardwareAccelerationKind, SceneCut};
 use std::path::Path;
 
 #[derive(serde::Serialize)]

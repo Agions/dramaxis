@@ -11,14 +11,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useProject } from "./useProject";
-import type { Project, ProjectRecord } from "@splicr/ipc";
+import type { Project, ProjectRecord } from "@dramaxis/ipc";
 
 // ─── mocks ─────────────────────────────────────────────────────────
 const projectLoadMock = vi.fn();
 const projectSaveMock = vi.fn();
 const pipelineCancelMock = vi.fn();
 
-vi.mock("@splicr/ipc", () => ({
+vi.mock("@dramaxis/ipc", () => ({
   projectIpc: {
     load: (...a: unknown[]) => projectLoadMock(...a),
     save: (...a: unknown[]) => projectSaveMock(...a),
@@ -38,7 +38,7 @@ let storeState: {
   clear: ReturnType<typeof vi.fn>;
 };
 
-vi.mock("@splicr/core", () => ({
+vi.mock("@dramaxis/core", () => ({
   useProjectStore: (selector: (s: typeof storeState) => unknown) =>
     selector(storeState),
 }));

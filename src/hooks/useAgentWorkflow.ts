@@ -14,7 +14,7 @@ import {
   type AgentMessage,
   type BreakpointRequest,
   type Project,
-} from "@splicr/ipc";
+} from "@dramaxis/ipc";
 import { useTauriEvent } from "./useTauriEvent";
 import { toast } from "sonner";
 import { AGENT_STEPS } from "@components/production/AgentStudioRack";

@@ -17,8 +17,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { useUiStore, useThemeStore } from "@splicr/core";
-import { projectIpc, pipelineIpc, type MediaFile } from "@splicr/ipc";
+import { useUiStore, useThemeStore } from "@dramaxis/core";
+import { projectIpc, pipelineIpc, type MediaFile } from "@dramaxis/ipc";
 
 interface ActionItem {
   id: string;

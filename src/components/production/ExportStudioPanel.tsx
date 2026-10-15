@@ -14,7 +14,7 @@ import {
   exportIpc,
   type ProjectRecord,
   type RenderProgressPayload,
-} from "@splicr/ipc";
+} from "@dramaxis/ipc";
 import { useTauriEvent } from "@hooks/useTauriEvent";
 
 interface ExportStudioPanelProps {

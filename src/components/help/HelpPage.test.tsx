@@ -15,7 +15,7 @@ import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelpPage } from "./HelpPage";
-import type { HelpTopic } from "@splicr/ipc";
+import type { HelpTopic } from "@dramaxis/ipc";
 
 // ─── invoke mock ─────────────────────────────────────────────────
 const invokeMock = vi.fn();

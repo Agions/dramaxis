@@ -1,4 +1,4 @@
-//! splicr-export v1.0.0  · 导出器 (M4.5 实装)
+//! dramaxis-export v1.0.0  · 导出器 (M4.5 实装)
 //!
 //! ## 责任范围
 //! 3 种导出模式的参数规划 + 字幕渲染 (与 v2.4
@@ -13,13 +13,13 @@
 //! ## 设计
 //! - 本 crate 只做**纯参数规划**:校验 + 生成 ffmpeg 参数列表,不执行进程
 //! - [`ExportPlanner::plan`] 产出 [`ExportPlan`],执行层 (src-tauri command)
-//!   将其交给 splicr-ffmpeg
+//!   将其交给 dramaxis-ffmpeg
 //! - [`render_subtitles`] 纯函数渲染 SRT / ASS / VTT 三种字幕文本
 //! - codec/container 兼容性表在 [`validate_params`] 中集中维护
 //!
 //! ## 用法
 //! ```
-//! use splicr_export::{ExportMode, ExportPlanner};
+//! use dramaxis_export::{ExportMode, ExportPlanner};
 //!
 //! let plan = ExportPlanner::new()
 //!     .plan(ExportMode::Quick, None)
@@ -35,7 +35,7 @@ pub use capcut::{
 };
 
 use serde::{Deserialize, Serialize};
-use splicr_core::domain::ProjectSettings;
+use dramaxis_core::domain::ProjectSettings;
 use thiserror::Error;
 
 // ════════════════════════════════════════════════════════════════════════
@@ -286,15 +286,15 @@ pub fn render_subtitles(
         }
     }
     let sub_format = match format {
-        SubtitleFormat::Srt => splicr_subtitle::SubtitleFormat::Srt,
-        SubtitleFormat::Vtt => splicr_subtitle::SubtitleFormat::Vtt,
-        SubtitleFormat::Ass => splicr_subtitle::SubtitleFormat::Ass,
+        SubtitleFormat::Srt => dramaxis_subtitle::SubtitleFormat::Srt,
+        SubtitleFormat::Vtt => dramaxis_subtitle::SubtitleFormat::Vtt,
+        SubtitleFormat::Ass => dramaxis_subtitle::SubtitleFormat::Ass,
     };
-    let track = splicr_subtitle::SubtitleTrack {
+    let track = dramaxis_subtitle::SubtitleTrack {
         entries: items
             .iter()
             .enumerate()
-            .map(|(i, item)| splicr_subtitle::SubtitleEntry {
+            .map(|(i, item)| dramaxis_subtitle::SubtitleEntry {
                 index: (i + 1) as u32,
                 start_ms: (item.start_seconds.max(0.0) * 1000.0).round() as u64,
                 end_ms: (item.end_seconds.max(0.0) * 1000.0).round() as u64,
@@ -305,7 +305,7 @@ pub fn render_subtitles(
         format: sub_format,
         language: "zh".into(),
     };
-    splicr_subtitle::formats::serialize(&track)
+    dramaxis_subtitle::formats::serialize(&track)
         .map_err(|e| ExportError::SubtitleFormatError(e.to_string()))
 }
 

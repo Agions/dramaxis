@@ -12,8 +12,8 @@ import {
 import type { QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { AppShell } from "@components/layout/AppShell";
-import { ErrorBoundary } from "@splicr/ui";
-import { useThemeStore } from "@splicr/core";
+import { ErrorBoundary } from "@dramaxis/ui";
+import { useThemeStore } from "@dramaxis/core";
 
 interface RouterContext {
   queryClient: QueryClient;

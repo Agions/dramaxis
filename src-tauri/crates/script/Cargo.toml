@@ -1,5 +1,5 @@
 [package]
-name = "splicr-script"
+name = "dramaxis-script"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -19,7 +19,7 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 futures = { workspace = true }
 
-[dependencies.splicr-core]
+[dependencies.dramaxis-core]
 path = "../core"
 
 [lints]

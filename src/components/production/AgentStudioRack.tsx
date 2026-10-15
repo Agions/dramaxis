@@ -3,7 +3,7 @@
  */
 
 import { memo } from "react";
-import type { AgentMessage, BreakpointRequest, AgentRole } from "@splicr/ipc";
+import type { AgentMessage, BreakpointRequest, AgentRole } from "@dramaxis/ipc";
 
 export interface AgentStepMeta {
   id: number;

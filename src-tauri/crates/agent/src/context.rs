@@ -1,6 +1,6 @@
 use crate::types::{AgentMessage, AgentRole, AgentStatus};
 use serde::{Deserialize, Serialize};
-use splicr_core::domain::Project;
+use dramaxis_core::domain::Project;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -12,7 +12,7 @@ import type {
   ConfigSnapshot,
   LlmProviderKind,
   TtsProviderKind,
-} from "@splicr/ipc";
+} from "@dramaxis/ipc";
 
 export interface SettingsState {
   locale: string;

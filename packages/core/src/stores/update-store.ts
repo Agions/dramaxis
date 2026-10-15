@@ -15,7 +15,7 @@ import type {
   UpdatePhase,
   UpdateProgress,
   UpdateState,
-} from "@splicr/ipc";
+} from "@dramaxis/ipc";
 
 interface UpdateStoreState {
   /** 完整状态快照(也写 currentVersion / downloadedPath / error) */

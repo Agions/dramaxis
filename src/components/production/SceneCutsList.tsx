@@ -4,7 +4,7 @@
 
 import { memo, useState } from "react";
 import { toast } from "sonner";
-import { detectIpc } from "@splicr/ipc";
+import { detectIpc } from "@dramaxis/ipc";
 
 export interface SceneCut {
   id: number;

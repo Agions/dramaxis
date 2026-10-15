@@ -1,4 +1,4 @@
-//! splicr-subtitle · formats — 字幕格式序列化
+//! dramaxis-subtitle · formats — 字幕格式序列化
 
 use crate::{SubtitleError, SubtitleFormat, SubtitleTrack};
 

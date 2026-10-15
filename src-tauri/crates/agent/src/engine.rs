@@ -1,7 +1,7 @@
 use crate::agents::*;
 use crate::context::AgentContext;
 use crate::types::{AgentEventPayload, AgentRole, AgentStatus, BreakpointRequest};
-use splicr_core::SplicrResult;
+use dramaxis_core::SplicrResult;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 

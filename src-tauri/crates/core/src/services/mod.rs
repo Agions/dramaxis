@@ -1,4 +1,4 @@
-//! splicr-core · 默认 19 个核心服务的注册与实现
+//! dramaxis-core · 默认 19 个核心服务的注册与实现
 //!
 //! ## 核心服务
 //! - [`ProjectService`] : 项目管理 (open / save / list / delete)
@@ -138,7 +138,7 @@ pub async fn register_default_services(container: &ServiceContainer) {
         .await;
 
     tracing::info!(
-        "splicr-core: 3/{total} default services registered (M2 milestone)",
+        "dramaxis-core: 3/{total} default services registered (M2 milestone)",
         total = 19
     );
 }

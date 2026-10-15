@@ -1,5 +1,5 @@
 [package]
-name = "splicr-intake"
+name = "dramaxis-intake"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -15,7 +15,7 @@ workspace = true
 [dependencies]
 serde = { workspace = true }
 thiserror = { workspace = true }
-splicr-core = { path = "../core" }
+dramaxis-core = { path = "../core" }
 
 [dev-dependencies]
 serde_json = { workspace = true }

@@ -6,9 +6,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { BatchImportDialog } from "@components/dialogs/BatchImportDialog";
-import { useProjectStore, useSettingsStore } from "@splicr/core";
+import { useProjectStore, useSettingsStore } from "@dramaxis/core";
 import { toast } from "sonner";
-import { projectIpc } from "@splicr/ipc";
+import { projectIpc } from "@dramaxis/ipc";
 
 export const Route = createFileRoute("/")({
   component: HomePage,

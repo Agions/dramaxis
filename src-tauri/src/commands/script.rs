@@ -1,7 +1,7 @@
-//! splicr v1.0.0 · AI 脚本生成 Tauri 命令
+//! dramaxis v1.1.0 · AI 脚本生成 Tauri 命令
 
-use splicr_core::error::SplicrError;
-use splicr_script::{factory, LlmProviderKind, LlmRequest};
+use dramaxis_core::error::SplicrError;
+use dramaxis_script::{factory, LlmProviderKind, LlmRequest};
 
 #[allow(dead_code)]
 #[derive(serde::Deserialize)]

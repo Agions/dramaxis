@@ -1,7 +1,7 @@
-//! splicr v1.0.0 · TTS 试听与合成 Tauri 命令
+//! dramaxis v1.1.0 · TTS 试听与合成 Tauri 命令
 
-use splicr_core::error::SplicrError;
-use splicr_voice::{
+use dramaxis_core::error::SplicrError;
+use dramaxis_voice::{
     engine, EdgeTtsOptions, GptSovitsOptions, MimoTtsOptions, OpenAiTtsOptions, TtsEngineConfig,
     TtsRequest,
 };
@@ -30,7 +30,7 @@ pub struct VoicePreviewResult {
     pub bytes_written: u64,
 }
 
-fn build_tts_engine(params: &VoicePreviewParams) -> Box<dyn splicr_voice::TtsEngine> {
+fn build_tts_engine(params: &VoicePreviewParams) -> Box<dyn dramaxis_voice::TtsEngine> {
     let config = match params.provider.as_str() {
         "open-ai" => TtsEngineConfig::OpenAi(OpenAiTtsOptions {
             api_key: params.api_key.clone().unwrap_or_default(),
@@ -75,7 +75,7 @@ fn build_tts_engine(params: &VoicePreviewParams) -> Box<dyn splicr_voice::TtsEng
     engine(config)
 }
 
-/// 快捷试听生成: 将试听文本生成音频并存入 App 临时缓存目录 `~/.splicr/cache/tts/`
+/// 快捷试听生成: 将试听文本生成音频并存入 App 临时缓存目录 `~/.dramaxis/cache/tts/`
 #[tauri::command]
 pub async fn voice_preview(
     app_handle: tauri::AppHandle,
@@ -89,7 +89,7 @@ pub async fn voice_preview(
     let cache_dir = app_handle
         .path()
         .app_cache_dir()
-        .unwrap_or_else(|_| PathBuf::from("/tmp/splicr/cache"));
+        .unwrap_or_else(|_| PathBuf::from("/tmp/dramaxis/cache"));
     let tts_cache_dir = cache_dir.join("tts");
     tokio::fs::create_dir_all(&tts_cache_dir)
         .await

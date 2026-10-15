@@ -9,8 +9,8 @@ import { Outlet, useRouterState } from "@tanstack/react-router";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { CommandPalette } from "./CommandPalette";
-import { useThemeStore, useSettingsStore } from "@splicr/core";
-import { settingsIpc } from "@splicr/ipc";
+import { useThemeStore, useSettingsStore } from "@dramaxis/core";
+import { settingsIpc } from "@dramaxis/ipc";
 import { useUpdate } from "@hooks/useUpdate";
 
 export function AppShell() {

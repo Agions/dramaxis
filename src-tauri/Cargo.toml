@@ -32,8 +32,8 @@ edition = "2021"
 rust-version = "1.85"
 license = "MIT"
 authors = ["Agions"]
-repository = "https://github.com/agions/splicr"
-homepage = "https://splicr.dev"
+repository = "https://github.com/Agions/dramaxis"
+homepage = "https://dramaxis.dev"
 
 [workspace.dependencies]
 # Tauri 2 + 插件
@@ -90,15 +90,15 @@ unused_imports = "warn"
 dead_code = "warn"
 
 [package]
-name = "splicr"
-version = "1.0.1"
-description = "splicr v1.0.1 · 叙影 — AI 影视解说桌面应用 (Tauri 2 + Rust)"
+name = "dramaxis"
+version = "1.1.0"
+description = "dramaxis v1.1.0 · 剧枢 — 电影级多智能体影视叙事与智能解说平台 (Tauri 2 + Rust)"
 authors = ["Agions"]
 edition = "2021"
 rust-version = "1.85"
 
 [lib]
-name = "splicr_lib"
+name = "dramaxis_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -116,27 +116,27 @@ chrono = { version = "0.4", features = ["serde"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1"
 
-# ── splicr 工作流 crates ──
+# ── dramaxis 工作流 crates ──
 # 基础层
-splicr-core    = { path = "crates/core" }
+dramaxis-core    = { path = "crates/core" }
 # Step 1 素材导入
-splicr-intake  = { path = "crates/intake" }
+dramaxis-intake  = { path = "crates/intake" }
 # Step 2 智能拆条
-splicr-detect  = { path = "crates/detect" }
+dramaxis-detect  = { path = "crates/detect" }
 # Step 3 脚本生成
-splicr-script  = { path = "crates/script" }
+dramaxis-script  = { path = "crates/script" }
 # Step 4 TTS 配音
-splicr-voice   = { path = "crates/voice" }
+dramaxis-voice   = { path = "crates/voice" }
 # Step 5 字幕合成
-splicr-subtitle = { path = "crates/subtitle" }
+dramaxis-subtitle = { path = "crates/subtitle" }
 # Step 6 画面对齐
-splicr-compose = { path = "crates/compose" }
+dramaxis-compose = { path = "crates/compose" }
 # Step 7 多平台导出
-splicr-export  = { path = "crates/export" }
+dramaxis-export  = { path = "crates/export" }
 # 基础设施
-splicr-storage = { path = "crates/storage" }
-splicr-update  = { path = "crates/update" }
-splicr-agent   = { path = "crates/agent" }
+dramaxis-storage = { path = "crates/storage" }
+dramaxis-update  = { path = "crates/update" }
+dramaxis-agent   = { path = "crates/agent" }
 
 [profile.release]
 panic = "abort"

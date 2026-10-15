@@ -8,16 +8,16 @@
 //!
 //! 所有命令通过 `AppContext.services` 解析 `UpdateService` 单例。
 
-use splicr_core::error::SplicrError;
-use splicr_core::AppContext;
-use splicr_update::{UpdateInfo, UpdateState};
+use dramaxis_core::error::SplicrError;
+use dramaxis_core::AppContext;
+use dramaxis_update::{UpdateInfo, UpdateState};
 use tauri::{AppHandle, Emitter, State};
 
 /// 查询当前更新状态快照
 #[tauri::command]
 pub async fn update_get_state(state: State<'_, AppContext>) -> Result<UpdateState, SplicrError> {
     let svc = state
-        .service::<splicr_update::UpdateService>()
+        .service::<dramaxis_update::UpdateService>()
         .await
         .map_err(|e| SplicrError::Updater(e.to_string()))?;
     Ok(svc.snapshot().await)
@@ -27,7 +27,7 @@ pub async fn update_get_state(state: State<'_, AppContext>) -> Result<UpdateStat
 #[tauri::command]
 pub async fn update_check(state: State<'_, AppContext>) -> Result<UpdateInfo, SplicrError> {
     let svc = state
-        .service::<splicr_update::UpdateService>()
+        .service::<dramaxis_update::UpdateService>()
         .await
         .map_err(|e| SplicrError::Updater(e.to_string()))?;
     svc.check()
@@ -43,7 +43,7 @@ pub async fn update_download(
     state: State<'_, AppContext>,
 ) -> Result<String, SplicrError> {
     let svc = state
-        .service::<splicr_update::UpdateService>()
+        .service::<dramaxis_update::UpdateService>()
         .await
         .map_err(|e| SplicrError::Updater(e.to_string()))?;
     let path = svc
@@ -64,7 +64,7 @@ pub async fn update_install(
     state: State<'_, AppContext>,
 ) -> Result<UpdateInstallResult, SplicrError> {
     let svc = state
-        .service::<splicr_update::UpdateService>()
+        .service::<dramaxis_update::UpdateService>()
         .await
         .map_err(|e| SplicrError::Updater(e.to_string()))?;
     let snap = svc.snapshot().await;
@@ -113,7 +113,7 @@ pub struct UpdateInstallResult {
 #[tauri::command]
 pub async fn update_reset(state: State<'_, AppContext>) -> Result<(), SplicrError> {
     let svc = state
-        .service::<splicr_update::UpdateService>()
+        .service::<dramaxis_update::UpdateService>()
         .await
         .map_err(|e| SplicrError::Updater(e.to_string()))?;
     svc.reset().await;

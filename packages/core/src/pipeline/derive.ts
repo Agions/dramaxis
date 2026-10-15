@@ -7,7 +7,7 @@
  * - 输入是后端 PipelineStatus + 前端 stepDefs,输出是 UI 直接消费的视图
  */
 
-import type { PipelineState, PipelineStatus, StepStatus } from "@splicr/ipc";
+import type { PipelineState, PipelineStatus, StepStatus } from "@dramaxis/ipc";
 
 export interface PipelineStepView {
   id: string;

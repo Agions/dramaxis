@@ -1,5 +1,5 @@
 [package]
-name = "splicr-update"
+name = "dramaxis-update"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -24,4 +24,4 @@ futures = { workspace = true }
 reqwest = { workspace = true }
 sha2 = "0.10"
 hex = "0.4"
-splicr-core = { path = "../core" }
+dramaxis-core = { path = "../core" }

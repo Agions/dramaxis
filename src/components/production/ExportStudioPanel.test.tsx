@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ExportStudioPanel } from "./ExportStudioPanel";
-import { exportIpc, type ProjectRecord } from "@splicr/ipc";
+import { exportIpc, type ProjectRecord } from "@dramaxis/ipc";
 import { toast } from "sonner";
 
-vi.mock("@splicr/ipc", () => ({
+vi.mock("@dramaxis/ipc", () => ({
   exportIpc: {
     capcutDraft: vi.fn(),
     renderVideo: vi.fn(),

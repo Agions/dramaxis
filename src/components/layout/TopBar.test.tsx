@@ -18,7 +18,7 @@ vi.mock("@hooks/useTauriQuery", () => ({
   }),
 }));
 
-vi.mock("@splicr/ipc", () => ({
+vi.mock("@dramaxis/ipc", () => ({
   themeIpc: {
     setLocale: vi.fn().mockResolvedValue(true),
   },

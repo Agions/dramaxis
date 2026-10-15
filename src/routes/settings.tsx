@@ -5,9 +5,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { settingsIpc, type ConfigSnapshot } from "@splicr/ipc";
-import { useSettingsStore, t } from "@splicr/core";
-import { Tabs } from "@splicr/ui";
+import { settingsIpc, type ConfigSnapshot } from "@dramaxis/ipc";
+import { useSettingsStore, t } from "@dramaxis/core";
+import { Tabs } from "@dramaxis/ui";
 import { toast } from "sonner";
 import { LlmProvidersSection } from "../components/settings/LlmProvidersSection";
 import { TtsVoicesSection } from "../components/settings/TtsVoicesSection";

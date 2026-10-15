@@ -14,13 +14,13 @@ import {
   type PipelineState,
   type PipelineStatus,
   type Project,
-} from "@splicr/ipc";
+} from "@dramaxis/ipc";
 import {
   computePercent,
   deriveSteps,
   findActiveIndex,
   type PipelineStepView,
-} from "@splicr/core";
+} from "@dramaxis/core";
 
 // PipelineStepView 类型 re-export (业务侧只引用 usePipeline 一处)
 export type { PipelineStepView };

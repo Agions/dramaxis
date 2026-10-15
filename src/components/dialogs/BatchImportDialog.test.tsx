@@ -20,7 +20,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { BatchImportDialog } from "./BatchImportDialog";
-import type { ScanResult } from "@splicr/ipc";
+import type { ScanResult } from "@dramaxis/ipc";
 
 // ─── shared fixtures ───────────────────────────────────────────────
 const scanMock = vi.fn();

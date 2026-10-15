@@ -1,10 +1,10 @@
 use crate::context::AgentContext;
 use crate::types::{AgentRole, AgentStatus};
 use async_trait::async_trait;
-use splicr_core::error::{LlmProviderKind, SplicrResult};
-use splicr_detect::Ffmpeg;
-use splicr_script::{factory, LlmRequest};
-use splicr_voice::{EdgeTtsEngine, EdgeTtsOptions, TtsEngine, TtsRequest};
+use dramaxis_core::error::{LlmProviderKind, SplicrResult};
+use dramaxis_detect::Ffmpeg;
+use dramaxis_script::{factory, LlmRequest};
+use dramaxis_voice::{EdgeTtsEngine, EdgeTtsOptions, TtsEngine, TtsRequest};
 use std::path::Path;
 
 #[async_trait]
@@ -69,7 +69,7 @@ impl Agent for VisualCriticAgent {
                         ffmpeg
                             .probe(path_obj)
                             .await
-                            .unwrap_or(splicr_detect::FfmpegProbe {
+                            .unwrap_or(dramaxis_detect::FfmpegProbe {
                                 duration_seconds: 60.0,
                                 width: 1080,
                                 height: 1920,
@@ -89,7 +89,7 @@ impl Agent for VisualCriticAgent {
 
                     // 深度多模态优化：真实抽取前 3~4 个场景切点的关键帧并进行 Base64 编码
                     let temp_frames_dir = std::env::temp_dir()
-                        .join(format!("splicr_frames_{}", uuid::Uuid::new_v4()));
+                        .join(format!("dramaxis_frames_{}", uuid::Uuid::new_v4()));
                     let sample_cuts: Vec<f64> = cuts.iter().take(4).cloned().collect();
                     let mut b64_list = Vec::new();
 
@@ -290,7 +290,7 @@ impl Agent for VoiceArtistAgent {
 
         // 尝试通过 Edge-TTS 生成真实音频文件，带重试机制
         let cache_dir =
-            std::env::temp_dir().join(format!("splicr_voice_{}.mp3", uuid::Uuid::new_v4()));
+            std::env::temp_dir().join(format!("dramaxis_voice_{}.mp3", uuid::Uuid::new_v4()));
         let tts_engine = EdgeTtsEngine::new(EdgeTtsOptions {
             voice: "zh-CN-YunxiNeural".into(),
         });

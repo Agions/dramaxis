@@ -1,4 +1,4 @@
-//! splicr-detect v1.0.0  · 智能拆条与视觉检测
+//! dramaxis-detect v1.0.0  · 智能拆条与视觉检测
 //!
 //! ## 责任范围
 //! - 二进制发现 (`ffmpeg` / `ffprobe` PATH 探测)
@@ -20,7 +20,7 @@ use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
 use serde::{Deserialize, Serialize};
-use splicr_core::error::{SplicrError, SplicrResult};
+use dramaxis_core::error::{SplicrError, SplicrResult};
 
 // ════════════════════════════════════════════════════════════════════════
 // 数据结构
@@ -660,11 +660,11 @@ fn which(bin: &str) -> Option<PathBuf> {
 
 /// SRT 字幕生成 helper (由 pipeline 层调用): (start, end, text) → SRT 文本
 pub fn build_srt(entries: &[(f64, f64, String)]) -> String {
-    let track = splicr_subtitle::SubtitleTrack {
+    let track = dramaxis_subtitle::SubtitleTrack {
         entries: entries
             .iter()
             .enumerate()
-            .map(|(i, (start, end, text))| splicr_subtitle::SubtitleEntry {
+            .map(|(i, (start, end, text))| dramaxis_subtitle::SubtitleEntry {
                 index: (i + 1) as u32,
                 start_ms: (start.max(0.0) * 1000.0).round() as u64,
                 end_ms: (end.max(0.0) * 1000.0).round() as u64,
@@ -672,10 +672,10 @@ pub fn build_srt(entries: &[(f64, f64, String)]) -> String {
                 emotion_tag: None,
             })
             .collect(),
-        format: splicr_subtitle::SubtitleFormat::Srt,
+        format: dramaxis_subtitle::SubtitleFormat::Srt,
         language: "zh".into(),
     };
-    splicr_subtitle::formats::to_srt(&track).unwrap_or_default()
+    dramaxis_subtitle::formats::to_srt(&track).unwrap_or_default()
 }
 
 // ════════════════════════════════════════════════════════════════════════

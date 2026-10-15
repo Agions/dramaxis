@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useUpdate } from "./useUpdate";
-import type { UpdateInfo, UpdateInstallResult, UpdateState } from "@splicr/ipc";
+import type { UpdateInfo, UpdateInstallResult, UpdateState } from "@dramaxis/ipc";
 
 // ─── mocks ─────────────────────────────────────────────────────────
 const getStateMock = vi.fn();
@@ -21,7 +21,7 @@ const downloadIpcMock = vi.fn();
 const installIpcMock = vi.fn();
 const resetIpcMock = vi.fn();
 
-vi.mock("@splicr/ipc", () => ({
+vi.mock("@dramaxis/ipc", () => ({
   updateIpc: {
     getState: (...a: unknown[]) => getStateMock(...a),
     check: (...a: unknown[]) => checkIpcMock(...a),
@@ -54,7 +54,7 @@ type StoreShape = {
 
 let storeState: StoreShape;
 
-vi.mock("@splicr/core", () => ({
+vi.mock("@dramaxis/core", () => ({
   useUpdateStore: (selector: (s: StoreShape) => unknown) =>
     selector(storeState),
 }));

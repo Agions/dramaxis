@@ -5,9 +5,9 @@
 
 use std::path::PathBuf;
 
-use splicr_core::error::SplicrError;
-use splicr_core::services::{ConfigService, ConfigSnapshot};
-use splicr_core::AppContext;
+use dramaxis_core::error::SplicrError;
+use dramaxis_core::services::{ConfigService, ConfigSnapshot};
+use dramaxis_core::AppContext;
 use tauri::{Manager, State};
 
 const CONFIG_FILE: &str = "config.json";

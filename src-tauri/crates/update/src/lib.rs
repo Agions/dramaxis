@@ -1,4 +1,4 @@
-//! splicr-update v1.0.0  · 应用更新器 (M4 完整实装)
+//! dramaxis-update v1.0.0  · 应用更新器 (M4 完整实装)
 //!
 //! ## 责任范围
 //! - GitHub Releases 探测最新版本
@@ -159,7 +159,7 @@ impl UpdateService {
             repo: repo.into(),
             client: reqwest::Client::builder()
                 .timeout(Duration::from_secs(30))
-                .user_agent("splicr-updater/3.0")
+                .user_agent("dramaxis-updater/3.0")
                 .build()
                 .unwrap_or_else(|_| reqwest::Client::new()),
             state: tokio::sync::Mutex::new(UpdateState {
@@ -330,7 +330,7 @@ impl UpdateService {
         Ok(info)
     }
 
-    /// 下载 latest 到 `dest`(可显式传;否则落到 std::env::temp_dir()/splicr-update-<version>)
+    /// 下载 latest 到 `dest`(可显式传;否则落到 std::env::temp_dir()/dramaxis-update-<version>)
     pub async fn download(&self, dest: Option<PathBuf>) -> Result<PathBuf, UpdateError> {
         let info = {
             let s = self.state.lock().await;
@@ -343,7 +343,7 @@ impl UpdateService {
             .ok_or_else(|| UpdateError::Api("release 无 binary asset".into()))?;
 
         let dest = dest.unwrap_or_else(|| {
-            std::env::temp_dir().join(format!("splicr-update-{}.bin", info.version))
+            std::env::temp_dir().join(format!("dramaxis-update-{}.bin", info.version))
         });
         let tmp_dest = dest.with_extension("tmp");
 
@@ -645,7 +645,7 @@ mod tests {
 
     #[test]
     fn phase_state_default_is_idle() {
-        let svc = UpdateService::new("1.0.0", "Agions/splicr");
+        let svc = UpdateService::new("1.0.0", "Agions/dramaxis");
         let rt = tokio::runtime::Runtime::new().unwrap();
         let s = rt.block_on(svc.snapshot());
         assert_eq!(s.phase, UpdatePhase::Idle);
@@ -655,13 +655,13 @@ mod tests {
 
     #[test]
     fn subscribe_returns_receiver() {
-        let svc = UpdateService::new("1.0.0", "Agions/splicr");
+        let svc = UpdateService::new("1.0.0", "Agions/dramaxis");
         let _rx = svc.subscribe();
     }
 
     #[test]
     fn reset_returns_to_idle() {
-        let svc = UpdateService::new("1.0.0", "Agions/splicr");
+        let svc = UpdateService::new("1.0.0", "Agions/dramaxis");
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(svc.reset());
         let s = rt.block_on(svc.snapshot());

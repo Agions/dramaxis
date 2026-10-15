@@ -1,10 +1,10 @@
-//! Tauri 命令分组 · splicr-agent 多智能体协同服务
+//! Tauri 命令分组 · dramaxis-agent 多智能体协同服务
 
-use splicr_agent::{AgentContext, AgentEventPayload, AgentOrchestrator, BreakpointRequest};
-use splicr_core::domain::Project;
-use splicr_core::error::SplicrError;
-use splicr_core::services::{ConfigService, ConfigSnapshot};
-use splicr_core::AppContext;
+use dramaxis_agent::{AgentContext, AgentEventPayload, AgentOrchestrator, BreakpointRequest};
+use dramaxis_core::domain::Project;
+use dramaxis_core::error::SplicrError;
+use dramaxis_core::services::{ConfigService, ConfigSnapshot};
+use dramaxis_core::AppContext;
 use std::sync::Arc;
 use tauri::{Emitter, State};
 use tokio::sync::RwLock;

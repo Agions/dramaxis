@@ -1,4 +1,4 @@
-//! splicr-subtitle — Step 5 · 字幕合成
+//! dramaxis-subtitle — Step 5 · 字幕合成
 //!
 //! 职责：
 //! - VAD（语音端点检测）驱动字幕时间轴自动对齐

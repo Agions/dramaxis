@@ -8,16 +8,16 @@ importers:
 
   .:
     dependencies:
-      '@splicr/core':
+      '@dramaxis/core':
         specifier: workspace:*
         version: link:packages/core
-      '@splicr/ipc':
+      '@dramaxis/ipc':
         specifier: workspace:*
         version: link:packages/ipc
-      '@splicr/ui':
+      '@dramaxis/ui':
         specifier: workspace:*
         version: link:packages/ui
-      '@splicr/utils':
+      '@dramaxis/utils':
         specifier: workspace:*
         version: link:packages/utils
       '@tanstack/react-query':
@@ -120,10 +120,10 @@ importers:
 
   packages/core:
     dependencies:
-      '@splicr/ipc':
+      '@dramaxis/ipc':
         specifier: workspace:*
         version: link:../ipc
-      '@splicr/utils':
+      '@dramaxis/utils':
         specifier: workspace:*
         version: link:../utils
       zustand:
@@ -138,7 +138,7 @@ importers:
 
   packages/ui:
     dependencies:
-      '@splicr/utils':
+      '@dramaxis/utils':
         specifier: workspace:*
         version: link:../utils
       react:

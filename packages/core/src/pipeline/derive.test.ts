@@ -16,7 +16,7 @@ import {
   stepStatusLabel,
   type StepDefLike,
 } from "./derive";
-import type { PipelineStatus } from "@splicr/ipc";
+import type { PipelineStatus } from "@dramaxis/ipc";
 
 const stepDefs: StepDefLike[] = [
   { id: "ingest", label_zh: "导入" },

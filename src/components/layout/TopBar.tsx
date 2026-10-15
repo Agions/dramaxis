@@ -8,8 +8,8 @@
 
 import { Link } from "@tanstack/react-router";
 import { useTauriQuery } from "@hooks/useTauriQuery";
-import { useUiStore, useSettingsStore, t } from "@splicr/core";
-import { themeIpc } from "@splicr/ipc";
+import { useUiStore, useSettingsStore, t } from "@dramaxis/core";
+import { themeIpc } from "@dramaxis/ipc";
 import { toast } from "sonner";
 
 // splicr Logo 图标 SVG（钢笔笔尖 + 播放三角，内联）

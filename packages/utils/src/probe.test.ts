@@ -10,7 +10,7 @@
 import { describe, expect, it } from "vitest";
 import { applyProbe, basename, pathToMediaFileEmpty } from "./probe";
 import { formatBytes } from "./bytes";
-import type { FfmpegProbe, MediaFile } from "@splicr/ipc";
+import type { FfmpegProbe, MediaFile } from "@dramaxis/ipc";
 
 describe("pathToMediaFileEmpty", () => {
   it("保留 path,其他字段填默认值", () => {

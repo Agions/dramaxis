@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useAgentWorkflow } from "./useAgentWorkflow";
-import { agentIpc, type Project } from "@splicr/ipc";
+import { agentIpc, type Project } from "@dramaxis/ipc";
 
-vi.mock("@splicr/ipc", () => ({
+vi.mock("@dramaxis/ipc", () => ({
   agentIpc: {
     start: vi.fn(),
     step: vi.fn(),

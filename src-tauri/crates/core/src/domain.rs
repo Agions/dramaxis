@@ -1,4 +1,4 @@
-//! splicr-core::domain · 核心领域模型实体
+//! dramaxis-core::domain · 核心领域模型实体
 //!
 //! ## 责任范围
 //! 整个应用的"业务对象" — 不依赖任何低层 IO 细节

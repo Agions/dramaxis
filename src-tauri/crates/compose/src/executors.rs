@@ -1,4 +1,4 @@
-//! splicr-compose · 流水线执行器矩阵
+//! dramaxis-compose · 流水线执行器矩阵
 //!
 //! ## 依赖注入
 //! [`PipelineDeps`] 集中持有 LLM / TTS / FFmpeg / workdir,
@@ -12,10 +12,10 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use splicr_core::domain::{ExportRecord, Project, ScriptSegment};
-use splicr_detect::Ffmpeg;
-use splicr_script::{LlmProvider, LlmRequest};
-use splicr_voice::{TtsEngine, TtsRequest};
+use dramaxis_core::domain::{ExportRecord, Project, ScriptSegment};
+use dramaxis_detect::Ffmpeg;
+use dramaxis_script::{LlmProvider, LlmRequest};
+use dramaxis_voice::{TtsEngine, TtsRequest};
 
 use crate::{SplicrError, SplicrResult, StepExecutor};
 
@@ -352,7 +352,7 @@ impl StepExecutor for VoiceCaptionsStep {
         }
 
         // SRT 字幕落盘
-        let srt = splicr_detect::build_srt(&srt_entries);
+        let srt = dramaxis_detect::build_srt(&srt_entries);
         let srt_path = self.deps.workdir.join("captions/captions.srt");
         tokio::fs::create_dir_all(self.deps.workdir.join("captions")).await?;
         tokio::fs::write(&srt_path, srt).await?;
@@ -563,7 +563,7 @@ impl StepExecutor for ExportStep {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use splicr_core::domain::MediaFile;
+    use dramaxis_core::domain::MediaFile;
 
     fn deps(tmp: &str) -> Arc<PipelineDeps> {
         Arc::new(PipelineDeps {

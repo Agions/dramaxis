@@ -1,5 +1,5 @@
 [package]
-name = "splicr-export"
+name = "dramaxis-export"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -18,5 +18,5 @@ serde_json = { workspace = true }
 dirs = { workspace = true }
 chrono = { workspace = true }
 thiserror = { workspace = true }
-splicr-core = { path = "../core" }
-splicr-subtitle = { path = "../subtitle" }
+dramaxis-core = { path = "../core" }
+dramaxis-subtitle = { path = "../subtitle" }

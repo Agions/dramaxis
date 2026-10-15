@@ -4,7 +4,7 @@
  */
 
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { useSettingsStore, useUpdateStore, t } from "@splicr/core";
+import { useSettingsStore, useUpdateStore, t } from "@dramaxis/core";
 
 interface NavItem {
   to: "/" | "/production" | "/assets" | "/settings" | "/help";

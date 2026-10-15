@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { basename } from "@splicr/utils";
+import { basename } from "@dramaxis/utils";
 
 export interface ThumbnailImageProps {
   /** 素材源路径 */

@@ -30,14 +30,14 @@
       "@components/*": ["./src/components/*"],
       "@hooks/*": ["./src/hooks/*"],
       "@styles/*": ["./src/styles/*"],
-      "@splicr/ipc": ["./packages/ipc/src/index.ts"],
-      "@splicr/ipc/*": ["./packages/ipc/src/*"],
-      "@splicr/core": ["./packages/core/src/index.ts"],
-      "@splicr/core/*": ["./packages/core/src/*"],
-      "@splicr/ui": ["./packages/ui/src/index.ts"],
-      "@splicr/ui/*": ["./packages/ui/src/*"],
-      "@splicr/utils": ["./packages/utils/src/index.ts"],
-      "@splicr/utils/*": ["./packages/utils/src/*"]
+      "@dramaxis/ipc": ["./packages/ipc/src/index.ts"],
+      "@dramaxis/ipc/*": ["./packages/ipc/src/*"],
+      "@dramaxis/core": ["./packages/core/src/index.ts"],
+      "@dramaxis/core/*": ["./packages/core/src/*"],
+      "@dramaxis/ui": ["./packages/ui/src/index.ts"],
+      "@dramaxis/ui/*": ["./packages/ui/src/*"],
+      "@dramaxis/utils": ["./packages/utils/src/index.ts"],
+      "@dramaxis/utils/*": ["./packages/utils/src/*"]
     }
   },
   "include": ["src", "packages", "e2e"],

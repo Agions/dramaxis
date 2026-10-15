@@ -1,12 +1,12 @@
 {
-  "name": "@splicr/core",
+  "name": "@dramaxis/core",
   "version": "1.0.1",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@splicr/ipc": "workspace:*",
-    "@splicr/utils": "workspace:*",
+    "@dramaxis/ipc": "workspace:*",
+    "@dramaxis/utils": "workspace:*",
     "zustand": "^5.0.0"
   }
 }

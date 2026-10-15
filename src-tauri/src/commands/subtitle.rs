@@ -1,7 +1,7 @@
-//! splicr v1.0.0 · 智能字幕与 ASS/SRT/VTT 渲染 Tauri 命令
+//! dramaxis v1.1.0 · 智能字幕与 ASS/SRT/VTT 渲染 Tauri 命令
 
-use splicr_core::error::SplicrError;
-use splicr_export::{SubtitleFormat, SubtitleItem};
+use dramaxis_core::error::SplicrError;
+use dramaxis_export::{SubtitleFormat, SubtitleItem};
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -67,7 +67,7 @@ pub async fn subtitle_generate(
         _ => SubtitleFormat::Srt,
     };
 
-    let content = splicr_export::render_subtitles(&items, sub_fmt)
+    let content = dramaxis_export::render_subtitles(&items, sub_fmt)
         .map_err(|e| SplicrError::InvalidInput(format!("渲染字幕失败: {e}")))?;
 
     let count = items.len();

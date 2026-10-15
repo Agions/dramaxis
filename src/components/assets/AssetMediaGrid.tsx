@@ -1,5 +1,5 @@
-import type { MediaFile } from "@splicr/ipc";
-import { Badge, Card } from "@splicr/ui";
+import type { MediaFile } from "@dramaxis/ipc";
+import { Badge, Card } from "@dramaxis/ui";
 import { ThumbnailImage } from "@components/common/ThumbnailImage";
 
 export interface AssetMediaGridProps {

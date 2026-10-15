@@ -1,4 +1,4 @@
-import { Card } from "@splicr/ui";
+import { Card } from "@dramaxis/ui";
 
 export function KeybindingsSection() {
   const SHORTCUTS = [

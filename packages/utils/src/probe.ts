@@ -6,7 +6,7 @@
  * - 由 useAssets.ts 调用,也由测试单独验证
  */
 
-import type { FfmpegProbe, MediaFile } from "@splicr/ipc";
+import type { FfmpegProbe, MediaFile } from "@dramaxis/ipc";
 
 /** 把 path 转成最小可用的 MediaFile (fallback,probe 失败时使用) */
 export function pathToMediaFileEmpty(path: string): MediaFile {

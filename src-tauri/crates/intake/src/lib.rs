@@ -1,4 +1,4 @@
-//! splicr-video v1.0.0  · 视频编排核心 (M4.3 实装)
+//! dramaxis-video v1.0.0  · 视频编排核心 (M4.3 实装)
 //!
 //! ## 责任范围
 //! 4 种多视频策略的"编排计划"生成 (与 v2.4
@@ -13,14 +13,14 @@
 //!
 //! ## 设计
 //! - 本 crate 只做**纯编排计划** (素材 → 输出计划的映射),不碰 IO;
-//!   真正的 ffmpeg 拼接 / 转码由 [`splicr-ffmpeg`] 在执行层完成
-//! - 复用 [`splicr_core::domain::ExportStrategy`] 枚举,避免类型重复
+//!   真正的 ffmpeg 拼接 / 转码由 [`dramaxis-ffmpeg`] 在执行层完成
+//! - 复用 [`dramaxis_core::domain::ExportStrategy`] 枚举,避免类型重复
 //! - 校验失败返回 [`VideoPlanError`],由上层转 `SplicrError::Pipeline`
 //!
 //! ## 用法
 //! ```
-//! use splicr_core::domain::ExportStrategy;
-//! use splicr_intake::{build_plans, PlanOptions};
+//! use dramaxis_core::domain::ExportStrategy;
+//! use dramaxis_intake::{build_plans, PlanOptions};
 //! use std::path::PathBuf;
 //!
 //! let sources = vec![PathBuf::from("a.mp4"), PathBuf::from("b.mp4")];
@@ -32,7 +32,7 @@
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
-use splicr_core::domain::ExportStrategy;
+use dramaxis_core::domain::ExportStrategy;
 use thiserror::Error;
 
 // ════════════════════════════════════════════════════════════════════════

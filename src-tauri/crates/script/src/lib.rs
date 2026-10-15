@@ -1,4 +1,4 @@
-//! splicr-llm v1.0.0  · LlmProvider trait + 11 provider 真实实现 + LlmManager 故障切换
+//! dramaxis-llm v1.0.0  · LlmProvider trait + 11 provider 真实实现 + LlmManager 故障切换
 //!
 //! ## 11 个 Provider
 //! - Qwen (Qwen3-Max / Qwen-Plus / Qwen-Turbo)        — OpenAI 兼容
@@ -25,7 +25,7 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
-pub use splicr_core::error::{LlmProviderKind, SplicrError, SplicrResult};
+pub use dramaxis_core::error::{LlmProviderKind, SplicrError, SplicrResult};
 
 // ════════════════════════════════════════════════════════════════════════
 // 输入 / 输出契约

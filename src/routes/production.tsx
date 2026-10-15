@@ -20,11 +20,11 @@ import {
   SceneCutsList,
   type SceneCut,
 } from "@components/production/SceneCutsList";
-import { projectIpc, scriptIpc, type ProjectRecord } from "@splicr/ipc";
+import { projectIpc, scriptIpc, type ProjectRecord } from "@dramaxis/ipc";
 import { useAssets } from "@hooks/useAssets";
 import { useTauriEvent } from "@hooks/useTauriEvent";
 import { useAgentWorkflow } from "@hooks/useAgentWorkflow";
-import { useProjectStore } from "@splicr/core";
+import { useProjectStore } from "@dramaxis/core";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/production")({

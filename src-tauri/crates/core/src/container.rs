@@ -1,4 +1,4 @@
-//! splicr-core · ServiceContainer
+//! dramaxis-core · ServiceContainer
 //!
 //! 19 个核心服务的注册与解析。设计上故意不引入 DI 框架,
 //! 直接用 `Arc<dyn Any + Send + Sync>` 做 type-erased storage,

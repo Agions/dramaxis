@@ -9,15 +9,15 @@
 
 use std::path::{Path, PathBuf};
 
-use splicr_core::domain::{ExportStrategy, ProjectSettings};
-use splicr_core::error::SplicrError;
-use splicr_detect::Ffmpeg;
-pub use splicr_export::capcut::{CapcutDraftOptions, CapcutDraftResult, CapcutSubtitleItem};
-use splicr_export::{
+use dramaxis_core::domain::{ExportStrategy, ProjectSettings};
+use dramaxis_core::error::SplicrError;
+use dramaxis_detect::Ffmpeg;
+pub use dramaxis_export::capcut::{CapcutDraftOptions, CapcutDraftResult, CapcutSubtitleItem};
+use dramaxis_export::{
     create_capcut_draft, render_subtitles, validate_params, ExportMode, ExportParams, ExportPlan,
     ExportPlanner, SubtitleFormat, SubtitleItem,
 };
-use splicr_intake::{build_plans, OutputPlan, PlanOptions};
+use dramaxis_intake::{build_plans, OutputPlan, PlanOptions};
 use tauri::{Emitter, Manager};
 
 /// 按模式生成导出计划。custom 模式必须携带 settings。
@@ -140,7 +140,7 @@ pub async fn export_render_video(
             .download_dir()
             .unwrap_or_else(|_| std::env::temp_dir());
         let filename = format!(
-            "splicr_{}_{}.mp4",
+            "dramaxis_{}_{}.mp4",
             preset.to_lowercase().replace([' ', '/'], "_"),
             chrono::Utc::now().timestamp_millis()
         );
@@ -154,7 +154,7 @@ pub async fn export_render_video(
     // 3. 字幕临时文件构建
     let temp_srt = if !params.subtitles.is_empty() {
         let srt_path = std::env::temp_dir().join(format!(
-            "splicr_temp_sub_{}.srt",
+            "dramaxis_temp_sub_{}.srt",
             chrono::Utc::now().timestamp_micros()
         ));
         let mut srt_content = String::new();

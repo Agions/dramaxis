@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useTauriCommand } from "./useTauriCommand";
-import * as ipcModule from "@splicr/ipc";
+import * as ipcModule from "@dramaxis/ipc";
 
-vi.mock("@splicr/ipc", () => ({
+vi.mock("@dramaxis/ipc", () => ({
   callIpc: vi.fn(),
 }));
 

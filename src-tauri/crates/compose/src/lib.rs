@@ -1,4 +1,4 @@
-//! splicr-pipeline v1.0.0  · 7 步第一人称叙述流水线
+//! dramaxis-pipeline v1.0.0  · 7 步第一人称叙述流水线
 //!
 //! ## 流水线定义 (7 步状态机)
 //! - [`STEPS`] 常量 (7 个步骤的硬编码顺序: intake ➔ detect ➔ script ➔ voice ➔ subtitle ➔ compose ➔ export)
@@ -25,8 +25,8 @@ use std::fmt;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::sync::broadcast;
 
-pub use splicr_core::domain::{Clip, MediaFile, Project, ScriptSegment, Timeline, Track};
-pub use splicr_core::error::{SplicrError, SplicrResult};
+pub use dramaxis_core::domain::{Clip, MediaFile, Project, ScriptSegment, Timeline, Track};
+pub use dramaxis_core::error::{SplicrError, SplicrResult};
 
 // ════════════════════════════════════════════════════════════════════════
 // 5 步定义

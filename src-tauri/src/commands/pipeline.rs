@@ -8,17 +8,17 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use splicr_compose::executors::PipelineDeps;
-use splicr_compose::service::{PipelineService, PipelineStatus};
-use splicr_compose::{Project, StepDef, STEPS};
-use splicr_core::error::SplicrError;
-use splicr_core::services::{ConfigService, ConfigSnapshot};
-use splicr_core::AppContext;
-use splicr_detect::Ffmpeg;
-use splicr_script::factory;
-use splicr_script::LlmProviderKind;
-use splicr_voice::engine;
-use splicr_voice::{
+use dramaxis_compose::executors::PipelineDeps;
+use dramaxis_compose::service::{PipelineService, PipelineStatus};
+use dramaxis_compose::{Project, StepDef, STEPS};
+use dramaxis_core::error::SplicrError;
+use dramaxis_core::services::{ConfigService, ConfigSnapshot};
+use dramaxis_core::AppContext;
+use dramaxis_detect::Ffmpeg;
+use dramaxis_script::factory;
+use dramaxis_script::LlmProviderKind;
+use dramaxis_voice::engine;
+use dramaxis_voice::{
     EdgeTtsOptions, GptSovitsOptions, MimoTtsOptions, OpenAiTtsOptions, TtsEngineConfig,
     TtsProviderKind,
 };
@@ -193,7 +193,7 @@ fn build_deps(
         ffmpeg,
         workdir: workdir
             .map(PathBuf::from)
-            .unwrap_or_else(|| std::env::temp_dir().join("splicr-workdir")),
+            .unwrap_or_else(|| std::env::temp_dir().join("dramaxis-workdir")),
     })
 }
 
