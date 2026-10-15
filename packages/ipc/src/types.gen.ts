@@ -592,6 +592,8 @@ export interface ScriptSegment {
   end_seconds?: number | null;
   is_hook?: boolean | null;
   hook_style?: string | null;
+  visual_cut_ref?: string | null;
+  score?: number | null;
 }
 
 // Rust 端 ExportRecord (pub struct)
@@ -617,7 +619,9 @@ export type PlatformId =
 // Rust 端 TrackKind (pub enum, rename_all = "kebab-case")
 export type TrackKind =
   | "video"
-  | "audio"
+  | "voice"
+  | "ambient"
+  | "bgm"
   | "subtitle";
 
 // Rust 端 ExportStrategy (pub enum, rename_all = "kebab-case")

@@ -72,7 +72,7 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
       });
 
       const draftResult = await exportIpc.capcutDraft({
-        projectName: currentProject?.project?.name ?? "splicr_project",
+        projectName: currentProject?.project?.name ?? "dramaxis_project",
         videoPath: mediaFile ?? null,
         videoDurationSeconds:
           currentProject?.project?.media_files?.[0]?.duration_seconds ?? 60,

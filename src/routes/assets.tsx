@@ -169,11 +169,13 @@ function AssetsPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {recents.map((path) => {
+                const segments = path.split(/[/\\]/);
+                let last = segments.pop() || path;
+                if (last === "project.dramaxis.json" && segments.length > 0) {
+                  last = segments.pop() || last;
+                }
                 const name =
-                  path
-                    .split(/[/\\]/)
-                    .pop()
-                    ?.replace(/\.splicr(\.json)?$/, "") ?? path;
+                  last.replace(/\.(dramaxis|splicr)(\.json)?$/, "") || last;
                 return (
                   <button
                     key={path}

@@ -72,10 +72,10 @@ function HomePage() {
             <div className="space-y-2.5">
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-[11px] font-bold text-gold shadow-[0_0_12px_rgba(245,200,66,0.15)]">
                 <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
-                <span>v1.0.1 · Rust Native 6-Agent 智能体协作中枢</span>
+                <span>v1.1.0 · Rust Native 6-Agent 智能体协作中枢</span>
               </div>
               <h1 className="text-3xl md:text-4xl font-black tracking-tight text-text-primary flex flex-wrap items-center gap-3">
-                <span>splicr 叙影</span>
+                <span>Dramaxis 剧枢</span>
                 <span className="bg-gradient-to-r from-gold via-gold-hover to-amber bg-clip-text text-transparent">
                   电影级短剧 AI 叙事工厂
                 </span>
@@ -238,11 +238,13 @@ function HomePage() {
           ) : hasProjects ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
               {recentPaths.slice(0, 6).map((p, idx) => {
+                const segments = p.split(/[/\\]/);
+                let last = segments.pop() || p;
+                if (last === "project.dramaxis.json" && segments.length > 0) {
+                  last = segments.pop() || last;
+                }
                 const name =
-                  p
-                    .split(/[/\\]/)
-                    .pop()
-                    ?.replace(/\.splicr(\.json)?$/, "") ?? p;
+                  last.replace(/\.(dramaxis|splicr)(\.json)?$/, "") || last;
                 return (
                   <div
                     key={p}

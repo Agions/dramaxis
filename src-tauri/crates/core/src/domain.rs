@@ -139,7 +139,42 @@ pub struct Timeline {
     pub tracks: Vec<Track>,
 }
 
-/// 时间线轨道 (单视频轨 / 多音频轨 / 字幕轨)。
+impl Timeline {
+    /// 构造标准 5 轨时间线模板 (画面/旁白/环境声/BGM/字幕)
+    pub fn default_5tracks() -> Self {
+        Self {
+            tracks: vec![
+                Track {
+                    id: "track_video".into(),
+                    kind: TrackKind::Video,
+                    clips: vec![],
+                },
+                Track {
+                    id: "track_voice".into(),
+                    kind: TrackKind::Voice,
+                    clips: vec![],
+                },
+                Track {
+                    id: "track_ambient".into(),
+                    kind: TrackKind::Ambient,
+                    clips: vec![],
+                },
+                Track {
+                    id: "track_bgm".into(),
+                    kind: TrackKind::Bgm,
+                    clips: vec![],
+                },
+                Track {
+                    id: "track_sub".into(),
+                    kind: TrackKind::Subtitle,
+                    clips: vec![],
+                },
+            ],
+        }
+    }
+}
+
+/// 时间线轨道 (5 轨原生支持: 画面 / 旁白 / 环境声 / BGM / 字幕)。
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Track {
     pub id: String,
@@ -147,13 +182,17 @@ pub struct Track {
     pub clips: Vec<Clip>,
 }
 
-/// 轨道类型。
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+/// 轨道类型 (5 轨时间线 + 兼容通用 Audio)。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "kebab-case")]
 pub enum TrackKind {
     Video,
-    Audio,
+    Voice,
+    Ambient,
+    Bgm,
     Subtitle,
+    #[serde(alias = "audio")]
+    Audio,
 }
 
 /// 时间线片段。
@@ -167,7 +206,7 @@ pub struct Clip {
     pub volume: Option<f32>, // 仅 audio 有意义
 }
 
-/// 第一人称叙述脚本的一段 (含黄金前3秒爆款钩子支持)。
+/// 第一人称叙述脚本的一段 (含黄金前3秒爆款钩子支持与画面对齐评定)。
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ScriptSegment {
     pub id: String,
@@ -180,6 +219,27 @@ pub struct ScriptSegment {
     pub is_hook: Option<bool>,
     #[serde(default)]
     pub hook_style: Option<String>,
+    #[serde(default)]
+    pub visual_cut_ref: Option<String>,
+    #[serde(default)]
+    pub score: Option<f32>,
+}
+
+impl Default for ScriptSegment {
+    fn default() -> Self {
+        Self {
+            id: format!("seg-{}", uuid_v4_like()),
+            step_index: 0,
+            text: String::new(),
+            emotion: None,
+            start_seconds: None,
+            end_seconds: None,
+            is_hook: None,
+            hook_style: None,
+            visual_cut_ref: None,
+            score: None,
+        }
+    }
 }
 
 /// 一次导出记录。
@@ -283,5 +343,24 @@ mod tests {
             assert!(!p.label().is_empty());
             assert!(!p.default_resolution().is_empty());
         }
+    }
+
+    #[test]
+    fn timeline_5tracks_and_track_kinds() {
+        let tl = Timeline::default_5tracks();
+        assert_eq!(tl.tracks.len(), 5);
+        assert_eq!(tl.tracks[0].kind, TrackKind::Video);
+        assert_eq!(tl.tracks[1].kind, TrackKind::Voice);
+        assert_eq!(tl.tracks[2].kind, TrackKind::Ambient);
+        assert_eq!(tl.tracks[3].kind, TrackKind::Bgm);
+        assert_eq!(tl.tracks[4].kind, TrackKind::Subtitle);
+
+        // 验证兼容旧格式 "audio"
+        let legacy_audio: TrackKind = serde_json::from_str("\"audio\"").unwrap();
+        assert_eq!(legacy_audio, TrackKind::Audio);
+
+        let json = serde_json::to_string(&tl).unwrap();
+        let back: Timeline = serde_json::from_str(&json).unwrap();
+        assert_eq!(tl, back);
     }
 }

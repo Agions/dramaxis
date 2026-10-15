@@ -158,6 +158,8 @@ impl StepExecutor for SceneSplitStep {
                 end_seconds: Some(w[1]),
                 is_hook: None,
                 hook_style: None,
+                visual_cut_ref: Some(format!("scene-{:02}", i)),
+                score: None,
             })
             .collect();
         Ok(())
@@ -276,6 +278,8 @@ impl StepExecutor for ScriptGenStep {
                     end_seconds: Some(timing.map(|t| t.1).unwrap_or(60.0)),
                     is_hook: None,
                     hook_style: None,
+                    visual_cut_ref: None,
+                    score: None,
                 }];
             }
         }

@@ -12,8 +12,8 @@ import { useUiStore, useSettingsStore, t } from "@dramaxis/core";
 import { themeIpc } from "@dramaxis/ipc";
 import { toast } from "sonner";
 
-// splicr Logo 图标 SVG（钢笔笔尖 + 播放三角，内联）
-function SplicrIcon({ size = 28 }: { size?: number }) {
+// Dramaxis Logo 图标 SVG（钢笔笔尖 + 播放三角，内联）
+function DramaxisIcon({ size = 28 }: { size?: number }) {
   return (
     <svg
       width={size}
@@ -21,7 +21,7 @@ function SplicrIcon({ size = 28 }: { size?: number }) {
       viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="splicr Logo"
+      aria-label="Dramaxis Logo"
     >
       <defs>
         <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -69,7 +69,7 @@ export function TopBar() {
       {/* 左侧：Logo + 品牌名 */}
       <div className="flex items-center gap-2.5 [app-region:no-drag]">
         <div className="flex h-[34px] w-[34px] items-center justify-center rounded-lg border border-border bg-surface shadow-[0_0_12px_var(--color-gold-glow)]">
-          <SplicrIcon size={22} />
+          <DramaxisIcon size={22} />
         </div>
         <div className="leading-tight">
           <div className="text-base font-bold tracking-wide text-gold">

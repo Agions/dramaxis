@@ -150,8 +150,8 @@ mod tests {
     #[tokio::test]
     async fn project_service_recent_works() {
         let dir = std::env::temp_dir();
-        let path_a = dir.join("test_splicr_a.splicr");
-        let path_b = dir.join("test_splicr_b.splicr");
+        let path_a = dir.join("test_dramaxis_a.dramaxis");
+        let path_b = dir.join("test_dramaxis_b.dramaxis");
         let _ = std::fs::File::create(&path_a);
         let _ = std::fs::File::create(&path_b);
 

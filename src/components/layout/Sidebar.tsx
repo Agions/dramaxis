@@ -45,7 +45,7 @@ export function Sidebar({ currentPath }: SidebarProps) {
   return (
     <aside
       className="flex w-16 flex-col items-center justify-between border-r border-border bg-bg py-3 flex-shrink-0 z-30 select-none transition-colors duration-200"
-      aria-label="splicr 主导航"
+      aria-label="Dramaxis 主导航"
     >
       {/* 1. 顶部 Brand Logo */}
       <div className="flex flex-col items-center space-y-4 w-full">
@@ -53,9 +53,9 @@ export function Sidebar({ currentPath }: SidebarProps) {
           type="button"
           onClick={() => void navigate({ to: "/" })}
           className="group relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-gold to-amber text-zinc-950 font-black text-xl shadow-[0_0_16px_var(--color-gold-glow)] transition-transform duration-300 hover:scale-105"
-          title="splicr 叙影 AI 视频解说"
+          title="Dramaxis 剧枢 AI 视频解说与短剧创作平台"
         >
-          S
+          D
           <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75" />
             <span className="relative inline-flex rounded-full h-3 w-3 bg-gold" />
