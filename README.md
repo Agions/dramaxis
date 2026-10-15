@@ -8,17 +8,17 @@
 
 > **电影级多智能体影视叙事与智能解说创作平台 · 本地优先 · 6 大智能体编导群 · 4 步工坊向导 · 5 轨毫秒级剪辑 · 剪映/CapCut 草稿深度互通 · 8 大平台消重发布矩阵**
 
-[![Version](https://img.shields.io/badge/Version-v1.1.0-F5C842?style=flat-square&logo=git&logoColor=1A1A20)](https://github.com/Agions/splicr/releases)
-[![Merged](https://img.shields.io/badge/Merger-Fablr%20%2B%20splicr-10B981?style=flat-square&logo=git)](https://github.com/Agions/splicr)
+[![Version](https://img.shields.io/badge/Version-v1.1.0-F5C842?style=flat-square&logo=git&logoColor=1A1A20)](https://github.com/Agions/dramaxis/releases)
+[![Merged](https://img.shields.io/badge/Merger-Fablr%20%2B%20splicr-10B981?style=flat-square&logo=git)](https://github.com/Agions/dramaxis)
 [![Tauri](https://img.shields.io/badge/Tauri-v2.0-7C3AED?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app)
 [![Rust](https://img.shields.io/badge/Rust-1.85%2B-F97316?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![React](https://img.shields.io/badge/React-19.0-06B6D4?style=flat-square&logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/License-MIT-10B981?style=flat-square&logo=open-source-initiative&logoColor=white)](LICENSE)  
-[![Multi-Agent](https://img.shields.io/badge/Multi--Agent-6%20Specialists-D97706?style=flat-square&logo=openai)](https://github.com/Agions/splicr)
-[![LLM](https://img.shields.io/badge/LLM-11%20Providers-F5C842?style=flat-square&logo=openai&logoColor=1A1A20)](https://github.com/Agions/splicr)
-[![TTS](https://img.shields.io/badge/TTS-Zero--shot%20Clone-22C55E?style=flat-square&logo=microphone)](https://github.com/Agions/splicr)
-[![Export](https://img.shields.io/badge/Export-CapCut%20Draft-EC4899?style=flat-square&logo=video)](https://github.com/Agions/splicr)
+[![Multi-Agent](https://img.shields.io/badge/Multi--Agent-6%20Specialists-D97706?style=flat-square&logo=openai)](https://github.com/Agions/dramaxis)
+[![LLM](https://img.shields.io/badge/LLM-11%20Providers-F5C842?style=flat-square&logo=openai&logoColor=1A1A20)](https://github.com/Agions/dramaxis)
+[![TTS](https://img.shields.io/badge/TTS-Zero--shot%20Clone-22C55E?style=flat-square&logo=microphone)](https://github.com/Agions/dramaxis)
+[![Export](https://img.shields.io/badge/Export-CapCut%20Draft-EC4899?style=flat-square&logo=video)](https://github.com/Agions/dramaxis)
 
 </div>
 
@@ -139,7 +139,7 @@ graph TD
 ## 🏛️ 项目结构与模块划分
 
 ```text
-splicr/
+dramaxis/
 ├── src/                  # React 19 + TypeScript 三栏专业工作台
 ├── packages/             # 前端 Monorepo 模块 (@splicr/ipc, @splicr/core, @splicr/ui, @splicr/utils)
 ├── public/               # 运行时静态资产与品牌识别 (public/branding/)
@@ -166,8 +166,8 @@ splicr/
 
 ```bash
 # 1. 克隆代码仓库
-git clone https://github.com/Agions/splicr.git
-cd splicr
+git clone https://github.com/Agions/dramaxis.git
+cd dramaxis
 
 # 2. 安装前端依赖
 pnpm install
@@ -181,7 +181,7 @@ pnpm test
 ```
 
 > **💡 macOS 安装提示**：若打开下载的安装包时提示 `“已损坏，无法打开”`，系 macOS Gatekeeper 安全机制对未签名文件的隔离标记，请在终端执行：  
-> `sudo xattr -rd com.apple.quarantine /Applications/splicr.app` 即可正常启动。
+> `sudo xattr -rd com.apple.quarantine /Applications/Dramaxis.app` 即可正常启动。
 
 ---
 
