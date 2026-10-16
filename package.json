@@ -16,6 +16,8 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "docs:pdf": "python3 scripts/generate_manual_pdf.py",
+    "docs:docx": "python3 scripts/generate_manual_docx.py",
+    "docs:all": "python3 scripts/generate_manual_pdf.py && python3 scripts/generate_manual_docx.py",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",

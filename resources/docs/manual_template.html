@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <title>Splicr 用户使用手册</title>
+    <title>Dramaxis (剧枢) 用户使用手册</title>
     <style>
       @page {
         size: A4;
@@ -369,20 +369,20 @@
     <!-- 封面 -->
     <div class="cover">
       <div class="cover-header">
-        <div class="cover-logo">S</div>
-        <div class="cover-brand">SPLICR</div>
+        <div class="cover-logo">D</div>
+        <div class="cover-brand">DRAMAXIS 剧枢</div>
       </div>
       <div class="cover-body">
-        <div class="cover-badge">v1.0.1 官方正式版指南</div>
-        <div class="cover-title">用户使用手册与<br />多智能体创作指南</div>
+        <div class="cover-badge">v1.1.0 官方正式版指南</div>
+        <div class="cover-title">用户使用手册与<br />6-Agent 协同导演指南</div>
         <div class="cover-subtitle">
-          基于 Tauri 2.0 与 Rust Native 原生引擎的 AI 影视解说工业化生产桌面平台
+          基于 Tauri 2.0 与 Rust Native 原生微服务群的电影级多智能体影视叙事与智能解说平台
         </div>
       </div>
       <div class="cover-footer">
-        <div>发布主体：<span>Splicr Architecture Team</span></div>
+        <div>发布主体：<span>Dramaxis Architecture Team (Agions)</span></div>
         <div>适用平台：<span>macOS / Windows / Linux</span></div>
-        <div>更新日期：<span>2026 年 9 月</span></div>
+        <div>更新日期：<span>2026 年 10 月</span></div>
       </div>
     </div>
 
@@ -390,16 +390,16 @@
     <div class="page">
       <h1>1. 系统概述与前置环境配置</h1>
       <p>
-        <strong>Splicr</strong>
-        是一套专为影视解说、短视频二创与纪录片解说量身打造的<strong>桌面级工业化多智能体创作引擎</strong>。本软件融合了前沿的
-        LLM 剧情推理、48kHz
-        高清神经配音、自研卡拉OK动态字幕渲染以及剪映（CapCut）草稿工程一键互通技术。
+        <strong>Dramaxis (剧枢)</strong>
+        是一套专为影视解说、短视频二创与微短剧剪辑量身打造的<strong>桌面级工业化 6-Agent 智能导演系统</strong>。本平台深度融合了
+        LLM 剧情编剧推理、48kHz
+        高清神经配音、5 轨毫秒级对齐时间轴、四道质量闸门质检以及剪映（CapCut）草稿工程一键互通技术。
       </p>
 
       <div class="callout">
         <div class="callout-title">核心设计理念</div>
-        Splicr 坚持“单一真相源”、“本地原生高性能”与“创作者断点协同
-        (HITL)”原则。所有视频切片与音频合成均在本地高效处理，配置文件均落盘至本地系统原生目录，保障创作数据的绝对隐私与资产安全。
+        Dramaxis 坚持“本地优先 (Local-First)”、“多智能体协同自治”与“创作者断点协同
+        (HITL)”原则。所有工程隔离在本地独立沙箱 (~/.dramaxis/projects/) 中，素材零拷贝软链入库，保障创作数据的绝对隐私与资产安全。
       </div>
 
       <h2>1.1 操作系统运行要求</h2>
@@ -432,7 +432,7 @@
 
       <h2>1.2 必备核心外部依赖：FFmpeg 5.0+</h2>
       <p>
-        Splicr 的音视频探针分析、智能场景切片提取与多轨流式封装深度依托系统中的
+        Dramaxis 的音视频探针分析、智能场景切片提取与多轨流式封装深度依托系统中的
         <code>ffmpeg</code> 与
         <code>ffprobe</code> 二进制工具。初次使用前请确保已完成安装：
       </p>
@@ -451,9 +451,9 @@ ffmpeg -version</code></pre>
     <div class="page">
       <h1>2. 核心创作流水线与五步上手实操</h1>
       <p>
-        Splicr 提供标准化的 7
-        步多智能体生产流水线，使一部原本需要半天的影视解说作品在 5
-        分钟内高质量完成初稿编排与剪辑对齐。
+        Dramaxis 提供标准化的 6-Agent
+        协同导演流水线，使一部原本需要半天的影视解说作品在 5
+        分钟内高质量完成初稿编排与 5 轨毫秒级剪辑对齐。
       </p>
 
       <div class="steps-container">
@@ -557,7 +557,7 @@ ffmpeg -version</code></pre>
       </table>
 
       <h2>3.2 语音合成引擎配置 (TTS Engines)</h2>
-      <p>Splicr 支持免费与商业顶尖音色的灵活搭配：</p>
+      <p>Dramaxis 支持免费与商业顶尖音色的灵活搭配：</p>
       <ul
         style="
           margin-left: 20px;
@@ -584,9 +584,9 @@ ffmpeg -version</code></pre>
       <h2>3.3 剪映草稿互通技术规范</h2>
       <div class="callout callout-info">
         <div class="callout-title">跨软件零损耗互通</div>
-        Splicr 生成的草稿直接符合剪映专业版的
+        Dramaxis 生成的草稿直接符合剪映专业版的
         <code>draft_content.json</code>
-        协议标准。包含独立的视频轨道（切片片段）、解说主音频轨道与字幕轨道。打开剪映客户端后，草稿箱将直接显示工程缩略图，创作者可随时在剪映中套用花字滤镜、特效贴纸或混音推子。
+        协议标准。包含完整的 5 轨工程（切片片段、独白音频、环境音、配乐与字幕）。打开剪映客户端后，草稿箱将直接显示工程缩略图，创作者可随时在剪映中套用花字滤镜、特效贴纸或混音推子。
       </div>
     </div>
 
@@ -649,13 +649,13 @@ ffmpeg -version</code></pre>
         <strong>排查方案</strong>：请确认电脑已安装 FFmpeg 并且
         <code>ffmpeg</code> 位于全局环境变量
         <code>PATH</code> 中。安装完成后必须<strong
-          >完全退出并重新启动 Splicr</strong
+          >完全退出并重新启动 Dramaxis</strong
         >，以使系统环境变量生效。
       </p>
 
       <h3>Q2: 导出剪映草稿后，剪映打开提示“媒体文件丢失”？</h3>
       <p>
-        <strong>排查方案</strong>：Splicr
+        <strong>排查方案</strong>：Dramaxis
         为保障处理速度并节省磁盘空间，对原始素材采用路径软链接引用。导出剪映草稿后，请切勿移动、重命名或删除原视频文件。
       </p>
 
@@ -676,7 +676,7 @@ ffmpeg -version</code></pre>
           font-size: 8.5pt;
         "
       >
-        Splicr v1.0.1 工业级影视解说引擎 · 版权所有 © 2026 Agions ·
+        Dramaxis (剧枢) v1.1.0 电影级多智能体影视叙事平台 · 版权所有 © 2026 Agions ·
         祝您创作丰收！
       </div>
     </div>
