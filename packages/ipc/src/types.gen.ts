@@ -468,6 +468,16 @@ export interface BreakpointRequest {
   options: string[];
 }
 
+// Rust 端 QualityReport (pub struct, rename_all = "camelCase")
+export interface QualityReport {
+  hookScore: number;
+  syncToleranceMs: number;
+  pacingScore: number;
+  compliancePassed: boolean;
+  overallScore: number;
+  suggestions: string[];
+}
+
 // Rust 端 AgentRole (pub enum, rename_all = "snake_case")
 export type AgentRole =
   | "director"
@@ -493,6 +503,7 @@ export type AgentEventPayload =
   | "action_executed"
   | "breakpoint_required"
   | "step_completed"
+  | "quality_gate_evaluated"
   | "workflow_completed"
   | "error";
 

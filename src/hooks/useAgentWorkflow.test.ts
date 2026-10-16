@@ -98,8 +98,19 @@ describe("useAgentWorkflow", () => {
           { text: "台词片段一", start: 0, end: 3.5 },
           { text: "台词片段二", start: 3.5, end: 7.2 },
         ]),
+        quality_score: "92.5",
+        quality_report_json: JSON.stringify({
+          hookScore: 92.0,
+          syncToleranceMs: 42.5,
+          pacingScore: 94.0,
+          compliancePassed: true,
+          overallScore: 92.5,
+          suggestions: [],
+        }),
       },
     });
+
+    const onQuality = vi.fn();
 
     const { result } = renderHook(() =>
       useAgentWorkflow({
@@ -107,6 +118,7 @@ describe("useAgentWorkflow", () => {
         onScriptGenerated: onScript,
         onVoiceGenerated: onVoice,
         onSubtitlesGenerated: onSubtitles,
+        onQualityEvaluated: onQuality,
         onWorkflowComplete: onComplete,
       }),
     );
@@ -130,6 +142,12 @@ describe("useAgentWorkflow", () => {
       expect.arrayContaining([
         expect.objectContaining({ id: "sub-1", text: "台词片段一" }),
       ]),
+    );
+    expect(onQuality).toHaveBeenCalledWith(
+      expect.objectContaining({ overallScore: 92.5, hookScore: 92.0 }),
+    );
+    expect(result.current.qualityReport).toEqual(
+      expect.objectContaining({ overallScore: 92.5 }),
     );
     expect(onComplete).toHaveBeenCalled();
     expect(result.current.isAgentRunning).toBe(false);

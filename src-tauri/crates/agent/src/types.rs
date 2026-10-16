@@ -41,6 +41,17 @@ pub struct BreakpointRequest {
     pub options: Vec<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QualityReport {
+    pub hook_score: f32,
+    pub sync_tolerance_ms: f32,
+    pub pacing_score: f32,
+    pub compliance_passed: bool,
+    pub overall_score: f32,
+    pub suggestions: Vec<String>,
+}
+
 /// 实时事件总线载荷 (Tauri Event: `agent://event`)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data", rename_all = "snake_case")]
@@ -65,6 +76,7 @@ pub enum AgentEventPayload {
         role: AgentRole,
         summary: String,
     },
+    QualityGateEvaluated(QualityReport),
     WorkflowCompleted {
         total_steps: usize,
         duration_ms: u64,

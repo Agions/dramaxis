@@ -13,6 +13,7 @@ import {
   agentIpc,
   type AgentMessage,
   type BreakpointRequest,
+  type QualityReport,
   type Project,
 } from "@dramaxis/ipc";
 import { useTauriEvent } from "./useTauriEvent";
@@ -36,6 +37,7 @@ export interface UseAgentWorkflowOptions {
   onSubtitlesGenerated?: (
     subtitles: { id: string; text: string; start: number; duration: number }[],
   ) => void;
+  onQualityEvaluated?: (report: QualityReport) => void;
 }
 
 export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
@@ -44,6 +46,7 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1);
   const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
   const [breakpoint, setBreakpoint] = useState<BreakpointRequest | null>(null);
+  const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
 
   const pausedStepRef = useRef<number>(0);
   const isMountedRef = useRef(true);
@@ -58,11 +61,12 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
   // 监听 Tauri 后端推送的实时 Agent 事件
   useTauriEvent<{
     type:
-      "step_started" | "breakpoint_required" | "workflow_completed" | "error";
-    data?: {
-      step_idx?: number;
-      message?: string;
-    } & BreakpointRequest;
+      | "step_started"
+      | "breakpoint_required"
+      | "workflow_completed"
+      | "quality_gate_evaluated"
+      | "error";
+    data?: any;
   }>("agent://event", (e) => {
     if (!isMountedRef.current) return;
     const payload = e.payload;
@@ -74,6 +78,12 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
       options?.onStepChange?.(idx);
     } else if (payload.type === "breakpoint_required") {
       setBreakpoint(payload.data ?? null);
+    } else if (payload.type === "quality_gate_evaluated") {
+      if (payload.data) {
+        const report = payload.data as QualityReport;
+        setQualityReport(report);
+        options?.onQualityEvaluated?.(report);
+      }
     } else if (payload.type === "workflow_completed") {
       setIsAgentRunning(false);
       setCurrentStepIndex(6);
@@ -175,6 +185,17 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
                 console.error("解析 subtitles_json 失败", e);
               }
             }
+
+            // Step 5: 终审质量守门员完成
+            if (i === 5 && mem.quality_report_json) {
+              try {
+                const report: QualityReport = JSON.parse(mem.quality_report_json);
+                setQualityReport(report);
+                options?.onQualityEvaluated?.(report);
+              } catch (e) {
+                console.error("解析 quality_report_json 失败", e);
+              }
+            }
           }
 
           if (res) {
@@ -245,6 +266,7 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
     setCurrentStepIndex(-1);
     setBreakpoint(null);
     setAgentMessages([]);
+    setQualityReport(null);
     pausedStepRef.current = 0;
   }, []);
 
@@ -255,6 +277,7 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
     currentStepIndex,
     agentMessages,
     breakpoint,
+    qualityReport,
     startWorkflow,
     approveBreakpoint,
     resetWorkflow,
