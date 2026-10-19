@@ -140,3 +140,14 @@ pub async fn script_generate(
         estimated_duration_sec,
     })
 }
+
+use dramaxis_script::HookCandidate;
+
+/// 启发式生成 4 种不同公式的 3 秒 Hook 候选文案 (离线高保真兜底 + 算法赋能)
+#[tauri::command]
+pub async fn script_generate_hooks(
+    synopsis: String,
+) -> Result<Vec<HookCandidate>, SplicrError> {
+    Ok(dramaxis_script::generate_heuristic_hooks(&synopsis))
+}
+

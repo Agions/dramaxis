@@ -185,7 +185,9 @@ describe("ExportStudioPanel", () => {
     fireEvent.change(slider, { target: { value: "1.06" } });
     expect(handleZoom).toHaveBeenCalledWith(1.06);
 
-    const checkbox = screen.getByRole("checkbox");
+    const checkbox = screen.getByRole("checkbox", {
+      name: "9:16 竖屏高斯模糊环境底衬",
+    });
     fireEvent.click(checkbox);
     expect(handleBlur).toHaveBeenCalledWith(true);
   });

@@ -124,6 +124,7 @@ pub fn run() {
             commands::voice::voice_preview,
             commands::voice::voice_synthesize,
             commands::script::script_generate,
+            commands::script::script_generate_hooks,
             commands::detect::detect_scenes,
             commands::detect::detect_hardware_acceleration,
             commands::subtitle::subtitle_generate,

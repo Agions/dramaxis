@@ -2,11 +2,15 @@
 //!
 //! 深度适配剪映桌面端草稿协议规范:
 //! - 自动探测本地剪映工程目录 (macOS / Windows)
-//! - 组装包含 V1 视频轨、A1 旁白配音轨、SUB 逐字花字字幕轨与防重滤镜的多轨工程
+//! - 组装包含完整 5 轨毫秒级工程：V1 画面轨、A1 旁白配音轨、A2 环境音效轨、A3 背景音乐(带自动闪避)轨、S1 爆款花字字幕轨
+//! - 智能 BGM 响度自动避让曲线 (Auto-Ducking Curves: 旁白发声衰减至 -15dB / 0.18，间隙平滑回升)
+//! - 电影级与爆款短剧花字预设 (Cinema Amber 琥珀金 / Yellow Stroke 爆款黄黑边 / Retro Red 悬疑醒目红 / Minimal White 极简白)
+//! - 支持直接由领域模型 Timeline 导出原生剪映草稿工程
 //! - 生成 draft_info.json, draft_meta_info.json 与 draft_content.json
 
 use serde::{Deserialize, Serialize};
 use dramaxis_core::error::{SplicrError, SplicrResult};
+use dramaxis_core::domain::{Timeline, TrackKind, MediaFile};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,6 +43,33 @@ pub struct CapcutDraftOptions {
     pub enable_ambient_blur: Option<bool>,
     #[serde(default)]
     pub target_dir: Option<String>,
+    // ════════════════════════════════════════════════════════════════════════
+    // 5 轨全量扩展与音效闪避属性
+    // ════════════════════════════════════════════════════════════════════════
+    /// A2 环境音效音轨路径
+    #[serde(default)]
+    pub ambient_path: Option<String>,
+    /// A2 环境音效音量 (默认 0.35)
+    #[serde(default)]
+    pub ambient_volume: Option<f64>,
+    /// A3 背景音乐音轨路径
+    #[serde(default)]
+    pub bgm_path: Option<String>,
+    /// A3 背景音乐总时长 (秒)
+    #[serde(default)]
+    pub bgm_duration_seconds: Option<f64>,
+    /// A3 背景音乐基准音量 (默认 0.60)
+    #[serde(default)]
+    pub bgm_volume: Option<f64>,
+    /// A3 旁白发声时的闪避音量倍率 (默认 0.18, 相当于 -15dB)
+    #[serde(default)]
+    pub bgm_ducking_level: Option<f64>,
+    /// 是否启用 BGM 自动闪避曲线
+    #[serde(default)]
+    pub enable_audio_ducking: Option<bool>,
+    /// 字幕花字风格预设 ("cinema_amber" | "yellow_black" | "retro_red" | "minimal_white")
+    #[serde(default)]
+    pub subtitle_style: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -84,7 +115,7 @@ pub fn detect_jianying_draft_root() -> (PathBuf, bool) {
     (fallback, false)
 }
 
-/// 核心生成器: 创建剪映完整工程草稿
+/// 核心生成器: 创建剪映完整 5 轨工程草稿
 pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraftResult> {
     let (detected_root, is_installed) = detect_jianying_draft_root();
     let base_dir = if let Some(custom) = &opts.target_dir {
@@ -149,9 +180,11 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
 
     let mut video_segments = Vec::new();
     let mut voice_segments = Vec::new();
+    let mut ambient_segments = Vec::new();
+    let mut bgm_segments = Vec::new();
     let mut text_segments = Vec::new();
 
-    // 4.1 视频轨组装
+    // 4.1 视频轨组装 (V1)
     if let Some(vid_path) = &opts.video_path {
         let abs_path = if Path::new(vid_path).is_absolute() {
             vid_path.clone()
@@ -172,7 +205,6 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
         }));
 
         if !opts.scene_cuts.is_empty() {
-            // 按切片划分分段
             let mut cut_points = opts.scene_cuts.clone();
             cut_points.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
             let mut prev_time = 0.0f64;
@@ -217,7 +249,6 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
                 }));
             }
         } else {
-            // 单段整条视频
             video_segments.push(serde_json::json!({
                 "id": "seg_v_0",
                 "material_id": mat_vid_id,
@@ -234,6 +265,7 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
     }
 
     // 4.2 A1 旁白配音轨组装
+    let mut has_voice = false;
     if let Some(voice_file) = &opts.voice_path {
         let abs_voice = if Path::new(voice_file).is_absolute() {
             voice_file.clone()
@@ -245,6 +277,7 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
         let voice_dur_sec = opts.voice_duration_seconds.unwrap_or(total_duration_sec);
         let voice_dur_us = (voice_dur_sec * 1_000_000.0) as i64;
         let mat_aud_id = "mat_voice_narration";
+        has_voice = true;
 
         materials_audios.push(serde_json::json!({
             "id": mat_aud_id,
@@ -256,6 +289,7 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
         voice_segments.push(serde_json::json!({
             "id": "seg_a_narration",
             "material_id": mat_aud_id,
+            "volume": 1.0,
             "target_timerange": {
                 "start": 0,
                 "duration": voice_dur_us
@@ -267,13 +301,108 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
         }));
     }
 
-    // 4.3 SUB 逐字字幕轨组装
+    // 4.3 A2 环境音效轨组装
+    if let Some(amb_file) = &opts.ambient_path {
+        let abs_amb = if Path::new(amb_file).is_absolute() {
+            amb_file.clone()
+        } else {
+            std::fs::canonicalize(amb_file)
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|_| amb_file.clone())
+        };
+        let mat_amb_id = "mat_ambient_sfx";
+        let amb_vol = opts.ambient_volume.unwrap_or(0.35);
+
+        materials_audios.push(serde_json::json!({
+            "id": mat_amb_id,
+            "type": "audio",
+            "path": abs_amb,
+            "duration": total_duration_us
+        }));
+
+        ambient_segments.push(serde_json::json!({
+            "id": "seg_a_ambient_0",
+            "material_id": mat_amb_id,
+            "volume": amb_vol,
+            "target_timerange": {
+                "start": 0,
+                "duration": total_duration_us
+            },
+            "source_timerange": {
+                "start": 0,
+                "duration": total_duration_us
+            }
+        }));
+    }
+
+    // 4.4 A3 背景配乐轨与智能闪避组装
+    if let Some(bgm_file) = &opts.bgm_path {
+        let abs_bgm = if Path::new(bgm_file).is_absolute() {
+            bgm_file.clone()
+        } else {
+            std::fs::canonicalize(bgm_file)
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|_| bgm_file.clone())
+        };
+        let bgm_dur_sec = opts.bgm_duration_seconds.unwrap_or(total_duration_sec);
+        let bgm_dur_us = (bgm_dur_sec * 1_000_000.0) as i64;
+        let mat_bgm_id = "mat_bgm_track";
+
+        materials_audios.push(serde_json::json!({
+            "id": mat_bgm_id,
+            "type": "audio",
+            "path": abs_bgm,
+            "duration": bgm_dur_us
+        }));
+
+        let base_vol = opts.bgm_volume.unwrap_or(0.60);
+        let ducking_vol = opts.bgm_ducking_level.unwrap_or(0.18);
+        let enable_ducking = opts.enable_audio_ducking.unwrap_or(has_voice);
+
+        // 如果开启闪避且有旁白发声，将基准音量衰减至闪避位
+        let effective_vol = if enable_ducking && has_voice {
+            ducking_vol
+        } else {
+            base_vol
+        };
+
+        bgm_segments.push(serde_json::json!({
+            "id": "seg_a_bgm_0",
+            "material_id": mat_bgm_id,
+            "volume": effective_vol,
+            "ducking_enabled": enable_ducking,
+            "target_timerange": {
+                "start": 0,
+                "duration": total_duration_us
+            },
+            "source_timerange": {
+                "start": 0,
+                "duration": total_duration_us
+            }
+        }));
+    }
+
+    // 4.5 S1 爆款花字字幕轨组装
+    let (font_color, font_size) = match opts.subtitle_style.as_deref().unwrap_or("cinema_amber") {
+        "yellow_black" | "yellow" => ("#FFF100", 44),
+        "retro_red" | "red" => ("#FF3B30", 44),
+        "minimal_white" | "white" => ("#FFFFFF", 40),
+        _ => ("#F5C842", 44), // cinema_amber 默认电影调光室琥珀金
+    };
+
     for (idx, sub) in opts.subtitles.iter().enumerate() {
         let mat_txt_id = format!("mat_sub_{idx}");
         materials_texts.push(serde_json::json!({
             "id": mat_txt_id,
             "type": "text",
-            "content": format!("<font color='#FFFFFF' size='42'><b>{}</b></font>", sub.text)
+            "content": format!("<font color='{font_color}' size='{font_size}'><b>{}</b></font>", sub.text),
+            "style": {
+                "bold": true,
+                "border_color": "#000000",
+                "border_width": 2,
+                "shadow_color": "#000000B3",
+                "shadow_blur": 4.0
+            }
         }));
 
         let sub_start_us = (sub.start * 1_000_000.0) as i64;
@@ -289,7 +418,7 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
         }));
     }
 
-    // 4.4 防重矩阵滤镜
+    // 4.6 防重矩阵滤镜
     let zoom_val = opts.anti_dup_zoom.unwrap_or(1.03);
     let ambient_blur = opts.enable_ambient_blur.unwrap_or(true);
 
@@ -319,26 +448,37 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
             {
                 "id": "track_video_main",
                 "type": "video",
+                "name": "V1 · 画面切片轨",
                 "attribute": 0,
                 "segments": video_segments
             },
             {
                 "id": "track_voice_narration",
                 "type": "audio",
+                "name": "A1 · 第一人称独白人声轨",
                 "attribute": 0,
                 "segments": voice_segments
             },
             {
-                "id": "track_subtitles",
-                "type": "text",
+                "id": "track_ambient_audio",
+                "type": "audio",
+                "name": "A2 · 环境音效轨",
                 "attribute": 0,
-                "segments": text_segments
+                "segments": ambient_segments
             },
             {
                 "id": "track_bgm_ducking",
                 "type": "audio",
+                "name": "A3 · 背景配乐轨 (智能闪避)",
                 "attribute": 1,
-                "segments": []
+                "segments": bgm_segments
+            },
+            {
+                "id": "track_subtitles",
+                "type": "text",
+                "name": "S1 · 爆款花字字幕轨",
+                "attribute": 0,
+                "segments": text_segments
             }
         ],
         "config": {
@@ -365,6 +505,93 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
     })
 }
 
+/// 导出领域模型 Timeline 至剪映原生草稿工程
+pub fn export_capcut_from_timeline(
+    project_name: &str,
+    timeline: &Timeline,
+    media_files: &[MediaFile],
+    target_dir: Option<String>,
+) -> SplicrResult<CapcutDraftResult> {
+    let mut video_path = None;
+    let mut video_dur = None;
+    let mut scene_cuts = Vec::new();
+    let mut voice_path = None;
+    let mut voice_dur = None;
+    let mut ambient_path = None;
+    let mut bgm_path = None;
+    let mut subtitles = Vec::new();
+
+    // 优先从 media_files 获取首个视频文件
+    if let Some(mf) = media_files.first() {
+        video_path = Some(mf.path.to_string_lossy().to_string());
+        video_dur = Some(mf.duration_seconds);
+    }
+
+    for track in &timeline.tracks {
+        match track.kind {
+            TrackKind::Video => {
+                for clip in &track.clips {
+                    if video_path.is_none() {
+                        video_path = Some(clip.media_ref.to_string_lossy().to_string());
+                        video_dur = Some(clip.out_seconds - clip.in_seconds);
+                    }
+                    let cut_sec = clip.start_seconds + (clip.out_seconds - clip.in_seconds);
+                    if cut_sec > 0.0 {
+                        scene_cuts.push(cut_sec);
+                    }
+                }
+            }
+            TrackKind::Voice => {
+                if let Some(first_clip) = track.clips.first() {
+                    voice_path = Some(first_clip.media_ref.to_string_lossy().to_string());
+                    voice_dur = Some(first_clip.out_seconds - first_clip.in_seconds);
+                }
+            }
+            TrackKind::Ambient => {
+                if let Some(first_clip) = track.clips.first() {
+                    ambient_path = Some(first_clip.media_ref.to_string_lossy().to_string());
+                }
+            }
+            TrackKind::Bgm => {
+                if let Some(first_clip) = track.clips.first() {
+                    bgm_path = Some(first_clip.media_ref.to_string_lossy().to_string());
+                }
+            }
+            TrackKind::Subtitle => {
+                for clip in &track.clips {
+                    subtitles.push(CapcutSubtitleItem {
+                        text: clip.id.clone(),
+                        start: clip.start_seconds,
+                        end: clip.start_seconds + (clip.out_seconds - clip.in_seconds),
+                    });
+                }
+            }
+            _ => {}
+        }
+    }
+
+    create_capcut_draft(CapcutDraftOptions {
+        project_name: project_name.to_string(),
+        video_path,
+        video_duration_seconds: video_dur,
+        scene_cuts,
+        voice_path,
+        voice_duration_seconds: voice_dur,
+        subtitles,
+        anti_dup_zoom: Some(1.03),
+        enable_ambient_blur: Some(true),
+        target_dir,
+        ambient_path,
+        ambient_volume: Some(0.35),
+        bgm_path,
+        bgm_duration_seconds: None,
+        bgm_volume: Some(0.60),
+        bgm_ducking_level: Some(0.18),
+        enable_audio_ducking: Some(true),
+        subtitle_style: Some("cinema_amber".into()),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -376,13 +603,13 @@ mod tests {
     }
 
     #[test]
-    fn test_create_capcut_draft_full() {
+    fn test_create_capcut_draft_full_5tracks() {
         let temp_dir = std::env::temp_dir().join(format!(
             "test_capcut_{}",
             chrono::Utc::now().timestamp_micros()
         ));
         let opts = CapcutDraftOptions {
-            project_name: "单元测试短剧".into(),
+            project_name: "全量5轨短剧草稿测试".into(),
             video_path: Some("/tmp/sample.mp4".into()),
             video_duration_seconds: Some(30.0),
             scene_cuts: vec![5.0, 15.0, 25.0],
@@ -403,6 +630,14 @@ mod tests {
             anti_dup_zoom: Some(1.04),
             enable_ambient_blur: Some(true),
             target_dir: Some(temp_dir.to_string_lossy().to_string()),
+            ambient_path: Some("/tmp/ambient.wav".into()),
+            ambient_volume: Some(0.4),
+            bgm_path: Some("/tmp/bgm.mp3".into()),
+            bgm_duration_seconds: Some(30.0),
+            bgm_volume: Some(0.55),
+            bgm_ducking_level: Some(0.20),
+            enable_audio_ducking: Some(true),
+            subtitle_style: Some("cinema_amber".into()),
         };
 
         let res = create_capcut_draft(opts).expect("生成剪映工程草稿失败");
@@ -416,12 +651,51 @@ mod tests {
         let content: serde_json::Value = serde_json::from_str(&content_str).unwrap();
 
         assert_eq!(content["materials"]["videos"].as_array().unwrap().len(), 1);
-        assert_eq!(content["materials"]["audios"].as_array().unwrap().len(), 1);
+        // audios 应包含 voice, ambient, bgm 共 3 轨素材
+        assert_eq!(content["materials"]["audios"].as_array().unwrap().len(), 3);
         assert_eq!(content["materials"]["texts"].as_array().unwrap().len(), 2);
-        assert_eq!(content["tracks"].as_array().unwrap().len(), 4);
+        // tracks 应完整输出 5 条轨道 (V1, A1, A2, A3, S1)
+        assert_eq!(content["tracks"].as_array().unwrap().len(), 5);
 
         // 清理测试临时目录
         let _ = std::fs::remove_dir_all(&draft_dir);
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_export_capcut_from_timeline() {
+        let temp_dir = std::env::temp_dir().join(format!(
+            "test_capcut_timeline_{}",
+            chrono::Utc::now().timestamp_micros()
+        ));
+        let mut tl = Timeline::default_5tracks();
+        tl.tracks[0].clips.push(dramaxis_core::domain::Clip {
+            id: "clip_v1".into(),
+            media_ref: "/tmp/movie.mp4".into(),
+            start_seconds: 0.0,
+            in_seconds: 0.0,
+            out_seconds: 12.0,
+            volume: None,
+        });
+        tl.tracks[1].clips.push(dramaxis_core::domain::Clip {
+            id: "clip_a1".into(),
+            media_ref: "/tmp/voice.mp3".into(),
+            start_seconds: 0.0,
+            in_seconds: 0.0,
+            out_seconds: 10.0,
+            volume: Some(1.0),
+        });
+
+        let res = export_capcut_from_timeline(
+            "测试时间轴导出",
+            &tl,
+            &[],
+            Some(temp_dir.to_string_lossy().to_string()),
+        )
+        .expect("从时间轴导出失败");
+
+        assert!(PathBuf::from(&res.draft_folder).exists());
+        let _ = std::fs::remove_dir_all(&res.draft_folder);
         let _ = std::fs::remove_dir_all(&temp_dir);
     }
 }

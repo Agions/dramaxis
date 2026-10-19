@@ -45,6 +45,10 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
   const [renderProgress, setRenderProgress] = useState(0);
   const [renderPhase, setRenderPhase] = useState("");
   const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [subtitleStyle, setSubtitleStyle] = useState<
+    "cinema_amber" | "yellow_black" | "retro_red" | "minimal_white"
+  >("cinema_amber");
+  const [enableAudioDucking, setEnableAudioDucking] = useState(true);
 
   // 监听后端 FFmpeg 实时压制进度
   useTauriEvent<RenderProgressPayload>("export://progress", (e) => {
@@ -88,6 +92,14 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
         antiDupZoom,
         enableAmbientBlur,
         targetDir: null,
+        ambientPath: null,
+        ambientVolume: 0.35,
+        bgmPath: null,
+        bgmDurationSeconds: null,
+        bgmVolume: 0.6,
+        bgmDuckingLevel: 0.18,
+        enableAudioDucking,
+        subtitleStyle,
       });
 
       if (draftResult.isJianyingInstalled) {
@@ -170,6 +182,81 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
             无损二次微调
           </span>
         </div>
+
+        {/* 5 轨就绪状态展示 */}
+        <div className="grid grid-cols-5 gap-1 text-[9px] font-mono text-center">
+          <div className="rounded bg-surface-elevated/70 border border-border p-1 text-gold font-bold">
+            V1 画面
+          </div>
+          <div className="rounded bg-surface-elevated/70 border border-border p-1 text-emerald-400 font-bold">
+            A1 独白
+          </div>
+          <div className="rounded bg-surface-elevated/70 border border-border p-1 text-cyan-400 font-bold">
+            A2 环境
+          </div>
+          <div className="rounded bg-surface-elevated/70 border border-border p-1 text-purple-400 font-bold">
+            A3 配乐
+          </div>
+          <div className="rounded bg-surface-elevated/70 border border-border p-1 text-amber-400 font-bold">
+            S1 花字
+          </div>
+        </div>
+
+        {/* 花字风格预设 */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-text-secondary">爆款字幕花字风格</span>
+            <span className="text-[9px] font-mono text-gold font-bold">
+              {subtitleStyle === "cinema_amber"
+                ? "琥珀金 (影院调光)"
+                : subtitleStyle === "yellow_black"
+                ? "爆款黄黑边"
+                : subtitleStyle === "retro_red"
+                ? "悬疑醒目红"
+                : "极简纯白"}
+            </span>
+          </div>
+          <div className="grid grid-cols-4 gap-1">
+            {[
+              { id: "cinema_amber", label: "琥珀金" },
+              { id: "yellow_black", label: "黄黑边" },
+              { id: "retro_red", label: "悬疑红" },
+              { id: "minimal_white", label: "极简白" },
+            ].map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() =>
+                  setSubtitleStyle(
+                    s.id as
+                      | "cinema_amber"
+                      | "yellow_black"
+                      | "retro_red"
+                      | "minimal_white",
+                  )
+                }
+                className={`rounded py-1 text-[10px] font-bold transition-all border ${
+                  subtitleStyle === s.id
+                    ? "border-gold bg-gold/15 text-gold"
+                    : "border-border bg-bg text-text-secondary hover:border-gold/50"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 智能闪避开关 */}
+        <label className="flex items-center justify-between text-[11px] text-text-secondary cursor-pointer">
+          <span>BGM 智能响度自动闪避 (独白发声 -15dB)</span>
+          <input
+            type="checkbox"
+            checked={enableAudioDucking}
+            onChange={(e) => setEnableAudioDucking(e.target.checked)}
+            className="accent-gold"
+          />
+        </label>
 
         <button
           type="button"

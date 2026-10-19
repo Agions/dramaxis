@@ -256,12 +256,18 @@ export interface IpcContracts {
     };
     result: VoicePreviewResult;
   };
-  // ─────── script · 1 个 ───────
+  // ─────── script · 2 个 ───────
   script_generate: {
     args: {
       params: ScriptGenerateParams;
     };
     result: ScriptGenerateResult;
+  };
+  script_generate_hooks: {
+    args: {
+      synopsis: string;
+    };
+    result: HookCandidate[];
   };
   // ─────── detect · 2 个 ───────
   detect_hardware_acceleration: {
@@ -738,6 +744,14 @@ export interface CapcutDraftOptions {
   antiDupZoom?: number | null;
   enableAmbientBlur?: boolean | null;
   targetDir?: string | null;
+  ambientPath?: string | null;
+  ambientVolume?: number | null;
+  bgmPath?: string | null;
+  bgmDurationSeconds?: number | null;
+  bgmVolume?: number | null;
+  bgmDuckingLevel?: number | null;
+  enableAudioDucking?: boolean | null;
+  subtitleStyle?: string | null;
 }
 
 // Rust 端 CapcutDraftResult (pub struct, rename_all = "camelCase")
@@ -800,6 +814,22 @@ export interface OutputPlan {
   episode_label?: string | null;
   series_context?: string | null;
 }
+
+// Rust 端 HookCandidate (pub struct, rename_all = "camelCase")
+export interface HookCandidate {
+  formula: HookFormula;
+  formulaName: string;
+  hookText: string;
+  estimatedRetentionScore: number;
+  strategyReason: string;
+}
+
+// Rust 端 HookFormula (pub enum, rename_all = "snake_case")
+export type HookFormula =
+  | "result_first"
+  | "counter_intuitive"
+  | "high_stakes_empathy"
+  | "lethal_mystery";
 
 // Rust 端 AssetEntry (pub struct, rename_all = "camelCase")
 export interface AssetEntry {
