@@ -8,9 +8,9 @@
 //! - 支持直接由领域模型 Timeline 导出原生剪映草稿工程
 //! - 生成 draft_info.json, draft_meta_info.json 与 draft_content.json
 
-use serde::{Deserialize, Serialize};
+use dramaxis_core::domain::{MediaFile, Timeline, TrackKind};
 use dramaxis_core::error::{SplicrError, SplicrResult};
-use dramaxis_core::domain::{Timeline, TrackKind, MediaFile};
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -394,7 +394,11 @@ impl Agent for SoundEngineerAgent {
         }
 
         // 2. 挂载 A1 配音轨
-        let voice_audio_path = ctx.memory.get("voice_audio_path").cloned().unwrap_or_default();
+        let voice_audio_path = ctx
+            .memory
+            .get("voice_audio_path")
+            .cloned()
+            .unwrap_or_default();
         let voice_dur_num: f64 = voice_dur.parse().unwrap_or(curr_t);
         if !voice_audio_path.is_empty() {
             timeline.tracks[1].clips.push(Clip {
@@ -410,7 +414,10 @@ impl Agent for SoundEngineerAgent {
         // 3. 挂载 SUB 字幕轨
         for (idx, sub) in subtitle_items.iter().enumerate() {
             let start = sub.get("start").and_then(|v| v.as_f64()).unwrap_or(0.0);
-            let end = sub.get("end").and_then(|v| v.as_f64()).unwrap_or(start + 2.0);
+            let end = sub
+                .get("end")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(start + 2.0);
             let text = sub.get("text").and_then(|v| v.as_str()).unwrap_or_default();
             timeline.tracks[4].clips.push(Clip {
                 id: format!("clip_sub_{:02}", idx),
@@ -428,18 +435,33 @@ impl Agent for SoundEngineerAgent {
         let mut script_segments = Vec::new();
         for (idx, sub) in subtitle_items.iter().enumerate() {
             let start = sub.get("start").and_then(|v| v.as_f64()).unwrap_or(0.0);
-            let end = sub.get("end").and_then(|v| v.as_f64()).unwrap_or(start + 2.0);
-            let text = sub.get("text").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+            let end = sub
+                .get("end")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(start + 2.0);
+            let text = sub
+                .get("text")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string();
             let is_hook = idx == 0;
             script_segments.push(ScriptSegment {
                 id: format!("seg-{:02}", idx),
                 step_index: 2,
                 text,
-                emotion: Some(if is_hook { "suspense".into() } else { "narrative".into() }),
+                emotion: Some(if is_hook {
+                    "suspense".into()
+                } else {
+                    "narrative".into()
+                }),
                 start_seconds: Some(start),
                 end_seconds: Some(end),
                 is_hook: Some(is_hook),
-                hook_style: if is_hook { Some("conflict-reversal".into()) } else { None },
+                hook_style: if is_hook {
+                    Some("conflict-reversal".into())
+                } else {
+                    None
+                },
                 visual_cut_ref: Some(format!("scene-{:02}", idx)),
                 score: None,
             });
@@ -456,9 +478,15 @@ impl Agent for SoundEngineerAgent {
         ctx.log_action(
             self.role(),
             "5 轨音画字幕精准对齐",
-            format!("完成 5 轨吸附与 {} 条字幕片段对齐，已装配进入 Project 实体", subtitle_items.len()),
+            format!(
+                "完成 5 轨吸附与 {} 条字幕片段对齐，已装配进入 Project 实体",
+                subtitle_items.len()
+            ),
         );
-        Ok(Some(format!("5 轨多媒体时间线装配完成，共包含 {} 条音画字幕片段", subtitle_items.len())))
+        Ok(Some(format!(
+            "5 轨多媒体时间线装配完成，共包含 {} 条音画字幕片段",
+            subtitle_items.len()
+        )))
     }
 }
 
@@ -483,7 +511,18 @@ impl Agent for QualityReviewerAgent {
         let mut hook_score: f32 = 82.0;
         let mut suggestions = Vec::new();
         if let Some(seg) = first_seg {
-            let hook_words = ["没想到", "万万没想到", "竟然", "秘密", "真相", "究竟", "震惊", "危机", "突然", "背后"];
+            let hook_words = [
+                "没想到",
+                "万万没想到",
+                "竟然",
+                "秘密",
+                "真相",
+                "究竟",
+                "震惊",
+                "危机",
+                "突然",
+                "背后",
+            ];
             let hit_count = hook_words.iter().filter(|w| seg.text.contains(**w)).count();
             hook_score = (85.0 + (hit_count as f32 * 4.5)).min(98.5);
 
@@ -507,7 +546,10 @@ impl Agent for QualityReviewerAgent {
         let compliance_passed = true;
 
         // 综合加权得分
-        let overall_score: f32 = (hook_score * 0.35 + (100.0 - sync_tolerance_ms * 0.1) * 0.25 + pacing_score * 0.25 + 100.0 * 0.15)
+        let overall_score: f32 = (hook_score * 0.35
+            + (100.0 - sync_tolerance_ms * 0.1) * 0.25
+            + pacing_score * 0.25
+            + 100.0 * 0.15)
             .min(100.0);
 
         // 更新 ScriptSegment.score
@@ -526,7 +568,8 @@ impl Agent for QualityReviewerAgent {
 
         let report_json = serde_json::to_string(&report).unwrap_or_else(|_| "{}".into());
         ctx.memory.insert("quality_report_json".into(), report_json);
-        ctx.memory.insert("quality_score".into(), format!("{:.1}", overall_score));
+        ctx.memory
+            .insert("quality_score".into(), format!("{:.1}", overall_score));
 
         ctx.log_thought(
             self.role(),
@@ -538,7 +581,10 @@ impl Agent for QualityReviewerAgent {
         ctx.log_action(
             self.role(),
             "签发终审合格证书",
-            format!("综合质检评分 {:.1} 分，各项工业指标均达到交付标准", overall_score),
+            format!(
+                "综合质检评分 {:.1} 分，各项工业指标均达到交付标准",
+                overall_score
+            ),
         );
 
         ctx.status = AgentStatus::Completed;

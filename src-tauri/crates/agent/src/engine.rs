@@ -93,7 +93,9 @@ impl AgentOrchestrator {
             // 终审质量守门员完成时，推送强类型 QualityGateEvaluated 质检报告事件
             if role == AgentRole::QualityReviewer {
                 if let Some(report_str) = ctx.memory.get("quality_report_json") {
-                    if let Ok(report) = serde_json::from_str::<crate::types::QualityReport>(report_str) {
+                    if let Ok(report) =
+                        serde_json::from_str::<crate::types::QualityReport>(report_str)
+                    {
                         emitter(AgentEventPayload::QualityGateEvaluated(report));
                     }
                 }

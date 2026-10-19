@@ -31,8 +31,10 @@ pub async fn project_create_blank(
     app: tauri::AppHandle,
     state: State<'_, AppContext>,
 ) -> Result<ProjectRecord, SplicrError> {
-    let mut proj = Project::default();
-    proj.timeline = dramaxis_core::domain::Timeline::default_5tracks();
+    let proj = Project {
+        timeline: dramaxis_core::domain::Timeline::default_5tracks(),
+        ..Default::default()
+    };
     let base_dir = project_dir(&app).map_err(|e| SplicrError::Io(e.to_string()))?;
     let proj_dir = base_dir.join(&proj.id);
 

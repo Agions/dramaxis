@@ -5,8 +5,10 @@ use std::sync::Arc;
 
 #[tokio::test]
 async fn test_6_agent_orchestrator_full_workflow() {
-    let mut project = Project::default();
-    project.name = "绝命逆袭之真相".into();
+    let mut project = Project {
+        name: "绝命逆袭之真相".into(),
+        ..Default::default()
+    };
     project.media_files.push(MediaFile {
         path: std::path::PathBuf::from("/tmp/sample_test.mp4"),
         duration_seconds: 45.0,
@@ -73,8 +75,10 @@ async fn test_6_agent_orchestrator_full_workflow() {
 
 #[tokio::test]
 async fn test_agent_orchestrator_hitl_breakpoint() {
-    let mut project = Project::default();
-    project.name = "HITL 人机协作测试".into();
+    let project = Project {
+        name: "HITL 人机协作测试".into(),
+        ..Default::default()
+    };
 
     // auto_mode = false，触发人工协同断点
     let context = AgentContext::new(project, false);

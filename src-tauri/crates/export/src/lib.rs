@@ -34,8 +34,8 @@ pub use capcut::{
     CapcutSubtitleItem,
 };
 
-use serde::{Deserialize, Serialize};
 use dramaxis_core::domain::ProjectSettings;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 // ════════════════════════════════════════════════════════════════════════
