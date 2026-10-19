@@ -10,6 +10,7 @@
 
 import { memo, useState } from "react";
 import { toast } from "sonner";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import {
   exportIpc,
   type ProjectRecord,
@@ -49,6 +50,59 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
     "cinema_amber" | "yellow_black" | "retro_red" | "minimal_white"
   >("cinema_amber");
   const [enableAudioDucking, setEnableAudioDucking] = useState(true);
+  const [ambientPath, setAmbientPath] = useState<string | null>(null);
+  const [ambientLabel, setAmbientLabel] = useState("未挂载");
+  const [ambientVolume, setAmbientVolume] = useState(0.35);
+  const [bgmPath, setBgmPath] = useState<string | null>(null);
+  const [bgmLabel, setBgmLabel] = useState("未挂载");
+  const [bgmVolume, setBgmVolume] = useState(0.6);
+  const [bgmDuckingLevel, setBgmDuckingLevel] = useState(0.18);
+
+  const handleSelectAmbientAudio = async () => {
+    try {
+      const selected = await openDialog({
+        multiple: false,
+        filters: [
+          {
+            name: "环境音效 (Audio)",
+            extensions: ["wav", "mp3", "flac", "m4a"],
+          },
+        ],
+      });
+      if (selected) {
+        const path = Array.isArray(selected) ? selected[0] : selected;
+        setAmbientPath(path ?? null);
+        const fileName = String(path).split(/[/\\]/).pop() ?? "自定义音效";
+        setAmbientLabel(fileName);
+        toast.success(`已载入 A2 环境音效轨: ${fileName}`);
+      }
+    } catch {
+      toast.error("选择环境音效失败");
+    }
+  };
+
+  const handleSelectBgmAudio = async () => {
+    try {
+      const selected = await openDialog({
+        multiple: false,
+        filters: [
+          {
+            name: "背景配乐 (BGM)",
+            extensions: ["wav", "mp3", "flac", "m4a"],
+          },
+        ],
+      });
+      if (selected) {
+        const path = Array.isArray(selected) ? selected[0] : selected;
+        setBgmPath(path ?? null);
+        const fileName = String(path).split(/[/\\]/).pop() ?? "自定义配乐";
+        setBgmLabel(fileName);
+        toast.success(`已载入 A3 背景配乐轨: ${fileName}`);
+      }
+    } catch {
+      toast.error("选择背景配乐失败");
+    }
+  };
 
   // 监听后端 FFmpeg 实时压制进度
   useTauriEvent<RenderProgressPayload>("export://progress", (e) => {
@@ -92,12 +146,12 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
         antiDupZoom,
         enableAmbientBlur,
         targetDir: null,
-        ambientPath: null,
-        ambientVolume: 0.35,
-        bgmPath: null,
+        ambientPath: ambientPath ?? null,
+        ambientVolume,
+        bgmPath: bgmPath ?? null,
         bgmDurationSeconds: null,
-        bgmVolume: 0.6,
-        bgmDuckingLevel: 0.18,
+        bgmVolume,
+        bgmDuckingLevel,
         enableAudioDucking,
         subtitleStyle,
       });
@@ -185,21 +239,126 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
 
         {/* 5 轨就绪状态展示 */}
         <div className="grid grid-cols-5 gap-1 text-[9px] font-mono text-center">
-          <div className="rounded bg-surface-elevated/70 border border-border p-1 text-gold font-bold">
-            V1 画面
+          <div
+            className={`rounded border p-1 font-bold ${
+              currentProject?.project?.media_files?.length
+                ? "bg-gold/15 border-gold text-gold"
+                : "bg-surface-elevated/70 border-border text-text-muted"
+            }`}
+          >
+            {currentProject?.project?.media_files?.length
+              ? "✓ V1 画面"
+              : "V1 画面"}
           </div>
-          <div className="rounded bg-surface-elevated/70 border border-border p-1 text-emerald-400 font-bold">
-            A1 独白
+          <div
+            className={`rounded border p-1 font-bold ${
+              voiceAudioPath
+                ? "bg-emerald-500/15 border-emerald-500 text-emerald-400"
+                : "bg-surface-elevated/70 border-border text-text-muted"
+            }`}
+          >
+            {voiceAudioPath ? "✓ A1 独白" : "A1 独白"}
           </div>
-          <div className="rounded bg-surface-elevated/70 border border-border p-1 text-cyan-400 font-bold">
-            A2 环境
+          <div
+            className={`rounded border p-1 font-bold ${
+              ambientPath
+                ? "bg-cyan-500/15 border-cyan-500 text-cyan-400"
+                : "bg-surface-elevated/70 border-border text-text-muted"
+            }`}
+          >
+            {ambientPath ? "✓ A2 环境" : "A2 环境"}
           </div>
-          <div className="rounded bg-surface-elevated/70 border border-border p-1 text-purple-400 font-bold">
-            A3 配乐
+          <div
+            className={`rounded border p-1 font-bold ${
+              bgmPath
+                ? "bg-purple-500/15 border-purple-500 text-purple-400"
+                : "bg-surface-elevated/70 border-border text-text-muted"
+            }`}
+          >
+            {bgmPath ? "✓ A3 配乐" : "A3 配乐"}
           </div>
-          <div className="rounded bg-surface-elevated/70 border border-border p-1 text-amber-400 font-bold">
-            S1 花字
+          <div
+            className={`rounded border p-1 font-bold ${
+              subtitles.length > 0
+                ? "bg-amber-500/15 border-amber-500 text-amber-400"
+                : "bg-surface-elevated/70 border-border text-text-muted"
+            }`}
+          >
+            {subtitles.length > 0 ? "✓ S1 花字" : "S1 花字"}
           </div>
+        </div>
+
+        {/* A2/A3 声学音轨与自动闪避控制 */}
+        <div className="rounded-xl border border-border/70 bg-surface/50 p-2.5 space-y-2">
+          {/* A2 环境音效轨 */}
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-text-secondary font-medium flex items-center gap-1">
+              <span>🌊</span>
+              <span>A2 环境音效轨:</span>
+              <span className="font-mono text-cyan-400 font-bold truncate max-w-[130px]">
+                {ambientLabel}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={handleSelectAmbientAudio}
+              className="px-2 py-0.5 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 font-bold text-[10px] border border-cyan-500/20 transition-colors"
+            >
+              {ambientPath ? "更换音效" : "+ 载入音效"}
+            </button>
+          </div>
+          {ambientPath && (
+            <div className="flex items-center gap-2 text-[10px] text-text-muted">
+              <span>音量:</span>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={ambientVolume}
+                onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
+                className="w-full accent-cyan-400"
+              />
+              <span className="font-mono text-cyan-400 w-8 text-right">
+                {Math.round(ambientVolume * 100)}%
+              </span>
+            </div>
+          )}
+
+          {/* A3 背景配乐轨 */}
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-text-secondary font-medium flex items-center gap-1">
+              <span>🎵</span>
+              <span>A3 背景配乐轨:</span>
+              <span className="font-mono text-purple-400 font-bold truncate max-w-[130px]">
+                {bgmLabel}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={handleSelectBgmAudio}
+              className="px-2 py-0.5 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 font-bold text-[10px] border border-purple-500/20 transition-colors"
+            >
+              {bgmPath ? "更换配乐" : "+ 载入配乐"}
+            </button>
+          </div>
+          {bgmPath && (
+            <div className="flex items-center gap-2 text-[10px] text-text-muted">
+              <span>音量:</span>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={bgmVolume}
+                onChange={(e) => setBgmVolume(parseFloat(e.target.value))}
+                className="w-full accent-purple-400"
+              />
+              <span className="font-mono text-purple-400 w-8 text-right">
+                {Math.round(bgmVolume * 100)}%
+              </span>
+            </div>
+          )}
         </div>
 
         {/* 花字风格预设 */}
@@ -247,16 +406,35 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
           </div>
         </div>
 
-        {/* 智能闪避开关 */}
-        <label className="flex items-center justify-between text-[11px] text-text-secondary cursor-pointer">
-          <span>BGM 智能响度自动闪避 (独白发声 -15dB)</span>
-          <input
-            type="checkbox"
-            checked={enableAudioDucking}
-            onChange={(e) => setEnableAudioDucking(e.target.checked)}
-            className="accent-gold"
-          />
-        </label>
+        {/* 智能闪避开关与衰减深度 */}
+        <div className="space-y-1">
+          <label className="flex items-center justify-between text-[11px] text-text-secondary cursor-pointer">
+            <span>BGM 智能响度自动闪避 (独白发声时动态衰减)</span>
+            <input
+              type="checkbox"
+              checked={enableAudioDucking}
+              onChange={(e) => setEnableAudioDucking(e.target.checked)}
+              className="accent-gold"
+            />
+          </label>
+          {enableAudioDucking && (
+            <div className="flex items-center justify-between text-[10px] text-text-muted gap-2 pl-1">
+              <span>衰减深度:</span>
+              <input
+                type="range"
+                min={0.08}
+                max={0.35}
+                step={0.01}
+                value={bgmDuckingLevel}
+                onChange={(e) => setBgmDuckingLevel(parseFloat(e.target.value))}
+                className="w-full accent-gold"
+              />
+              <span className="font-mono text-gold w-14 text-right">
+                {Math.round(20 * Math.log10(bgmDuckingLevel))} dB
+              </span>
+            </div>
+          )}
+        </div>
 
         <button
           type="button"
@@ -291,6 +469,7 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
           </div>
           <input
             type="range"
+            aria-label="画面动态微缩放"
             min={1.0}
             max={1.08}
             step={0.01}

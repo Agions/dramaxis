@@ -181,7 +181,7 @@ describe("ExportStudioPanel", () => {
       />,
     );
 
-    const slider = screen.getByRole("slider");
+    const slider = screen.getByRole("slider", { name: "画面动态微缩放" });
     fireEvent.change(slider, { target: { value: "1.06" } });
     expect(handleZoom).toHaveBeenCalledWith(1.06);
 

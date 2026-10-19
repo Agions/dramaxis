@@ -31,6 +31,7 @@ import type {
   ScanResult,
   ScriptGenerateParams,
   ScriptGenerateResult,
+  HookCandidate,
   SearchHit,
   SubtitleFormat,
   SubtitleItem,
@@ -227,6 +228,8 @@ export const voiceIpc = {
 export const scriptIpc = {
   generate: (params: ScriptGenerateParams): Promise<ScriptGenerateResult> =>
     callIpc("script_generate", { params }),
+  generateHooks: (synopsis: string): Promise<HookCandidate[]> =>
+    callIpc("script_generate_hooks", { synopsis }),
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────
