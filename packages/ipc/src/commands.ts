@@ -85,6 +85,10 @@ export const projectIpc = {
     project: Project,
     media: MediaFile,
   ): Promise<Project> => callIpc("project_add_media", { path, project, media }),
+  undo: (path: string, projectId: string): Promise<Project | null> =>
+    callIpc("project_undo", { path, projectId }),
+  redo: (path: string, projectId: string): Promise<Project | null> =>
+    callIpc("project_redo", { path, projectId }),
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────

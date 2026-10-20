@@ -38,6 +38,10 @@ export interface UseProjectReturn {
   save: () => Promise<void>;
   /** 另存为新路径 */
   saveAs: (path: string) => Promise<void>;
+  /** 撤销一步操作 (Undo) */
+  undo: () => Promise<void>;
+  /** 重做一步操作 (Redo) */
+  redo: () => Promise<void>;
   /** 关闭项目:清空 store + 取消正在运行的流水线 */
   close: () => Promise<void>;
 
@@ -145,6 +149,42 @@ export function useProject(): UseProjectReturn {
     [current, setCurrentPath, syncCurrentToCache],
   );
 
+  const undo = useCallback(async () => {
+    if (!currentPath || !current) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const restored = await projectIpc.undo(currentPath, current.id);
+      if (restored) {
+        setCurrent(restored);
+        syncCurrentToCache(restored, currentPath);
+      }
+    } catch (e) {
+      setError(e);
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPath, current, setCurrent, syncCurrentToCache]);
+
+  const redo = useCallback(async () => {
+    if (!currentPath || !current) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const restored = await projectIpc.redo(currentPath, current.id);
+      if (restored) {
+        setCurrent(restored);
+        syncCurrentToCache(restored, currentPath);
+      }
+    } catch (e) {
+      setError(e);
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPath, current, setCurrent, syncCurrentToCache]);
+
   const close = useCallback(async () => {
     clear();
     for (const key of QUERY_KEYS_CURRENT_PROJECT) {
@@ -165,6 +205,8 @@ export function useProject(): UseProjectReturn {
     open,
     save,
     saveAs,
+    undo,
+    redo,
     close,
     loading,
     error,

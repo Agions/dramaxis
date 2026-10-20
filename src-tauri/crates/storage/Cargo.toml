@@ -24,3 +24,6 @@ walkdir = { workspace = true }
 mime_guess = "2"
 dirs = { workspace = true }
 sha2 = "0.10"
+rusqlite = { workspace = true }
+chrono = { workspace = true }
+semver = { workspace = true }

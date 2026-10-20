@@ -16,12 +16,16 @@ import type { Project, ProjectRecord } from "@dramaxis/ipc";
 // ─── mocks ─────────────────────────────────────────────────────────
 const projectLoadMock = vi.fn();
 const projectSaveMock = vi.fn();
+const projectUndoMock = vi.fn();
+const projectRedoMock = vi.fn();
 const pipelineCancelMock = vi.fn();
 
 vi.mock("@dramaxis/ipc", () => ({
   projectIpc: {
     load: (...a: unknown[]) => projectLoadMock(...a),
     save: (...a: unknown[]) => projectSaveMock(...a),
+    undo: (...a: unknown[]) => projectUndoMock(...a),
+    redo: (...a: unknown[]) => projectRedoMock(...a),
   },
   pipelineIpc: {
     cancel: () => pipelineCancelMock(),
@@ -344,6 +348,44 @@ describe("useProject", () => {
         }),
       ).resolves.toBeUndefined();
       expect(storeState.clear).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("undo / redo 操作栈", () => {
+    it("undo 正常回退 → 同步 store", async () => {
+      const restored = { ...sampleProject, name: "撤销前版本" };
+      storeState.current = sampleProject;
+      storeState.currentPath = "/tmp/test.dramaxis";
+      projectUndoMock.mockResolvedValueOnce(restored);
+
+      const { result } = renderHook(() => useProject(), {
+        wrapper: makeWrapper(),
+      });
+
+      await act(async () => {
+        await result.current.undo();
+      });
+
+      expect(projectUndoMock).toHaveBeenCalledWith("/tmp/test.dramaxis", "test-uuid");
+      expect(storeState.setCurrent).toHaveBeenCalledWith(restored);
+    });
+
+    it("redo 正常重做 → 同步 store", async () => {
+      const restored = { ...sampleProject, name: "重做后版本" };
+      storeState.current = sampleProject;
+      storeState.currentPath = "/tmp/test.dramaxis";
+      projectRedoMock.mockResolvedValueOnce(restored);
+
+      const { result } = renderHook(() => useProject(), {
+        wrapper: makeWrapper(),
+      });
+
+      await act(async () => {
+        await result.current.redo();
+      });
+
+      expect(projectRedoMock).toHaveBeenCalledWith("/tmp/test.dramaxis", "test-uuid");
+      expect(storeState.setCurrent).toHaveBeenCalledWith(restored);
     });
   });
 

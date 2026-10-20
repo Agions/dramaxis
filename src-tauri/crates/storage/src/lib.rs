@@ -19,6 +19,14 @@ use walkdir::WalkDir;
 
 use dramaxis_detect::{parse_probe_json, Ffmpeg, FfmpegProbe};
 
+pub mod db;
+pub mod bundle;
+
+pub use bundle::{
+    create_bundle, open_bundle, redo_bundle, save_bundle, undo_bundle, DramaxisBundle,
+};
+pub use db::{init_database, load_project, redo, save_checkpoint, save_project, undo};
+
 // ════════════════════════════════════════════════════════════════════════
 // 错误
 // ════════════════════════════════════════════════════════════════════════
@@ -37,6 +45,8 @@ pub enum AssetError {
     Thumbnail(String),
     #[error("IO: {0}")]
     Io(#[from] std::io::Error),
+    #[error("SQLite 错误: {0}")]
+    Sqlite(#[from] rusqlite::Error),
     #[error("dramaxis 错误: {0}")]
     Core(#[from] dramaxis_core::error::SplicrError),
 }

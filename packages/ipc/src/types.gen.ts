@@ -70,7 +70,7 @@ export interface IpcContracts {
     args: void;
     result: string;
   };
-  // ─────── project · 6 个 ───────
+  // ─────── project · 8 个 ───────
   project_add_media: {
     args: {
       path: string;
@@ -99,12 +99,26 @@ export interface IpcContracts {
     };
     result: ProjectRecord;
   };
+  project_redo: {
+    args: {
+      path: string;
+      projectId: string;
+    };
+    result: Project | null;
+  };
   project_save: {
     args: {
       path: string;
       project: Project;
     };
     result: void;
+  };
+  project_undo: {
+    args: {
+      path: string;
+      projectId: string;
+    };
+    result: Project | null;
   };
   // ─────── pipeline · 5 个 ───────
   pipeline_cancel: {
@@ -830,6 +844,11 @@ export type HookFormula =
   | "counter_intuitive"
   | "high_stakes_empathy"
   | "lethal_mystery";
+
+// Rust 端 DramaxisBundle (pub struct)
+export interface DramaxisBundle {
+  path: string;
+}
 
 // Rust 端 AssetEntry (pub struct, rename_all = "camelCase")
 export interface AssetEntry {

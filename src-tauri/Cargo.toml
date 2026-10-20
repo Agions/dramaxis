@@ -68,6 +68,9 @@ serde_with = "3"
 walkdir = "2"
 notify = "6"
 
+# 数据库
+rusqlite = { version = "0.32", features = ["bundled", "chrono", "backup"] }
+
 # 时间
 chrono = { version = "0.4", features = ["serde"] }
 time = { version = "0.3", features = ["serde", "formatting"] }

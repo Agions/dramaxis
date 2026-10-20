@@ -1,6 +1,6 @@
-//! src-tauri 命令 · project 完整 CRUD (M3.2)
+//! src-tauri 命令 · project 完整 CRUD 与 .dramaxis 工程包持久化
 //!
-//! Tauri command 层:将 [`ProjectService`] 暴露为前端可调用的 IPC 指令。
+//! Tauri command 层: 将 SQLite WAL 存储与工程包管理器暴露为前端可调用的 IPC 指令。
 
 use std::path::{Path, PathBuf};
 
@@ -8,9 +8,10 @@ use dramaxis_core::domain::{MediaFile, Project};
 use dramaxis_core::error::SplicrError;
 use dramaxis_core::services::ProjectService;
 use dramaxis_core::AppContext;
+use dramaxis_storage::bundle::{create_bundle, open_bundle, redo_bundle, save_bundle, undo_bundle};
 use tauri::{Manager, State};
 
-/// 列举最近项目 (M3.2 真实从 ProjectService 取)
+/// 列举最近项目 (真实从 ProjectService 取)
 #[tauri::command]
 pub async fn project_list_recent(state: State<'_, AppContext>) -> Result<Vec<String>, SplicrError> {
     let svc = state
@@ -24,8 +25,8 @@ pub async fn project_list_recent(state: State<'_, AppContext>) -> Result<Vec<Str
         .collect())
 }
 
-/// 创建空白 Project 并保存到默认 projects 目录。
-/// 返回 (path, project) 元组:前端用 path 记住文件位置。
+/// 创建空白 Project 并生成标准 .dramaxis 工程包容器。
+/// 返回 (path, project) 元组: 前端用 path 记住文件位置。
 #[tauri::command]
 pub async fn project_create_blank(
     app: tauri::AppHandle,
@@ -36,83 +37,119 @@ pub async fn project_create_blank(
         ..Default::default()
     };
     let base_dir = project_dir(&app).map_err(|e| SplicrError::Io(e.to_string()))?;
-    let proj_dir = base_dir.join(&proj.id);
+    let bundle_path = base_dir.join(format!("{}.dramaxis", &proj.id));
 
-    // 建立 Local-First 沙盒目录骨架: media/, drafts/, cache/
-    tokio::fs::create_dir_all(proj_dir.join("media"))
-        .await
-        .map_err(|e| SplicrError::Io(e.to_string()))?;
-    tokio::fs::create_dir_all(proj_dir.join("drafts"))
-        .await
-        .map_err(|e| SplicrError::Io(e.to_string()))?;
-    tokio::fs::create_dir_all(proj_dir.join("cache"))
-        .await
-        .map_err(|e| SplicrError::Io(e.to_string()))?;
+    // 1. 创建标准 .dramaxis 工程包与 SQLite 数据库
+    let _bundle = create_bundle(&bundle_path, &proj)
+        .map_err(|e| SplicrError::Project(format!("创建 .dramaxis 工程包失败: {e}")))?;
 
-    let path = proj_dir.join("project.dramaxis.json");
-    write_project(&path, &proj)
-        .await
-        .map_err(|e| SplicrError::Io(e.to_string()))?;
+    // 2. 建立兼容性本地目录骨架与 JSON 快照
+    let media_dir = bundle_path.join("media");
+    let _ = tokio::fs::create_dir_all(&media_dir).await;
+    let legacy_json = bundle_path.join("project.dramaxis.json");
+    let _ = write_project(&legacy_json, &proj).await;
 
     let svc = state
         .service::<ProjectService>()
         .await
         .map_err(|e| SplicrError::Project(e.to_string()))?;
-    svc.push_recent(path.clone()).await;
+    svc.push_recent(bundle_path.clone()).await;
 
     Ok(ProjectRecord {
-        path: path.to_string_lossy().into_owned(),
+        path: bundle_path.to_string_lossy().into_owned(),
         project: proj,
     })
 }
 
-/// 从指定路径加载 Project (支持文件或项目目录)
+/// 从指定路径加载 Project (原生支持 .dramaxis 包、遗留 .json / .splicr 自动无损迁移)
 #[tauri::command]
 pub async fn project_load(
     path: String,
     state: State<'_, AppContext>,
 ) -> Result<ProjectRecord, SplicrError> {
-    let mut p = PathBuf::from(&path);
-    if p.is_dir() {
-        let canonical_file = p.join("project.dramaxis.json");
-        if canonical_file.exists() {
-            p = canonical_file;
+    let p = PathBuf::from(&path);
+
+    // 1. 优先尝试通过 .dramaxis 工程包加载（包含遗留 JSON 自动升级）
+    if let Ok((bundle, project)) = open_bundle(&p) {
+        if let Ok(svc) = state.service::<ProjectService>().await {
+            svc.push_recent(bundle.path.clone()).await;
+        }
+        return Ok(ProjectRecord {
+            path: bundle.path.to_string_lossy().into_owned(),
+            project,
+        });
+    }
+
+    // 2. 回退：直接从单文件 JSON 反序列化
+    let mut fallback_file = p.clone();
+    if fallback_file.is_dir() {
+        let candidate = fallback_file.join("project.dramaxis.json");
+        if candidate.exists() {
+            fallback_file = candidate;
         }
     }
-    let bytes = tokio::fs::read(&p)
+
+    let bytes = tokio::fs::read(&fallback_file)
         .await
         .map_err(|e| SplicrError::Io(e.to_string()))?;
     let proj: Project = serde_json::from_slice(&bytes)
         .map_err(|e| SplicrError::Project(format!("解析项目文件失败: {e}")))?;
 
-    let svc = state
-        .service::<ProjectService>()
-        .await
-        .map_err(|e| SplicrError::Project(e.to_string()))?;
-    svc.push_recent(p.clone()).await;
+    if let Ok(svc) = state.service::<ProjectService>().await {
+        svc.push_recent(fallback_file.clone()).await;
+    }
 
     Ok(ProjectRecord {
-        path: p.to_string_lossy().into_owned(),
+        path: fallback_file.to_string_lossy().into_owned(),
         project: proj,
     })
 }
 
-/// 把 Project 落盘到指定路径
+/// 把 Project 落盘到指定工程包或路径 (写入 SQLite WAL 事务并保存 Checkpoint)
 #[tauri::command]
 pub async fn project_save(path: String, project: Project) -> Result<(), SplicrError> {
     let p = PathBuf::from(&path);
+
+    // 1. 若为 .dramaxis 工程包或包含 project.db 的目录，使用 SQLite WAL 保存
+    let is_bundle = p.extension().and_then(|ext| ext.to_str()) == Some("dramaxis")
+        || p.join("project.db").exists();
+
+    if is_bundle {
+        if let Err(e) = save_bundle(&p, &project, Some("手动保存")) {
+            tracing::warn!(err = %e, "SQLite 保存遇到警告，回退写入快照");
+        }
+        // 同步写一份兼容性 JSON 快照
+        let snapshot = p.join("project.dramaxis.json");
+        let _ = write_project(&snapshot, &project).await;
+        return Ok(());
+    }
+
+    // 2. 否则按单文件或普通目录保存
     write_project(&p, &project)
         .await
         .map_err(|e| SplicrError::Io(e.to_string()))
 }
 
-/// 删除指定路径的 Project 文件，并同步从最近工程列表中注销
+/// 执行工程包内的撤销操作 (Undo)，还原上一历史检查点
+#[tauri::command]
+pub async fn project_undo(path: String, project_id: String) -> Result<Option<Project>, SplicrError> {
+    let p = PathBuf::from(&path);
+    undo_bundle(&p, &project_id).map_err(|e| SplicrError::Project(format!("撤销失败: {e}")))
+}
+
+/// 执行工程包内的重做操作 (Redo)，重做前向历史检查点
+#[tauri::command]
+pub async fn project_redo(path: String, project_id: String) -> Result<Option<Project>, SplicrError> {
+    let p = PathBuf::from(&path);
+    redo_bundle(&p, &project_id).map_err(|e| SplicrError::Project(format!("重做失败: {e}")))
+}
+
+/// 删除指定路径的 Project 文件或工程包，并同步从最近工程列表中注销
 #[tauri::command]
 pub async fn project_delete(state: State<'_, AppContext>, path: String) -> Result<(), SplicrError> {
     let p = PathBuf::from(&path);
     if p.is_file() {
         let _ = tokio::fs::remove_file(&p).await;
-        // 如果是标准的 project.dramaxis.json，清理外层沙盒工程目录
         if p.file_name().and_then(|n| n.to_str()) == Some("project.dramaxis.json") {
             if let Some(parent) = p.parent() {
                 let _ = tokio::fs::remove_dir_all(parent).await;
@@ -137,17 +174,22 @@ pub async fn project_add_media(
     let p = PathBuf::from(&path);
     let mut proj = project;
 
-    // 如果处于 Local-First 沙盒目录内，在 media/ 目录下建立软链接
-    if let Some(parent) = p.parent() {
-        let media_dir = parent.join("media");
-        if media_dir.is_dir() {
-            if let Some(file_name) = media.path.file_name() {
-                let link_dest = media_dir.join(file_name);
-                #[cfg(unix)]
-                {
-                    if !link_dest.exists() {
-                        let _ = std::os::unix::fs::symlink(&media.path, &link_dest);
-                    }
+    // 如果处于工程包目录内，在 media/ 目录下建立软链接
+    let media_dir = if p.is_dir() {
+        p.join("media")
+    } else if let Some(parent) = p.parent() {
+        parent.join("media")
+    } else {
+        PathBuf::from("media")
+    };
+
+    if media_dir.is_dir() {
+        if let Some(file_name) = media.path.file_name() {
+            let link_dest = media_dir.join(file_name);
+            #[cfg(unix)]
+            {
+                if !link_dest.exists() {
+                    let _ = std::os::unix::fs::symlink(&media.path, &link_dest);
                 }
             }
         }
@@ -155,9 +197,19 @@ pub async fn project_add_media(
 
     proj.media_files.push(media);
     proj.updated_at = chrono::Utc::now();
-    write_project(&p, &proj)
-        .await
-        .map_err(|e| SplicrError::Io(e.to_string()))?;
+
+    // 保存到工程包与快照
+    let is_bundle = p.extension().and_then(|ext| ext.to_str()) == Some("dramaxis")
+        || p.join("project.db").exists();
+    if is_bundle {
+        let _ = save_bundle(&p, &proj, Some("添加素材"));
+        let _ = write_project(&p.join("project.dramaxis.json"), &proj).await;
+    } else {
+        write_project(&p, &proj)
+            .await
+            .map_err(|e| SplicrError::Io(e.to_string()))?;
+    }
+
     Ok(proj)
 }
 

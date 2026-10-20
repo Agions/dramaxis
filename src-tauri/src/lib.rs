@@ -95,6 +95,8 @@ pub fn run() {
             commands::project::project_save,
             commands::project::project_delete,
             commands::project::project_add_media,
+            commands::project::project_undo,
+            commands::project::project_redo,
             commands::pipeline::pipeline_step_defs,
             commands::pipeline::pipeline_status,
             commands::pipeline::pipeline_start,
