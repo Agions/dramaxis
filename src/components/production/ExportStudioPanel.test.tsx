@@ -8,6 +8,8 @@ vi.mock("@dramaxis/ipc", () => ({
   exportIpc: {
     capcutDraft: vi.fn(),
     renderVideo: vi.fn(),
+    batchFission: vi.fn(),
+    getDedupPreset: vi.fn(),
   },
 }));
 
@@ -190,5 +192,65 @@ describe("ExportStudioPanel", () => {
     });
     fireEvent.click(checkbox);
     expect(handleBlur).toHaveBeenCalledWith(true);
+  });
+
+  it("点击防重预设与批量裂变按钮成功触发 batchFission", async () => {
+    vi.mocked(exportIpc.batchFission).mockResolvedValueOnce({
+      variants: [
+        {
+          index: 1,
+          outputPath: "/downloads/fission/variant_01.mp4",
+          sizeBytes: 20 * 1024 * 1024,
+          dedupOptions: {} as any,
+        },
+        {
+          index: 2,
+          outputPath: "/downloads/fission/variant_02.mp4",
+          sizeBytes: 20 * 1024 * 1024,
+          dedupOptions: {} as any,
+        },
+        {
+          index: 3,
+          outputPath: "/downloads/fission/variant_03.mp4",
+          sizeBytes: 20 * 1024 * 1024,
+          dedupOptions: {} as any,
+        },
+      ],
+      totalDurationSeconds: 45,
+    });
+
+    const handleZoom = vi.fn();
+
+    render(
+      <ExportStudioPanel
+        currentProject={mockProject}
+        antiDupZoom={1.04}
+        onAntiDupZoomChange={handleZoom}
+        enableAmbientBlur={true}
+        onEnableAmbientBlurChange={vi.fn()}
+      />,
+    );
+
+    // 点击强力裂变预设
+    const aggPresetBtn = screen.getByText("强力裂变");
+    fireEvent.click(aggPresetBtn);
+    expect(handleZoom).toHaveBeenCalledWith(1.06);
+
+    // 点击批量生成裂变视频
+    const fissionBtn = screen.getByText("批量生成 3 份成片");
+    fireEvent.click(fissionBtn);
+
+    await waitFor(() => {
+      expect(exportIpc.batchFission).toHaveBeenCalledWith(
+        expect.objectContaining({
+          videoPath: "/media/video.mp4",
+          count: 3,
+        }),
+      );
+      expect(toast.success).toHaveBeenCalledWith(
+        expect.stringContaining("成功并发裂变 3 份独立短视频"),
+        expect.any(Object),
+      );
+    });
   });
 });

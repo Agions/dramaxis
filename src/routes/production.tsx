@@ -1,5 +1,14 @@
 /**
- * splicr v1.0.1 · 三栏专业影视级 NLE 智能体创作工作台 (模块化重构版)
+/**
+ * dramaxis v1.1.0 · 剧枢 — 4 大工坊分阶流转与响应式脏标记驱动创作中心
+ *
+ * 工业级影视智能体创作全流程体系:
+ * - W1: 素材与对白摄取工坊 (Asset Hub: 视频摄取 / 场景拆条 / 格式探测)
+ * - W2: 编导剧本策划工坊 (Script Studio: 编导大纲 / 爆款剧本 / 6-Agent 闭环评审)
+ * - W3: 毫秒级多轨精修工坊 (Timeline Studio: 5轨毫秒磁吸 / 声画对齐 / 智能避让)
+ * - W4: 8维矩阵消重与交付工坊 (Export Hub: 剪映草稿秒出 / 8维指纹防重 / 批量并发裂变)
+ * - 响应式脏标记监控 (Dirty-Flag Tracker: 避免下游冗余计算，增量按需重算)
+ * - SQLite 3 WAL 毫秒级事务 Undo / Redo 历史快照恢复
  */
 
 import { createFileRoute } from "@tanstack/react-router";
@@ -24,6 +33,7 @@ import { projectIpc, scriptIpc, type ProjectRecord } from "@dramaxis/ipc";
 import { useAssets } from "@hooks/useAssets";
 import { useTauriEvent } from "@hooks/useTauriEvent";
 import { useAgentWorkflow } from "@hooks/useAgentWorkflow";
+import { useProject } from "@hooks/useProject";
 import { useProjectStore } from "@dramaxis/core";
 import { toast } from "sonner";
 
@@ -31,12 +41,57 @@ export const Route = createFileRoute("/production")({
   component: ProductionCinemaStudio,
 });
 
+export type WorkshopKind = "assets" | "script" | "timeline" | "export";
+
+export const WORKSHOP_STAGES: {
+  id: WorkshopKind;
+  step: number;
+  name: string;
+  en: string;
+  icon: string;
+  desc: string;
+}[] = [
+  {
+    id: "assets",
+    step: 1,
+    name: "素材摄取",
+    en: "Asset Hub",
+    icon: "🎞️",
+    desc: "视频导入 · 镜头硬切 · 对白提取",
+  },
+  {
+    id: "script",
+    step: 2,
+    name: "编导策划",
+    en: "Script Studio",
+    icon: "✍️",
+    desc: "爆款脚本 · 6-Agent评审 · 反思回路",
+  },
+  {
+    id: "timeline",
+    step: 3,
+    name: "多轨精修",
+    en: "Timeline Studio",
+    icon: "🎛️",
+    desc: "5轨磁性时间轴 · 声画对齐 · 响度闪避",
+  },
+  {
+    id: "export",
+    step: 4,
+    name: "矩阵交付",
+    en: "Export Hub",
+    icon: "🚀",
+    desc: "8维防重 · 剪映草稿 · 批量裂变",
+  },
+];
+
 function ProductionCinemaStudio() {
   const qc = useQueryClient();
   const setCurrentRecord = useProjectStore((s) => s.setCurrentRecord);
   const storeProject = useProjectStore((s) => s.current);
   const storePath = useProjectStore((s) => s.currentPath);
   const { importFromPaths, items: mediaItems } = useAssets();
+  const { undo: undoProject, redo: redoProject } = useProject();
 
   // 1. 真实数据订阅与工程加载
   const cachedRecord = qc.getQueryData<ProjectRecord>(["current-project"]);
@@ -47,33 +102,52 @@ function ProductionCinemaStudio() {
     return cachedRecord ?? null;
   }, [storeProject, storePath, cachedRecord]);
 
-  // 2. 状态管理
-  const [activeTab, setActiveTab] = useState<
-    "agent" | "script" | "voice" | "export"
-  >("agent");
+  // 2. 工坊分阶状态
+  const [activeWorkshop, setActiveWorkshop] = useState<WorkshopKind>("assets");
+  const [activeTab, setActiveTab] = useState<"agent" | "script" | "voice" | "export">("agent");
   const [showImport, setShowImport] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(100);
 
-  // 全局空格键 (Space) 播控监听 (避开输入框焦点冲突)
+  // 3. 响应式脏标记跟踪器 (Dirty-Flag Tracker)
+  const [dirtyState, setDirtyState] = useState({
+    scenesDirty: false,
+    scriptDirty: false,
+    voiceDirty: false,
+    timelineDirty: false,
+    exportDirty: false,
+  });
+
+  // 全局键盘快捷键: 播控 (Space) + Undo (⌘Z) + Redo (⇧⌘Z)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space") {
-        const activeEl = document.activeElement;
-        const isInput =
-          activeEl instanceof HTMLInputElement ||
-          activeEl instanceof HTMLTextAreaElement ||
-          activeEl?.getAttribute("contenteditable") === "true";
+      const activeEl = document.activeElement;
+      const isInput =
+        activeEl instanceof HTMLInputElement ||
+        activeEl instanceof HTMLTextAreaElement ||
+        activeEl?.getAttribute("contenteditable") === "true";
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
         if (!isInput) {
           e.preventDefault();
-          setIsPlaying((prev) => !prev);
+          if (e.shiftKey) {
+            void redoProject().then(() => toast.info("已重做 (Redo)"));
+          } else {
+            void undoProject().then(() => toast.info("已撤销 (Undo)"));
+          }
         }
+        return;
+      }
+
+      if (e.code === "Space" && !isInput) {
+        e.preventDefault();
+        setIsPlaying((prev) => !prev);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [undoProject, redoProject]);
 
   // 场景切片状态
   const [sceneCuts, setSceneCuts] = useState<SceneCut[]>([]);
@@ -96,7 +170,7 @@ function ProductionCinemaStudio() {
   const [voiceAudioPath, setVoiceAudioPath] = useState<string | null>(null);
   const [voiceDuration, setVoiceDuration] = useState<number>(0);
 
-  // 混流与防重构参数
+  // 混流与 8 维防重参数
   const [antiDupZoom, setAntiDupZoom] = useState(1.03);
   const [enableAmbientBlur, setEnableAmbientBlur] = useState(true);
 
@@ -112,20 +186,33 @@ function ProductionCinemaStudio() {
     approveBreakpoint,
   } = useAgentWorkflow({
     onWorkflowComplete: () => {
+      setActiveWorkshop("export");
       setActiveTab("export");
+      setDirtyState({
+        scenesDirty: false,
+        scriptDirty: false,
+        voiceDirty: false,
+        timelineDirty: false,
+        exportDirty: false,
+      });
+      toast.success("Multi-Agent 全流程生产完成，已直通矩阵交付工坊！");
     },
     onSceneCutsGenerated: (cuts) => {
       setSceneCuts(cuts);
+      setDirtyState((d) => ({ ...d, scenesDirty: false, timelineDirty: true, exportDirty: true }));
     },
     onScriptGenerated: (script) => {
       setScriptText(script);
+      setDirtyState((d) => ({ ...d, scriptDirty: false, voiceDirty: true, exportDirty: true }));
     },
     onVoiceGenerated: (path, dur) => {
       setVoiceAudioPath(path);
       setVoiceDuration(dur);
+      setDirtyState((d) => ({ ...d, voiceDirty: false, timelineDirty: true, exportDirty: true }));
     },
     onSubtitlesGenerated: (subs) => {
       setSubtitleSegments(subs);
+      setDirtyState((d) => ({ ...d, timelineDirty: false, exportDirty: true }));
     },
   });
 
@@ -133,6 +220,7 @@ function ProductionCinemaStudio() {
   useTauriEvent<string>("script:token", (e) => {
     if (e.payload) {
       setScriptText((prev) => (prev ? prev + "\n" + e.payload : e.payload));
+      setDirtyState((d) => ({ ...d, voiceDirty: true, exportDirty: true }));
     }
   });
 
@@ -183,6 +271,8 @@ function ProductionCinemaStudio() {
   const handleStartMultiAgent = useCallback(
     async (auto: boolean = true) => {
       if (!currentProject?.project) return;
+      setActiveWorkshop("script");
+      setActiveTab("agent");
       await startWorkflow(currentProject.project, auto);
     },
     [currentProject, startWorkflow],
@@ -204,9 +294,14 @@ function ProductionCinemaStudio() {
         const p = Array.isArray(selected) ? selected[0] : selected;
         if (p) {
           await importFromPaths([p]);
-          toast.success(
-            "素材已载入监看台，正在自动触发 6-Agent 智能体流水线...",
-          );
+          setDirtyState((d) => ({
+            ...d,
+            scenesDirty: true,
+            scriptDirty: true,
+            timelineDirty: true,
+            exportDirty: true,
+          }));
+          toast.success("素材已载入监看台，正在自动触发 6-Agent 智能体流水线...");
           setTimeout(() => {
             void handleStartMultiAgent(agentAutoMode);
           }, 300);
@@ -243,40 +338,126 @@ function ProductionCinemaStudio() {
         imagesBase64: null,
       });
       setScriptText(resp.text);
+      setDirtyState((d) => ({ ...d, voiceDirty: true, exportDirty: true }));
       toast.success("ScreenwriterAgent: AI 独白脚本生成完成！");
     } catch {
       setScriptText(
         "【第一人称沉浸独白】\n我叫林渊。所有人都以为三年前那场大火彻底烧死了我，直到今天我以千亿总裁的身份再次站在这里。那个曾经背叛我的人，现在正颤抖着跪在我的脚下求饶...但我知道，真正的幕后黑手，还藏在那扇紧闭的铁门后面！",
       );
+      setDirtyState((d) => ({ ...d, voiceDirty: true, exportDirty: true }));
       toast.success("ScreenwriterAgent: 剧本文案已生成就绪！");
     } finally {
       setIsGeneratingScript(false);
     }
   }, [userPrompt, scriptStyle, llmProvider]);
 
+  // 工坊切换联动
+  const handleSelectWorkshop = (w: WorkshopKind) => {
+    setActiveWorkshop(w);
+    if (w === "script") setActiveTab("script");
+    else if (w === "timeline") setActiveTab("voice");
+    else if (w === "export") setActiveTab("export");
+    else setActiveTab("agent");
+  };
+
+  // 评估各工坊完成状态
+  const isW1Ready = hasUploadedVideo;
+  const isW2Ready = Boolean(scriptText && scriptText.length > 20);
+  const isW3Ready = Boolean(voiceAudioPath && sceneCuts.length > 0);
+  const isW4Ready = Boolean(isW1Ready && (isW3Ready || isW2Ready));
+
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-bg select-none font-sans">
-      {/* ── 1. 顶部工作台全局状态条 ── */}
-      <header className="flex h-11 shrink-0 items-center justify-between border-b border-border bg-surface px-4">
+      {/* ── 1. 顶部 4 大工坊分阶流转与响应式脏标记总控栏 ── */}
+      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-surface px-4 z-20 shadow-sm">
+        {/* 左侧: 工程名 + SQLite 事务 Undo/Redo */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+            <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
             <span className="text-xs font-black tracking-tight text-text-primary">
-              {currentProject?.project?.name ?? "未命名工程"}
+              {currentProject?.project?.name ?? "未命名短剧工程"}
             </span>
           </div>
-          <span className="rounded bg-surface-elevated border border-border px-1.5 py-0.5 font-mono text-[9px] font-bold text-gold">
-            NLE Studio v1.0.1
-          </span>
+
+          <div className="flex items-center gap-1 border-l border-border pl-2">
+            <button
+              type="button"
+              onClick={() => void undoProject().then(() => toast.info("已撤销 (Undo)"))}
+              className="rounded p-1 text-[11px] text-text-muted hover:bg-surface-elevated hover:text-gold transition-colors"
+              title="撤销 (⌘Z)"
+            >
+              ↩
+            </button>
+            <button
+              type="button"
+              onClick={() => void redoProject().then(() => toast.info("已重做 (Redo)"))}
+              className="rounded p-1 text-[11px] text-text-muted hover:bg-surface-elevated hover:text-gold transition-colors"
+              title="重做 (⇧⌘Z)"
+            >
+              ↪
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* 中间: 4 大专业工坊分阶导航栏 (Workshop Stepper) */}
+        <div className="flex items-center gap-1 rounded-xl border border-border bg-bg/90 p-1">
+          {WORKSHOP_STAGES.map((s) => {
+            const isCurrent = activeWorkshop === s.id;
+            const isReady =
+              s.id === "assets"
+                ? isW1Ready
+                : s.id === "script"
+                ? isW2Ready
+                : s.id === "timeline"
+                ? isW3Ready
+                : isW4Ready;
+
+            const isDirty =
+              s.id === "script" && dirtyState.scriptDirty
+                ? true
+                : s.id === "timeline" && (dirtyState.voiceDirty || dirtyState.timelineDirty)
+                ? true
+                : s.id === "export" && dirtyState.exportDirty;
+
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => handleSelectWorkshop(s.id)}
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs transition-all ${
+                  isCurrent
+                    ? "border border-gold bg-gold/15 text-gold font-black shadow-sm"
+                    : "text-text-secondary hover:text-text-primary hover:bg-surface"
+                }`}
+              >
+                <span>{s.icon}</span>
+                <span>{s.step}. {s.name}</span>
+                {isDirty ? (
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber animate-ping" title="下游待同步重算" />
+                ) : isReady ? (
+                  <span className="text-[10px] text-emerald-400 font-bold">✓</span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 右侧: 脏状态指示与一键全流程 Multi-Agent */}
+        <div className="flex items-center gap-2.5">
+          {/* 响应式脏标记提醒 */}
+          {dirtyState.voiceDirty && (
+            <span className="rounded bg-amber/15 border border-amber/50 px-2 py-0.5 text-[10px] text-amber font-mono font-bold flex items-center gap-1 animate-pulse">
+              <span>⚠️</span>
+              <span>配音需同步</span>
+            </span>
+          )}
+
           <button
             type="button"
             onClick={() => setShowImport(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-border bg-surface-elevated px-2.5 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:border-gold transition-all"
+            className="flex items-center gap-1 rounded-lg border border-border bg-surface-elevated px-2.5 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:border-gold transition-all"
           >
-            <span>📁 批量素材扫描</span>
+            <span>📁 批量素材</span>
           </button>
 
           <button
@@ -294,9 +475,10 @@ function ProductionCinemaStudio() {
       </header>
 
       {/* ── 2. 中间三栏主体架构 ── */}
-      <div className="grid flex-1 grid-cols-[220px_1fr_300px] overflow-hidden">
-        {/* ── 左栏: 6-Agent 状态机机架 & 场景切片 ── */}
+      <div className="grid flex-1 grid-cols-[230px_1fr_310px] overflow-hidden">
+        {/* ── 左栏: 6-Agent 状态机机架 & 场景切片 (W1 / W2 焦点) ── */}
         <aside className="flex flex-col border-r border-border bg-surface p-3 gap-3 overflow-y-auto">
+          {/* Agent 角色机架 */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
@@ -355,12 +537,15 @@ function ProductionCinemaStudio() {
           {/* 场景切片列表模块 */}
           <SceneCutsList
             sceneCuts={sceneCuts}
-            onSetSceneCuts={setSceneCuts}
+            onSetSceneCuts={(cuts) => {
+              setSceneCuts(cuts);
+              setDirtyState((d) => ({ ...d, timelineDirty: true, exportDirty: true }));
+            }}
             mediaPath={mediaPath}
           />
         </aside>
 
-        {/* ── 中栏: 影视视听监看台与 5 轨磁性时间轴 ── */}
+        {/* ── 中栏: 影视视听监看台与 5 轨磁性时间轴 (W3 焦点) ── */}
         <main className="flex flex-col border-r border-border bg-bg p-3 gap-3 overflow-y-auto">
           {/* 上半部分: 居中专业视听监看台 */}
           <CinemaMonitor
@@ -444,7 +629,7 @@ function ProductionCinemaStudio() {
           </div>
         </main>
 
-        {/* ── 右栏: Multi-Agent 控制台与创作工坊 ── */}
+        {/* ── 右栏: Multi-Agent 控制台与创作工坊 (W2 / W4 焦点) ── */}
         <aside className="flex flex-col bg-surface p-3.5 gap-3.5 overflow-y-auto">
           {/* 顶部分页 Tab */}
           <div className="grid grid-cols-4 gap-1 rounded-xl border border-border bg-bg p-1">
@@ -452,16 +637,21 @@ function ProductionCinemaStudio() {
               { id: "agent" as const, label: "Agent", icon: "🧠" },
               { id: "script" as const, label: "剧本", icon: "✍️" },
               { id: "voice" as const, label: "克隆", icon: "🎙️" },
-              { id: "export" as const, label: "草稿", icon: "📤" },
+              { id: "export" as const, label: "交付", icon: "📤" },
             ].map((t) => (
               <button
                 key={t.id}
                 type="button"
-                onClick={() => setActiveTab(t.id)}
+                onClick={() => {
+                  setActiveTab(t.id);
+                  if (t.id === "script") setActiveWorkshop("script");
+                  else if (t.id === "voice") setActiveWorkshop("timeline");
+                  else if (t.id === "export") setActiveWorkshop("export");
+                }}
                 className={`flex items-center justify-center gap-1 rounded-lg py-1.5 text-[11px] font-bold transition-all ${
                   activeTab === t.id
                     ? "bg-surface text-gold shadow-sm border border-border"
-                    : "text-text-muted hover:text-text-primary"
+                    : "text-text-secondary hover:text-text-primary"
                 }`}
               >
                 <span>{t.icon}</span>
@@ -494,7 +684,14 @@ function ProductionCinemaStudio() {
               userPrompt={userPrompt}
               onUserPromptChange={setUserPrompt}
               scriptText={scriptText}
-              onScriptTextChange={setScriptText}
+              onScriptTextChange={(text) => {
+                setScriptText(text);
+                setDirtyState((d) => ({
+                  ...d,
+                  voiceDirty: Boolean(voiceAudioPath),
+                  exportDirty: true,
+                }));
+              }}
               isGeneratingScript={isGeneratingScript}
               onGenerateScript={handleScriptGenerate}
             />
@@ -509,7 +706,7 @@ function ProductionCinemaStudio() {
             />
           )}
 
-          {/* Tab 3: 剪映草稿交付与导出 */}
+          {/* Tab 3: 8 维消重矩阵与剪映草稿交付工坊 */}
           {activeTab === "export" && (
             <ExportStudioPanel
               currentProject={currentProject}

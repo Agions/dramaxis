@@ -49,6 +49,12 @@ import type {
   VoicePreviewParams,
   VoicePreviewResult,
   DagSnapshot,
+  DedupIntensity,
+  DedupOptions,
+  BatchFissionParams,
+  BatchFissionResult,
+  FissionVariantResult,
+  FissionProgressPayload,
 } from "./types.gen";
 
 export type {
@@ -58,6 +64,12 @@ export type {
   DagSnapshot,
   ProjectRecord,
   ConfigSnapshot,
+  DedupIntensity,
+  DedupOptions,
+  BatchFissionParams,
+  BatchFissionResult,
+  FissionVariantResult,
+  FissionProgressPayload,
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -158,6 +170,10 @@ export const exportIpc = {
     callIpc("export_capcut_draft", { params }),
   renderVideo: (params: RenderVideoParams): Promise<RenderVideoResult> =>
     callIpc("export_render_video", { params }),
+  getDedupPreset: (intensity: DedupIntensity): Promise<DedupOptions> =>
+    callIpc("export_get_dedup_preset", { intensity }),
+  batchFission: (params: BatchFissionParams): Promise<BatchFissionResult> =>
+    callIpc("export_batch_fission", { params }),
 } as const;
 
 export const detectIpc = {

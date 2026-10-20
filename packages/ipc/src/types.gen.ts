@@ -204,12 +204,24 @@ export interface IpcContracts {
     };
     result: ThumbnailResult;
   };
-  // ─────── export · 5 个 ───────
+  // ─────── export · 7 个 ───────
+  export_batch_fission: {
+    args: {
+      params: BatchFissionParams;
+    };
+    result: BatchFissionResult;
+  };
   export_capcut_draft: {
     args: {
       params: CapcutDraftOptions;
     };
     result: CapcutDraftResult;
+  };
+  export_get_dedup_preset: {
+    args: {
+      intensity: DedupIntensity;
+    };
+    result: DedupOptions;
   };
   export_plan: {
     args: {
@@ -386,6 +398,7 @@ export interface RenderVideoParams {
   platformPreset?: string | null;
   antiDupZoom?: number | null;
   enableAmbientBlur?: boolean | null;
+  dedup?: DedupOptions | null;
   outputPath?: string | null;
 }
 
@@ -401,6 +414,39 @@ export interface RenderProgressPayload {
   percent: number;
   timeSeconds: number;
   phase: string;
+}
+
+// Rust 端 BatchFissionParams (pub struct, rename_all = "camelCase")
+export interface BatchFissionParams {
+  videoPath: string;
+  voicePath?: string | null;
+  subtitles: CapcutSubtitleItem[];
+  platformPreset?: string | null;
+  baseDedup?: DedupOptions | null;
+  count: number;
+  outputDir?: string | null;
+}
+
+// Rust 端 FissionVariantResult (pub struct, rename_all = "camelCase")
+export interface FissionVariantResult {
+  index: number;
+  outputPath: string;
+  sizeBytes: number;
+  dedupOptions: DedupOptions;
+}
+
+// Rust 端 BatchFissionResult (pub struct, rename_all = "camelCase")
+export interface BatchFissionResult {
+  variants: FissionVariantResult[];
+  totalDurationSeconds: number;
+}
+
+// Rust 端 FissionProgressPayload (pub struct, rename_all = "camelCase")
+export interface FissionProgressPayload {
+  currentIndex: number;
+  totalCount: number;
+  percent: number;
+  message: string;
 }
 
 // Rust 端 ProjectRecord (pub struct, rename_all = "camelCase")
@@ -822,6 +868,32 @@ export interface CapcutDraftResult {
   isJianyingInstalled: boolean;
   totalDurationSeconds: number;
 }
+
+// Rust 端 DedupOptions (pub struct, rename_all = "camelCase")
+export interface DedupOptions {
+  intensity: DedupIntensity;
+  enableZoom: boolean;
+  zoomRate: number;
+  enableSpeed: boolean;
+  speedRate: number;
+  enableMirror: boolean;
+  enableNoise: boolean;
+  noiseStrength: number;
+  enableFpsDrift: boolean;
+  fpsDriftVal: number;
+  enablePitchShift: boolean;
+  pitchShiftRate: number;
+  enableBgmReverb: boolean;
+  reverbDecay: number;
+  enableMetadataScrub: boolean;
+}
+
+// Rust 端 DedupIntensity (pub enum, rename_all = "kebab-case")
+export type DedupIntensity =
+  | "mild"
+  | "standard"
+  | "aggressive"
+  | "custom";
 
 // Rust 端 ExportParams (pub struct)
 export interface ExportParams {
