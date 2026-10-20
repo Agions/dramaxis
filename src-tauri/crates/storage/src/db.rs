@@ -661,11 +661,16 @@ mod tests {
         let mut conn = Connection::open_in_memory().expect("open memory db");
         init_database(&conn).expect("init db schema");
 
-        let mut project = Project::default();
-        project.id = "proj-test-101".into();
-        project.name = "爆款电影解说测试".into();
-        project.settings.resolution = "1080x1920".into();
-        project.settings.target_platform = Some(PlatformId::Douyin);
+        let mut project = Project {
+            id: "proj-test-101".into(),
+            name: "爆款电影解说测试".into(),
+            settings: dramaxis_core::domain::ProjectSettings {
+                resolution: "1080x1920".into(),
+                target_platform: Some(PlatformId::Douyin),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
 
         project.media_files.push(MediaFile {
             path: PathBuf::from("/tmp/video1.mp4"),

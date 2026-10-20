@@ -204,9 +204,11 @@ mod tests {
         fs::create_dir_all(&temp_base).expect("create temp dir");
         let bundle_target = temp_base.join("DemoMovie.dramaxis");
 
-        let mut project = Project::default();
-        project.id = "proj-bundle-test".into();
-        project.name = "工程包容器生命周期测试".into();
+        let project = Project {
+            id: "proj-bundle-test".into(),
+            name: "工程包容器生命周期测试".into(),
+            ..Default::default()
+        };
 
         // 1. 创建工程包
         let bundle = create_bundle(&bundle_target, &project).expect("create bundle");

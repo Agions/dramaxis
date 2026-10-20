@@ -492,8 +492,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_dag_workflow_full_run() {
-        let mut proj = Project::default();
-        proj.name = "DAG 编排测试短剧".into();
+        let proj = Project {
+            name: "DAG 编排测试短剧".into(),
+            ..Default::default()
+        };
 
         let ctx = AgentContext::new(proj, true); // auto_mode = true
         let mut orchestrator = DagOrchestrator::new(ctx);
@@ -513,8 +515,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_dag_hitl_breakpoint_and_resume() {
-        let mut proj = Project::default();
-        proj.name = "HITL 交互断点测试".into();
+        let proj = Project {
+            name: "HITL 交互断点测试".into(),
+            ..Default::default()
+        };
 
         let ctx = AgentContext::new(proj, false); // auto_mode = false (HITL 开启)
         let mut orchestrator = DagOrchestrator::new(ctx);
