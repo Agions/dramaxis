@@ -37,7 +37,7 @@ pub async fn project_create_blank(
         ..Default::default()
     };
     let base_dir = project_dir(&app).map_err(|e| SplicrError::Io(e.to_string()))?;
-    let bundle_path = base_dir.join(format!("{}.dramaxis", &proj.id));
+    let bundle_path = base_dir.join(format!("{}.dramaxis", proj.id));
 
     // 1. 创建标准 .dramaxis 工程包与 SQLite 数据库
     let _bundle = create_bundle(&bundle_path, &proj)
