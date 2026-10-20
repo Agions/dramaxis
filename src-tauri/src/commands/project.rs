@@ -132,14 +132,20 @@ pub async fn project_save(path: String, project: Project) -> Result<(), SplicrEr
 
 /// 执行工程包内的撤销操作 (Undo)，还原上一历史检查点
 #[tauri::command]
-pub async fn project_undo(path: String, project_id: String) -> Result<Option<Project>, SplicrError> {
+pub async fn project_undo(
+    path: String,
+    project_id: String,
+) -> Result<Option<Project>, SplicrError> {
     let p = PathBuf::from(&path);
     undo_bundle(&p, &project_id).map_err(|e| SplicrError::Project(format!("撤销失败: {e}")))
 }
 
 /// 执行工程包内的重做操作 (Redo)，重做前向历史检查点
 #[tauri::command]
-pub async fn project_redo(path: String, project_id: String) -> Result<Option<Project>, SplicrError> {
+pub async fn project_redo(
+    path: String,
+    project_id: String,
+) -> Result<Option<Project>, SplicrError> {
     let p = PathBuf::from(&path);
     redo_bundle(&p, &project_id).map_err(|e| SplicrError::Project(format!("重做失败: {e}")))
 }

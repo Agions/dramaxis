@@ -13,12 +13,12 @@
 //! - 自动支持从旧版 .json / .splicr 遗留工程无缝原地迁移到 .dramaxis 包
 //! - 写入采用 WAL 事务机制，杜绝断电导致文件损坏
 
-use std::fs;
-use std::path::{Path, PathBuf};
-use rusqlite::Connection;
-use dramaxis_core::domain::Project;
 use crate::db::{init_database, load_project, redo, save_checkpoint, save_project, undo};
 use crate::AssetError;
+use dramaxis_core::domain::Project;
+use rusqlite::Connection;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 pub type BundleResult<T> = Result<T, AssetError>;
 
@@ -53,8 +53,10 @@ impl DramaxisBundle {
     /// 获取 SQLite 数据库连接并确保初始化
     pub fn connect(&self) -> BundleResult<Connection> {
         let db_file = self.db_path();
-        let conn = Connection::open(&db_file).map_err(|e| AssetError::NotFound(format!("SQLite 打开失败: {}", e)))?;
-        init_database(&conn).map_err(|e| AssetError::ProbeParse(format!("Schema 初始化失败: {}", e)))?;
+        let conn = Connection::open(&db_file)
+            .map_err(|e| AssetError::NotFound(format!("SQLite 打开失败: {}", e)))?;
+        init_database(&conn)
+            .map_err(|e| AssetError::ProbeParse(format!("Schema 初始化失败: {}", e)))?;
         Ok(conn)
     }
 }
@@ -81,7 +83,8 @@ pub fn create_bundle(path: &Path, project: &Project) -> BundleResult<DramaxisBun
 
     // 2. 初始化数据库并保存初始状态与首个 Checkpoint
     let mut conn = bundle.connect()?;
-    save_project(&mut conn, project).map_err(|e| AssetError::ProbeParse(format!("保存项目失败: {}", e)))?;
+    save_project(&mut conn, project)
+        .map_err(|e| AssetError::ProbeParse(format!("保存项目失败: {}", e)))?;
     let _ = save_checkpoint(&mut conn, project, "工程初始化");
 
     tracing::info!(bundle = %bundle_path.display(), id = %project.id, "创建 .dramaxis 工程包成功");
@@ -91,12 +94,16 @@ pub fn create_bundle(path: &Path, project: &Project) -> BundleResult<DramaxisBun
 /// 打开 .dramaxis 工程包（自动识别并兼容旧版 .json / .splicr 格式并自动迁移）
 pub fn open_bundle(path: &Path) -> BundleResult<(DramaxisBundle, Project)> {
     if !path.exists() {
-        return Err(AssetError::NotFound(format!("工程路径不存在: {}", path.display())));
+        return Err(AssetError::NotFound(format!(
+            "工程路径不存在: {}",
+            path.display()
+        )));
     }
 
     // 兼容：若传入的是旧版单文件 JSON，则自动原地升级为 .dramaxis 工程包
     if path.is_file() {
-        let is_json_or_splicr = path.extension()
+        let is_json_or_splicr = path
+            .extension()
             .and_then(|ext| ext.to_str())
             .map(|ext| ext == "json" || ext == "splicr")
             .unwrap_or(false);
@@ -110,7 +117,10 @@ pub fn open_bundle(path: &Path) -> BundleResult<(DramaxisBundle, Project)> {
     // 标准工程包目录
     let bundle = DramaxisBundle::new(path);
     if !bundle.db_path().exists() {
-        return Err(AssetError::NotFound(format!("工程包缺少核心 project.db: {}", path.display())));
+        return Err(AssetError::NotFound(format!(
+            "工程包缺少核心 project.db: {}",
+            path.display()
+        )));
     }
 
     let conn = bundle.connect()?;
@@ -122,11 +132,16 @@ pub fn open_bundle(path: &Path) -> BundleResult<(DramaxisBundle, Project)> {
 }
 
 /// 保存当前状态到工程包
-pub fn save_bundle(bundle_path: &Path, project: &Project, checkpoint_name: Option<&str>) -> BundleResult<()> {
+pub fn save_bundle(
+    bundle_path: &Path,
+    project: &Project,
+    checkpoint_name: Option<&str>,
+) -> BundleResult<()> {
     let bundle = DramaxisBundle::new(bundle_path);
     let mut conn = bundle.connect()?;
 
-    save_project(&mut conn, project).map_err(|e| AssetError::ProbeParse(format!("保存项目失败: {}", e)))?;
+    save_project(&mut conn, project)
+        .map_err(|e| AssetError::ProbeParse(format!("保存项目失败: {}", e)))?;
 
     if let Some(action) = checkpoint_name {
         let _ = save_checkpoint(&mut conn, project, action);
@@ -140,7 +155,8 @@ pub fn undo_bundle(bundle_path: &Path, project_id: &str) -> BundleResult<Option<
     let bundle = DramaxisBundle::new(bundle_path);
     let mut conn = bundle.connect()?;
 
-    let res = undo(&mut conn, project_id).map_err(|e| AssetError::ProbeParse(format!("撤销失败: {}", e)))?;
+    let res = undo(&mut conn, project_id)
+        .map_err(|e| AssetError::ProbeParse(format!("撤销失败: {}", e)))?;
     Ok(res)
 }
 
@@ -149,7 +165,8 @@ pub fn redo_bundle(bundle_path: &Path, project_id: &str) -> BundleResult<Option<
     let bundle = DramaxisBundle::new(bundle_path);
     let mut conn = bundle.connect()?;
 
-    let res = redo(&mut conn, project_id).map_err(|e| AssetError::ProbeParse(format!("重做失败: {}", e)))?;
+    let res = redo(&mut conn, project_id)
+        .map_err(|e| AssetError::ProbeParse(format!("重做失败: {}", e)))?;
     Ok(res)
 }
 
@@ -177,7 +194,13 @@ mod tests {
 
     #[test]
     fn test_bundle_lifecycle_and_legacy_migration() {
-        let temp_base = std::env::temp_dir().join(format!("dramaxis-test-{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let temp_base = std::env::temp_dir().join(format!(
+            "dramaxis-test-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         fs::create_dir_all(&temp_base).expect("create temp dir");
         let bundle_target = temp_base.join("DemoMovie.dramaxis");
 
@@ -206,7 +229,9 @@ mod tests {
         assert_eq!(reloaded_proj.name, "修改后的工程名");
 
         // 4. 测试撤销
-        let undone = undo_bundle(&bundle_target, "proj-bundle-test").expect("undo").expect("undone project");
+        let undone = undo_bundle(&bundle_target, "proj-bundle-test")
+            .expect("undo")
+            .expect("undone project");
         assert_eq!(undone.name, "工程包容器生命周期测试");
 
         // 5. 遗留 JSON 自动迁移测试
@@ -214,7 +239,8 @@ mod tests {
         let json_str = serde_json::to_string(&project).unwrap();
         fs::write(&legacy_file, json_str).expect("write legacy json");
 
-        let (migrated_bundle, migrated_proj) = open_bundle(&legacy_file).expect("auto migrate legacy file");
+        let (migrated_bundle, migrated_proj) =
+            open_bundle(&legacy_file).expect("auto migrate legacy file");
         assert_eq!(migrated_proj.id, "proj-bundle-test");
         assert!(migrated_bundle.db_path().exists());
         assert!(migrated_bundle.path.ends_with("OldProject.dramaxis"));

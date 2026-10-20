@@ -19,8 +19,8 @@ use walkdir::WalkDir;
 
 use dramaxis_detect::{parse_probe_json, Ffmpeg, FfmpegProbe};
 
-pub mod db;
 pub mod bundle;
+pub mod db;
 
 pub use bundle::{
     create_bundle, open_bundle, redo_bundle, save_bundle, undo_bundle, DramaxisBundle,

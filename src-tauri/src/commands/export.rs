@@ -15,9 +15,7 @@ use dramaxis_core::domain::{ExportStrategy, ProjectSettings};
 use dramaxis_core::error::SplicrError;
 use dramaxis_detect::Ffmpeg;
 pub use dramaxis_export::capcut::{CapcutDraftOptions, CapcutDraftResult, CapcutSubtitleItem};
-pub use dramaxis_export::dedup::{
-    generate_fission_variants, DedupIntensity, DedupOptions,
-};
+pub use dramaxis_export::dedup::{generate_fission_variants, DedupIntensity, DedupOptions};
 use dramaxis_export::{
     create_capcut_draft, render_subtitles, validate_params, ExportMode, ExportParams, ExportPlan,
     ExportPlanner, SubtitleFormat, SubtitleItem,
@@ -170,6 +168,7 @@ fn format_srt_time(ms: u64) -> String {
 }
 
 /// 内部通用渲染流水线 (支持 8 维消重矩阵、字幕、环境模糊、音画对齐)
+#[allow(clippy::too_many_arguments)]
 async fn render_video_pipeline(
     video_path: &str,
     voice_path: Option<&str>,
@@ -197,7 +196,11 @@ async fn render_video_pipeline(
         || preset.to_lowercase().contains("16:9")
         || preset.to_lowercase().contains("youtube");
 
-    let (tw, th): (u32, u32) = if is_landscape { (1920, 1080) } else { (1080, 1920) };
+    let (tw, th): (u32, u32) = if is_landscape {
+        (1920, 1080)
+    } else {
+        (1080, 1920)
+    };
 
     if let Some(parent) = output_file.parent() {
         let _ = tokio::fs::create_dir_all(parent).await;
@@ -298,17 +301,12 @@ async fn render_video_pipeline(
             ));
             "[aout]"
         } else {
-            filter_complex.push_str(&format!(
-                "[1:a]volume=1.0{audio_chain_prefix}[aout]"
-            ));
+            filter_complex.push_str(&format!("[1:a]volume=1.0{audio_chain_prefix}[aout]"));
             "[aout]"
         }
     } else if probe.audio_codec.is_some() {
         if !a_filters.is_empty() {
-            filter_complex.push_str(&format!(
-                "[0:a]{}[aout]",
-                a_filters.join(",")
-            ));
+            filter_complex.push_str(&format!("[0:a]{}[aout]", a_filters.join(",")));
             "[aout]"
         } else {
             "[0:a]"
@@ -338,7 +336,10 @@ async fn render_video_pipeline(
     }
 
     // 8 维元数据擦除与随机编码器签名
-    let meta_args = dedup.build_metadata_args("Dramaxis Master", chrono::Utc::now().timestamp_micros() as u64);
+    let meta_args = dedup.build_metadata_args(
+        "Dramaxis Master",
+        chrono::Utc::now().timestamp_micros() as u64,
+    );
     args.extend(meta_args);
 
     args.extend([
@@ -363,7 +364,9 @@ async fn render_video_pipeline(
         }
     });
 
-    let encode_res = ffmpeg.run_encode(&args_str_refs, Some(&*on_progress_wrapper)).await;
+    let encode_res = ffmpeg
+        .run_encode(&args_str_refs, Some(&*on_progress_wrapper))
+        .await;
 
     // 清理临时字幕文件
     if let Some(ref srt) = temp_srt {

@@ -626,7 +626,10 @@ impl LlmManager {
         {
             let cache_read = self.cache.read().await;
             if let Some(cached) = cache_read.get(&cache_key) {
-                tracing::info!(tokens = cached.tokens_used, "LLM 语义缓存命中，跳过外部网络调用");
+                tracing::info!(
+                    tokens = cached.tokens_used,
+                    "LLM 语义缓存命中，跳过外部网络调用"
+                );
                 return Ok(cached.clone());
             }
         }

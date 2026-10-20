@@ -5,13 +5,13 @@
 //! - 时间轴片段与剧本分段支持增量顺序存取
 //! - 提供操作快照历史栈，支持秒级 Undo / Redo
 
-use std::path::PathBuf;
 use chrono::{DateTime, Utc};
-use rusqlite::{params, Connection, Result as SqlResult};
 use dramaxis_core::domain::{
-    Clip, ExportRecord, ExportStrategy, MediaFile, Project, ProjectSettings,
-    ScriptSegment, Timeline, Track, TrackKind,
+    Clip, ExportRecord, ExportStrategy, MediaFile, Project, ProjectSettings, ScriptSegment,
+    Timeline, Track, TrackKind,
 };
+use rusqlite::{params, Connection, Result as SqlResult};
+use std::path::PathBuf;
 
 /// 初始化数据库 Schema 与性能 Pragma
 pub fn init_database(conn: &Connection) -> SqlResult<()> {
@@ -143,11 +143,26 @@ pub fn save_project(conn: &mut Connection, project: &Project) -> SqlResult<()> {
     )?;
 
     // 2. 清理旧的关系数据（级联或直接删除）
-    tx.execute("DELETE FROM media_assets WHERE project_id = ?1", params![project.id])?;
-    tx.execute("DELETE FROM timeline_clips WHERE project_id = ?1", params![project.id])?;
-    tx.execute("DELETE FROM timeline_tracks WHERE project_id = ?1", params![project.id])?;
-    tx.execute("DELETE FROM script_segments WHERE project_id = ?1", params![project.id])?;
-    tx.execute("DELETE FROM exports WHERE project_id = ?1", params![project.id])?;
+    tx.execute(
+        "DELETE FROM media_assets WHERE project_id = ?1",
+        params![project.id],
+    )?;
+    tx.execute(
+        "DELETE FROM timeline_clips WHERE project_id = ?1",
+        params![project.id],
+    )?;
+    tx.execute(
+        "DELETE FROM timeline_tracks WHERE project_id = ?1",
+        params![project.id],
+    )?;
+    tx.execute(
+        "DELETE FROM script_segments WHERE project_id = ?1",
+        params![project.id],
+    )?;
+    tx.execute(
+        "DELETE FROM exports WHERE project_id = ?1",
+        params![project.id],
+    )?;
 
     // 3. 插入媒体资产
     for (idx, m) in project.media_files.iter().enumerate() {
@@ -269,7 +284,7 @@ pub fn save_project(conn: &mut Connection, project: &Project) -> SqlResult<()> {
 
 /// 从 SQLite 还原整个 Project 领域对象
 pub fn load_project(conn: &Connection, project_id: Option<&str>) -> SqlResult<Option<Project>> {
-    let mut stmt = if let Some(_) = project_id {
+    let mut stmt = if project_id.is_some() {
         conn.prepare(
             "SELECT id, name, version, created_at, updated_at, settings_json FROM projects WHERE id = ?1",
         )?
@@ -309,7 +324,8 @@ pub fn load_project(conn: &Connection, project_id: Option<&str>) -> SqlResult<Op
         Err(e) => return Err(e),
     };
 
-    let version = semver::Version::parse(&version_str).unwrap_or_else(|_| semver::Version::new(1, 0, 1));
+    let version =
+        semver::Version::parse(&version_str).unwrap_or_else(|_| semver::Version::new(1, 0, 1));
     let created_at = DateTime::parse_from_rfc3339(&created_at_str)
         .map(|dt| dt.with_timezone(&Utc))
         .unwrap_or_else(|_| Utc::now());
@@ -510,7 +526,11 @@ pub fn load_project(conn: &Connection, project_id: Option<&str>) -> SqlResult<Op
 }
 
 /// 保存 Undo / Redo 操作快照
-pub fn save_checkpoint(conn: &mut Connection, project: &Project, action_name: &str) -> SqlResult<i64> {
+pub fn save_checkpoint(
+    conn: &mut Connection,
+    project: &Project,
+    action_name: &str,
+) -> SqlResult<i64> {
     let tx = conn.transaction()?;
 
     // 剪除被标记为已撤销 (is_undone = 1) 的未来分支
@@ -692,7 +712,10 @@ mod tests {
         assert_eq!(loaded.settings.target_platform, Some(PlatformId::Douyin));
         assert_eq!(loaded.media_files.len(), 1);
         assert_eq!(loaded.scripts.len(), 1);
-        assert_eq!(loaded.scripts[0].text, "注意看，这个男人叫小帅，此刻正被神秘人围堵在小巷中。");
+        assert_eq!(
+            loaded.scripts[0].text,
+            "注意看，这个男人叫小帅，此刻正被神秘人围堵在小巷中。"
+        );
         assert_eq!(loaded.scripts[0].is_hook, Some(true));
         assert_eq!(loaded.timeline.tracks.len(), 5);
         assert_eq!(loaded.timeline.tracks[0].clips.len(), 1);
@@ -702,16 +725,27 @@ mod tests {
 
         // 修改台词
         let mut modified = project.clone();
-        modified.scripts[0].text = "谁也没想到，这个看似平凡的普通人，竟然隐藏着足以改变战局的秘密。".into();
+        modified.scripts[0].text =
+            "谁也没想到，这个看似平凡的普通人，竟然隐藏着足以改变战局的秘密。".into();
         save_project(&mut conn, &modified).expect("save modified");
         save_checkpoint(&mut conn, &modified, "修改第一句台词").expect("save checkpoint 2");
 
         // 执行 Undo
-        let undone = undo(&mut conn, "proj-test-101").expect("undo").expect("undone project");
-        assert_eq!(undone.scripts[0].text, "注意看，这个男人叫小帅，此刻正被神秘人围堵在小巷中。");
+        let undone = undo(&mut conn, "proj-test-101")
+            .expect("undo")
+            .expect("undone project");
+        assert_eq!(
+            undone.scripts[0].text,
+            "注意看，这个男人叫小帅，此刻正被神秘人围堵在小巷中。"
+        );
 
         // 执行 Redo
-        let redone = redo(&mut conn, "proj-test-101").expect("redo").expect("redone project");
-        assert_eq!(redone.scripts[0].text, "谁也没想到，这个看似平凡的普通人，竟然隐藏着足以改变战局的秘密。");
+        let redone = redo(&mut conn, "proj-test-101")
+            .expect("redo")
+            .expect("redone project");
+        assert_eq!(
+            redone.scripts[0].text,
+            "谁也没想到，这个看似平凡的普通人，竟然隐藏着足以改变战局的秘密。"
+        );
     }
 }

@@ -214,10 +214,9 @@ impl DagOrchestrator {
 
             // 若无任何就绪节点，检查是否全部完成
             if ready_indices.is_empty() {
-                let all_done = self
-                    .nodes
-                    .iter()
-                    .all(|n| n.status == DagNodeStatus::Completed || n.status == DagNodeStatus::Skipped);
+                let all_done = self.nodes.iter().all(|n| {
+                    n.status == DagNodeStatus::Completed || n.status == DagNodeStatus::Skipped
+                });
 
                 if all_done {
                     let mut ctx = self.context.write().await;
@@ -236,7 +235,12 @@ impl DagOrchestrator {
             for node_idx in ready_indices {
                 let (node_id, role, name, is_hitl) = {
                     let node = &self.nodes[node_idx];
-                    (node.id, node.role, node.name.to_string(), node.is_hitl_checkpoint)
+                    (
+                        node.id,
+                        node.role,
+                        node.name.to_string(),
+                        node.is_hitl_checkpoint,
+                    )
                 };
 
                 // 人机协同断点处理 (HITL)
@@ -319,10 +323,9 @@ impl DagOrchestrator {
                                 self.critique_count += 1;
                                 let feedback = {
                                     let ctx = self.context.read().await;
-                                    ctx.memory
-                                        .get("critique_feedback")
-                                        .cloned()
-                                        .unwrap_or_else(|| "开篇前3秒悬念不足，建议加入突发冲突钩子".into())
+                                    ctx.memory.get("critique_feedback").cloned().unwrap_or_else(
+                                        || "开篇前3秒悬念不足，建议加入突发冲突钩子".into(),
+                                    )
                                 };
 
                                 if let Some(emitter) = &self.event_emitter {
@@ -368,7 +371,10 @@ impl DagOrchestrator {
     }
 
     /// 恢复人机协同断点
-    pub async fn resume_breakpoint(&mut self, action: &str) -> SplicrResult<Option<BreakpointRequest>> {
+    pub async fn resume_breakpoint(
+        &mut self,
+        action: &str,
+    ) -> SplicrResult<Option<BreakpointRequest>> {
         if let Some(hitl_node) = self.nodes.iter_mut().find(|n| n.id == "hitl_approval") {
             hitl_node.status = DagNodeStatus::Completed;
             hitl_node.summary = Some(format!("用户已确认: {}", action));
@@ -405,7 +411,10 @@ impl DagOrchestrator {
                     AgentRole::SoundEngineer,
                     "启动音频通道探测器，提取原片音频并进行 Whisper 语音活动分段...",
                 );
-                ctx.memory.insert("dialogue_summary".into(), "原片对话时长占比 45%，背景声场完整".into());
+                ctx.memory.insert(
+                    "dialogue_summary".into(),
+                    "原片对话时长占比 45%，背景声场完整".into(),
+                );
                 ctx.log_action(
                     AgentRole::SoundEngineer,
                     "对白抽取",
@@ -420,7 +429,11 @@ impl DagOrchestrator {
             }
             "critic_review" => {
                 // 评审机制：评估剧本爆款留存率与前3秒钩子
-                let hook_ok = ctx.project.scripts.iter().any(|s| s.is_hook.unwrap_or(false));
+                let hook_ok = ctx
+                    .project
+                    .scripts
+                    .iter()
+                    .any(|s| s.is_hook.unwrap_or(false));
                 let score: f32 = if hook_ok { 91.5 } else { 72.0 };
                 ctx.memory.insert("critic_score".into(), score.to_string());
 
@@ -513,7 +526,10 @@ mod tests {
         assert_eq!(req.agent, AgentRole::Director);
 
         // 恢复断点继续执行
-        let final_bp = orchestrator.resume_breakpoint("批准定稿").await.expect("resume");
+        let final_bp = orchestrator
+            .resume_breakpoint("批准定稿")
+            .await
+            .expect("resume");
         assert!(final_bp.is_none());
 
         let snap = orchestrator.snapshot().await;

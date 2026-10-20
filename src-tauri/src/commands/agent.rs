@@ -91,7 +91,9 @@ pub async fn agent_run_dag(
             .await
             .map_err(|e| SplicrError::Pipeline(e.to_string()))
     } else {
-        Err(SplicrError::Pipeline("DAG 智能体调度器尚未初始化".to_string()))
+        Err(SplicrError::Pipeline(
+            "DAG 智能体调度器尚未初始化".to_string(),
+        ))
     }
 }
 
@@ -107,7 +109,9 @@ pub async fn agent_resume_breakpoint(
             .await
             .map_err(|e| SplicrError::Pipeline(e.to_string()))
     } else {
-        Err(SplicrError::Pipeline("DAG 智能体调度器尚未初始化".to_string()))
+        Err(SplicrError::Pipeline(
+            "DAG 智能体调度器尚未初始化".to_string(),
+        ))
     }
 }
 
