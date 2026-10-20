@@ -329,10 +329,24 @@ export interface IpcContracts {
     };
     result: string;
   };
-  // ─────── agent · 3 个 ───────
+  // ─────── agent · 6 个 ───────
   agent_get_context: {
     args: void;
     result: AgentContext | null;
+  };
+  agent_get_dag_snapshot: {
+    args: void;
+    result: DagSnapshot | null;
+  };
+  agent_resume_breakpoint: {
+    args: {
+      action: string;
+    };
+    result: BreakpointRequest | null;
+  };
+  agent_run_dag: {
+    args: void;
+    result: BreakpointRequest | null;
   };
   agent_start: {
     args: {
@@ -498,6 +512,27 @@ export interface QualityReport {
   suggestions: string[];
 }
 
+// Rust 端 DagNodeInfo (pub struct, rename_all = "camelCase")
+export interface DagNodeInfo {
+  id: string;
+  name: string;
+  role: AgentRole;
+  dependencies: string[];
+  status: DagNodeStatus;
+  durationMs: number;
+  summary?: string | null;
+}
+
+// Rust 端 DagSnapshot (pub struct, rename_all = "camelCase")
+export interface DagSnapshot {
+  sessionId: string;
+  totalNodes: number;
+  completedNodes: number;
+  nodes: DagNodeInfo[];
+  inCritiqueLoop: boolean;
+  critiqueCount: number;
+}
+
 // Rust 端 AgentRole (pub enum, rename_all = "snake_case")
 export type AgentRole =
   | "director"
@@ -516,14 +551,25 @@ export type AgentStatus =
   | "completed"
   | "failed";
 
+// Rust 端 DagNodeStatus (pub enum, rename_all = "snake_case")
+export type DagNodeStatus =
+  | "pending"
+  | "running"
+  | "completed"
+  | "failed"
+  | "skipped";
+
 // Rust 端 AgentEventPayload (pub enum, rename_all = "snake_case")
 export type AgentEventPayload =
   | "step_started"
   | "thought_stream"
   | "action_executed"
   | "breakpoint_required"
+  | "breakpoint_resolved"
   | "step_completed"
   | "quality_gate_evaluated"
+  | "critique_loop_triggered"
+  | "dag_progress"
   | "workflow_completed"
   | "error";
 

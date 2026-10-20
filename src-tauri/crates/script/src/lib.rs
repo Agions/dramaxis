@@ -594,6 +594,7 @@ pub fn factory(kind: LlmProviderKind, api_key: impl Into<String>) -> Box<dyn Llm
 /// 设计: 顺序尝试 `chain` 中的 provider,第一个成功的返回;全部失败返回最后一次错误。
 pub struct LlmManager {
     chain: Vec<Box<dyn LlmProvider>>,
+    cache: std::sync::Arc<tokio::sync::RwLock<std::collections::HashMap<String, LlmResponse>>>,
 }
 
 impl std::fmt::Debug for LlmManager {
@@ -605,16 +606,29 @@ impl std::fmt::Debug for LlmManager {
 
 impl LlmManager {
     pub fn new(chain: Vec<Box<dyn LlmProvider>>) -> Self {
-        Self { chain }
+        Self {
+            chain,
+            cache: std::sync::Arc::new(tokio::sync::RwLock::new(std::collections::HashMap::new())),
+        }
     }
 
-    /// 顺序尝试所有 provider,直到有成功响应。
+    /// 顺序尝试所有 provider,直到有成功响应 (包含 Prompt 缓存与容灾降级)。
     pub async fn chat(&self, req: &LlmRequest) -> SplicrResult<LlmResponse> {
         if self.chain.is_empty() {
             return Err(SplicrError::Llm {
                 provider: LlmProviderKind::OpenAi, // 占位
                 message: "no LLM provider configured".into(),
             });
+        }
+
+        // 检查 Prompt 语义缓存
+        let cache_key = format!("{}:{}:{:?}", req.system, req.user, req.model);
+        {
+            let cache_read = self.cache.read().await;
+            if let Some(cached) = cache_read.get(&cache_key) {
+                tracing::info!(tokens = cached.tokens_used, "LLM 语义缓存命中，跳过外部网络调用");
+                return Ok(cached.clone());
+            }
         }
 
         let mut last_err: Option<SplicrError> = None;
@@ -627,6 +641,13 @@ impl LlmManager {
                         duration_ms = resp.duration_ms,
                         "llm request succeeded"
                     );
+
+                    // 写入缓存
+                    {
+                        let mut cache_write = self.cache.write().await;
+                        cache_write.insert(cache_key, resp.clone());
+                    }
+
                     return Ok(resp);
                 }
                 Err(e) => {

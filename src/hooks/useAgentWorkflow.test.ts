@@ -7,6 +7,9 @@ vi.mock("@dramaxis/ipc", () => ({
   agentIpc: {
     start: vi.fn(),
     step: vi.fn(),
+    runDag: vi.fn(),
+    resumeBreakpoint: vi.fn(),
+    getDagSnapshot: vi.fn(),
     getContext: vi.fn(),
   },
 }));
@@ -196,6 +199,44 @@ describe("useAgentWorkflow", () => {
       await result.current.approveBreakpoint(true, "台词节奏优化建议");
     });
 
+    expect(result.current.breakpoint).toBeNull();
+  });
+
+  it("runDagWorkflow 启动并支持 resumeDagBreakpoint 恢复断点", async () => {
+    vi.mocked(agentIpc.start).mockResolvedValueOnce({
+      session_id: "sess-dag-001",
+      project: mockProject,
+      status: "awaiting_approval",
+      current_role: "director",
+      auto_mode: false,
+      messages: [],
+      memory: {},
+    });
+
+    vi.mocked(agentIpc.runDag).mockResolvedValueOnce({
+      agent: "director",
+      step_title: "🤝 人机协同 · 剧本精修与终版确认 (HITL)",
+      content: "第一人称解说初稿",
+      options: ["批准定稿并进入配音", "重新微调剧本"],
+    });
+
+    const { result } = renderHook(() => useAgentWorkflow());
+
+    await act(async () => {
+      await result.current.runDagWorkflow(mockProject, false);
+    });
+
+    expect(agentIpc.start).toHaveBeenCalledWith(mockProject, false);
+    expect(agentIpc.runDag).toHaveBeenCalledTimes(1);
+    expect(result.current.breakpoint?.agent).toBe("director");
+
+    vi.mocked(agentIpc.resumeBreakpoint).mockResolvedValueOnce(null);
+
+    await act(async () => {
+      await result.current.resumeDagBreakpoint("批准定稿并进入配音");
+    });
+
+    expect(agentIpc.resumeBreakpoint).toHaveBeenCalledWith("批准定稿并进入配音");
     expect(result.current.breakpoint).toBeNull();
   });
 });

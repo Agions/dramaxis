@@ -117,6 +117,10 @@ const SKIP_TYPES = new Set([
   "AssetError",
   "UpdateError", // thiserror::Error
   "LoggingService",
+  "AgentServiceState",
+  "AgentOrchestrator",
+  "DagOrchestrator",
+  "DagNode",
 ]);
 
 // ── 字符串工具 ──────────────────────────────────────────────────────

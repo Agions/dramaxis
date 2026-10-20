@@ -6,10 +6,12 @@
 
 pub mod agents;
 pub mod context;
+pub mod dag;
 pub mod engine;
 pub mod types;
 
 pub use agents::*;
 pub use context::AgentContext;
+pub use dag::*;
 pub use engine::AgentOrchestrator;
 pub use types::*;

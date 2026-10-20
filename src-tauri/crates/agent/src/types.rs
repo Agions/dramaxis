@@ -52,6 +52,39 @@ pub struct QualityReport {
     pub suggestions: Vec<String>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DagNodeStatus {
+    Pending,
+    Running,
+    Completed,
+    Failed,
+    Skipped,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DagNodeInfo {
+    pub id: String,
+    pub name: String,
+    pub role: AgentRole,
+    pub dependencies: Vec<String>,
+    pub status: DagNodeStatus,
+    pub duration_ms: u64,
+    pub summary: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DagSnapshot {
+    pub session_id: String,
+    pub total_nodes: usize,
+    pub completed_nodes: usize,
+    pub nodes: Vec<DagNodeInfo>,
+    pub in_critique_loop: bool,
+    pub critique_count: u32,
+}
+
 /// 实时事件总线载荷 (Tauri Event: `agent://event`)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data", rename_all = "snake_case")]
@@ -71,12 +104,25 @@ pub enum AgentEventPayload {
         observation: String,
     },
     BreakpointRequired(BreakpointRequest),
+    BreakpointResolved {
+        agent: AgentRole,
+        action: String,
+    },
     StepCompleted {
         step_idx: usize,
         role: AgentRole,
         summary: String,
     },
     QualityGateEvaluated(QualityReport),
+    CritiqueLoopTriggered {
+        round: u32,
+        max_rounds: u32,
+        current_score: f32,
+        feedback: String,
+    },
+    DagProgress {
+        snapshot: DagSnapshot,
+    },
     WorkflowCompleted {
         total_steps: usize,
         duration_ms: u64,

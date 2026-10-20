@@ -48,12 +48,14 @@ import type {
   UpdateState,
   VoicePreviewParams,
   VoicePreviewResult,
+  DagSnapshot,
 } from "./types.gen";
 
 export type {
   AgentContext,
   AgentMessage,
   BreakpointRequest,
+  DagSnapshot,
   ProjectRecord,
   ConfigSnapshot,
 };
@@ -249,6 +251,11 @@ export const agentIpc = {
     callIpc("agent_start", { project, autoMode }),
   step: (stepIdx: number): Promise<BreakpointRequest | null> =>
     callIpc("agent_step", { stepIdx }),
+  runDag: (): Promise<BreakpointRequest | null> => callIpc("agent_run_dag"),
+  resumeBreakpoint: (action: string): Promise<BreakpointRequest | null> =>
+    callIpc("agent_resume_breakpoint", { action }),
+  getDagSnapshot: (): Promise<DagSnapshot | null> =>
+    callIpc("agent_get_dag_snapshot"),
   getContext: (): Promise<AgentContext | null> => callIpc("agent_get_context"),
 } as const;
 

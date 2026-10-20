@@ -134,6 +134,9 @@ pub fn run() {
             commands::export::export_render_video,
             commands::agent::agent_start,
             commands::agent::agent_step,
+            commands::agent::agent_run_dag,
+            commands::agent::agent_resume_breakpoint,
+            commands::agent::agent_get_dag_snapshot,
             commands::agent::agent_get_context,
         ])
         .run(tauri::generate_context!())

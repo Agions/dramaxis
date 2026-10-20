@@ -14,6 +14,7 @@ import {
   type AgentMessage,
   type BreakpointRequest,
   type QualityReport,
+  type DagSnapshot,
   type Project,
 } from "@dramaxis/ipc";
 import { useTauriEvent } from "./useTauriEvent";
@@ -47,6 +48,7 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
   const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
   const [breakpoint, setBreakpoint] = useState<BreakpointRequest | null>(null);
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
+  const [dagSnapshot, setDagSnapshot] = useState<DagSnapshot | null>(null);
 
   const pausedStepRef = useRef<number>(0);
   const isMountedRef = useRef(true);
@@ -63,6 +65,9 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
     type:
       | "step_started"
       | "breakpoint_required"
+      | "breakpoint_resolved"
+      | "dag_progress"
+      | "critique_loop_triggered"
       | "workflow_completed"
       | "quality_gate_evaluated"
       | "error";
@@ -78,6 +83,15 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
       options?.onStepChange?.(idx);
     } else if (payload.type === "breakpoint_required") {
       setBreakpoint(payload.data ?? null);
+    } else if (payload.type === "dag_progress") {
+      if (payload.data?.snapshot) {
+        setDagSnapshot(payload.data.snapshot);
+      }
+    } else if (payload.type === "critique_loop_triggered") {
+      const data = payload.data;
+      toast.info(
+        `智能体反思回路 (第 ${data?.round}/${data?.max_rounds} 轮): 当前评分 ${data?.current_score} 分未达标，正进行针对性剧本优化...`,
+      );
     } else if (payload.type === "quality_gate_evaluated") {
       if (payload.data) {
         const report = payload.data as QualityReport;
@@ -267,8 +281,49 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
     setBreakpoint(null);
     setAgentMessages([]);
     setQualityReport(null);
+    setDagSnapshot(null);
     pausedStepRef.current = 0;
   }, []);
+
+  const runDagWorkflow = useCallback(
+    async (project: Project, auto: boolean = true) => {
+      setIsAgentRunning(true);
+      setBreakpoint(null);
+      setAgentMessages([]);
+      try {
+        await agentIpc.start(project, auto);
+        const req = await agentIpc.runDag();
+        if (req) {
+          setBreakpoint(req);
+        }
+      } catch (e: any) {
+        if (isMountedRef.current) {
+          setIsAgentRunning(false);
+          toast.error(`DAG 推演异常: ${e?.message ?? e}`);
+        }
+      }
+    },
+    [],
+  );
+
+  const resumeDagBreakpoint = useCallback(
+    async (action: string) => {
+      setBreakpoint(null);
+      setIsAgentRunning(true);
+      try {
+        const nextReq = await agentIpc.resumeBreakpoint(action);
+        if (nextReq) {
+          setBreakpoint(nextReq);
+        }
+      } catch (e: any) {
+        if (isMountedRef.current) {
+          setIsAgentRunning(false);
+          toast.error(`断点恢复异常: ${e?.message ?? e}`);
+        }
+      }
+    },
+    [],
+  );
 
   return {
     isAgentRunning,
@@ -278,7 +333,10 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
     agentMessages,
     breakpoint,
     qualityReport,
+    dagSnapshot,
     startWorkflow,
+    runDagWorkflow,
+    resumeDagBreakpoint,
     approveBreakpoint,
     resetWorkflow,
   };
