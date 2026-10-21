@@ -1,9 +1,29 @@
 # Changelog
 
-All notable changes to the splicr project will be documented in this file.
+All notable changes to the Dramaxis project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.1.0] - 2026-10-21
+
+### 🚀 Major Architectural Upgrades & Highlights
+
+- **Decoupled Playback Engine (`usePlaybackStore`)**:
+  - Independent 60fps high-frequency playback clock separated from heavy project state updates.
+  - Zero-overhead audio/video synchronized scrub and canvas waveform rendering.
+- **Unified 4-Workshop State Machine (`useWorkshopStore`)**:
+  - Dedicated domain state management for Asset Hub, Script Studio, Production Workspace, and Export Hub.
+  - Granular undo/redo and atomic inspector property mutations.
+- **Production Monolith Decomposition**:
+  - Refactored `production.tsx` into modular components: `ProductionHeader`, `ProductionLeftSidebar`, `ProductionWorkspace`, and `ProductionInspector`.
+  - Maintainable component hierarchy and optimized rendering pipelines.
+- **Multi-Modal Vision RAG & Script Retention Flywheel**:
+  - Deep integration of video scene visual embeddings and multimodal scene-by-scene matching.
+  - Golden 3-second hook heuristics and retention tension arc generation.
+- **Comprehensive Legacy Cleanup & Naming Standardization**:
+  - Sanitized obsolete legacy references across Rust and TypeScript ecosystems.
+  - Safe LocalStorage key migration with backwards compatibility.
 
 ## [1.0.0] - 2026-08-06
 
