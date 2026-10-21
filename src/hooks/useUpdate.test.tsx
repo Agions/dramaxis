@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · useUpdate hook 单测 (renderHook)
+ * dramaxis v1.1.0 · useUpdate hook 单测 (renderHook)
  *
  * 测试策略:
  * - mock @ipc/commands 中的 updateIpc

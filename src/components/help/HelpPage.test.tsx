@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · HelpPage 单测 (M4.5)
+ * dramaxis v1.1.0 · HelpPage 单测 (M4.5)
  *
  * 覆盖场景:
  * - 加载状态(loading)

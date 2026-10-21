@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · HelpPage · 电影调光室风格 官方帮助与交互式知识库中心
+ * dramaxis v1.1.0 · HelpPage · 电影调光室风格 官方帮助与交互式知识库中心
  */
 
 import { useMemo, useState, useEffect } from "react";

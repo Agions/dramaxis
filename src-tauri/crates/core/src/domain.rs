@@ -4,7 +4,7 @@
 //! 整个应用的"业务对象" — 不依赖任何低层 IO 细节
 //!
 //! ## 核心领域模型
-//! - [`Project`]   : 顶层项目 (1 个 .splicr 文件对应 1 个 Project)
+//! - [`Project`]   : 顶层项目 (1 个 .dramaxis 工程包对应 1 个 Project)
 //! - [`MediaFile`] : 媒体文件 (mp4 / mov / wav / mp3)
 //! - [`Timeline`]  : 时间线 (含 tracks + clips)
 //! - [`Track`]     : 时间线轨道
@@ -17,7 +17,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-/// 顶层项目。一个 .splicr 文件对应 1 个 Project。
+/// 顶层项目。一个 .dramaxis 工程包对应 1 个 Project。
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Project {
     pub id: String,

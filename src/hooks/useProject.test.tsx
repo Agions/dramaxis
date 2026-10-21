@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · useProject hook 单测 (renderHook)
+ * dramaxis v1.1.0 · useProject hook 单测 (renderHook)
  *
  * 测试策略:
  * - mock @ipc/commands 中的 projectIpc / pipelineIpc
@@ -69,7 +69,7 @@ const sampleProject: Project = {
 };
 
 const sampleRecord: ProjectRecord = {
-  path: "/tmp/test.splicr.json",
+  path: "/tmp/test.dramaxis.json",
   project: { ...sampleProject, name: "已加载项目" },
 };
 
@@ -133,12 +133,12 @@ describe("useProject", () => {
       });
 
       await act(async () => {
-        await result.current.open("/tmp/test.splicr.json");
+        await result.current.open("/tmp/test.dramaxis.json");
       });
 
-      expect(projectLoadMock).toHaveBeenCalledWith("/tmp/test.splicr.json");
+      expect(projectLoadMock).toHaveBeenCalledWith("/tmp/test.dramaxis.json");
       expect(storeState.setCurrentRecord).toHaveBeenCalledWith(
-        "/tmp/test.splicr.json",
+        "/tmp/test.dramaxis.json",
         sampleRecord.project,
       );
       await waitFor(() => {
@@ -236,7 +236,7 @@ describe("useProject", () => {
 
     it("正常 save → 写 updated_at 并同步 store", async () => {
       storeState.current = sampleProject;
-      storeState.currentPath = "/tmp/test.splicr.json";
+      storeState.currentPath = "/tmp/test.dramaxis.json";
       projectSaveMock.mockResolvedValueOnce(undefined);
       const { result } = renderHook(() => useProject(), {
         wrapper: makeWrapper(),
@@ -249,7 +249,7 @@ describe("useProject", () => {
       const after = Date.now();
 
       expect(projectSaveMock).toHaveBeenCalledWith(
-        "/tmp/test.splicr.json",
+        "/tmp/test.dramaxis.json",
         expect.objectContaining({ name: "示例项目" }),
       );
       // setCurrent 被调,updated_at 应在 before-after 之间
@@ -262,7 +262,7 @@ describe("useProject", () => {
 
     it("save 失败 → error 被设,抛错", async () => {
       storeState.current = sampleProject;
-      storeState.currentPath = "/tmp/test.splicr.json";
+      storeState.currentPath = "/tmp/test.dramaxis.json";
       projectSaveMock.mockRejectedValueOnce(new Error("磁盘写失败"));
       const { result } = renderHook(() => useProject(), {
         wrapper: makeWrapper(),

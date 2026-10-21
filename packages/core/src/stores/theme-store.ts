@@ -1,10 +1,10 @@
 /**
- * splicr v1.0.1 · theme store (Zustand)
+ * dramaxis v1.1.0 · theme store (Zustand)
  *
  * 架构规范:
  * - 统一管理 light / dark / system 模式
  * - 修复 system 模式下 toggle 无法识别真实系统外观的缺陷
- * - 提供 safeStorage 兜底环境无 localStorage 时的异常
+ * - 提供 safeStorage 兜底环境无 localStorage 时的异常，自动兼容旧版 storage key
  */
 
 import { create } from "zustand";
@@ -31,13 +31,28 @@ interface ThemeState {
   toggle: () => void;
 }
 
+const STORAGE_KEY = "dramaxis.theme";
+const LEGACY_STORAGE_KEY = "splicr.theme";
+
 const safeStorage = {
   getItem: (name: string) => {
     try {
-      return typeof localStorage !== "undefined" &&
+      if (
+        typeof localStorage !== "undefined" &&
         typeof localStorage.getItem === "function"
-        ? localStorage.getItem(name)
-        : null;
+      ) {
+        const val = localStorage.getItem(name);
+        if (val !== null) return val;
+        if (name === STORAGE_KEY) {
+          const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+          if (legacy !== null) {
+            localStorage.setItem(STORAGE_KEY, legacy);
+            localStorage.removeItem(LEGACY_STORAGE_KEY);
+            return legacy;
+          }
+        }
+      }
+      return null;
     } catch {
       return null;
     }
@@ -79,7 +94,7 @@ export const useThemeStore = create<ThemeState>()(
       },
     }),
     {
-      name: "splicr.theme",
+      name: STORAGE_KEY,
       storage: createJSONStorage(() => safeStorage),
     },
   ),

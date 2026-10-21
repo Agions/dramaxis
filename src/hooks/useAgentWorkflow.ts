@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · useAgentWorkflow
+ * dramaxis v1.1.0 · useAgentWorkflow
  *
  * 6-Agent 多智能体协同流水线核心调度 Hook:
  * - 集中管理 Agent 运行状态、步骤推进、断点协同 (HITL) 与实时消息日志

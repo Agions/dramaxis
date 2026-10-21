@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · 全量双语 (i18n) 字典与翻译函数
+ * dramaxis v1.1.0 · 全量双语 (i18n) 字典与翻译函数
  */
 
 export type Locale = "zh-CN" | "en-US";

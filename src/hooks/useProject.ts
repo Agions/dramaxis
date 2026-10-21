@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · 当前项目 hook (M3 真实接通 Tauri 命令)
+ * dramaxis v1.1.0 · 当前项目 hook (M3 真实接通 Tauri 命令)
  *
  * 后端命令:
  * - open(path)    → projectIpc.load(path)      → ProjectRecord
@@ -32,7 +32,7 @@ export interface UseProjectReturn {
   /** 是否已加载项目 */
   hasProject: boolean;
 
-  /** 加载指定路径的项目 (解析 .splicr.json → setCurrentRecord) */
+  /** 加载指定路径的项目 (解析 .dramaxis 工程包或兼容旧版 .splicr.json → setCurrentRecord) */
   open: (path: string) => Promise<void>;
   /** 保存到当前路径 (currentPath 必须存在) */
   save: () => Promise<void>;

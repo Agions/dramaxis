@@ -1,4 +1,4 @@
-# splicr v1.0.1 Makefile
+# dramaxis v1.1.0 Makefile
 # Rust + Tauri 2 + React 主线构建系统
 #
 # 使用方法:
@@ -17,7 +17,7 @@
 # ── 版本号（单一真相来源：package.json）──────────────────
 VERSION := $(shell node -p "require('./package.json').version" 2>/dev/null)
 ifeq ($(VERSION),)
-  VERSION := 1.0.1
+  VERSION := 1.1.0
 endif
 
 # ── 颜色输出 ───────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ warn    = @echo "$(YELLOW)[WARN]$(NC)  $*"
 
 # ── 默认目标：显示帮助 ─────────────────────────────────────────────
 help:
-	@echo "splicr v$(VERSION) Build System  ·  Rust + Tauri 2 + React"
+	@echo "dramaxis v$(VERSION) Build System  ·  Rust + Tauri 2 + React"
 	@echo ""
 	@echo "使用方式: make <target>"
 	@echo ""

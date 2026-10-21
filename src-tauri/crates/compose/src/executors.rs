@@ -581,7 +581,7 @@ mod tests {
     fn project_with_media() -> Project {
         let mut p = Project::default();
         p.media_files.push(MediaFile {
-            path: PathBuf::from("/tmp/splicr-test-dummy.mp4"),
+            path: PathBuf::from("/tmp/dramaxis-test-dummy.mp4"),
             duration_seconds: 30.0,
             resolution: None,
             codec: None,

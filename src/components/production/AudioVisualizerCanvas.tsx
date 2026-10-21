@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · 实时音频频谱与波形可视化 Canvas
+ * dramaxis v1.1.0 · 实时音频频谱与波形可视化 Canvas
  * - 采用 Web Audio API (AnalyserNode) + 2D Canvas 渲染
  * - 金黄琥珀微光 (#F5C842) 与 48 频段 FFT 频谱跳动
  */

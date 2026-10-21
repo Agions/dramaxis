@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · ui store (Zustand)
+ * dramaxis v1.1.0 · ui store (Zustand)
  *
  * 设计:
  * - 与"数据"无关的 UI 状态:侧栏折叠/命令面板开关/当前路由 toast 等

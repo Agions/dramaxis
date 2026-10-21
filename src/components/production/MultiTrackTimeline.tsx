@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · 全景多轨生产时间轴组件 (MultiTrackTimeline)
+ * dramaxis v1.1.0 · 全景多轨生产时间轴组件 (MultiTrackTimeline)
  *
  * 深度适配 Dark/Light 调色台设计系统:
  * - 5 轨全景磁性轨道 (V1 视频切片、HK 黄金高光、A1 第一人称独白配音、SUB 逐字花字字幕、BGM 动态闪避伴奏)

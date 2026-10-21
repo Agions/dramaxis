@@ -6,7 +6,7 @@
 //! - [`container`] : `ServiceContainer` — 19 个核心服务的注册与解析
 //! - [`error`]     : `SplicrError` + `SplicrResult` — 统一错误类型 (Tauri Command 返回)
 //! - [`logging`]   : `init_logging` — `tracing_subscriber` 初始化
-//! - [`domain`]    : re-export 跨模块领域原语 (delegate 给 splicr-domain)
+//! - [`domain`]    : re-export 跨模块领域原语 (delegate 给 dramaxis 领域模型)
 //! - [`services`]  : 19 个 service 注册入口
 //!
 //! ## 核心领域模型

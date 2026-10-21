@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · AgentStudioRack · 6-Agent 智能体机架与思考控制台
+ * dramaxis v1.1.0 · AgentStudioRack · 6-Agent 智能体机架与思考控制台
  */
 
 import { memo } from "react";

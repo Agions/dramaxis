@@ -1,5 +1,5 @@
 /**
- * splicr · 5 轨多媒体时间轴视口虚拟化裁剪算法
+ * dramaxis v1.1.0 · 5 轨多媒体时间轴视口虚拟化裁剪算法
  */
 
 export interface VirtualViewportOptions {

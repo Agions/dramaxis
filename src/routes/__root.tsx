@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · 根路由 (M3.2 · 接 AppShell)
+ * dramaxis v1.1.0 · 根路由 (M3.2 · 接 AppShell)
  *
  * 整个应用统一布局:AppShell 已经包含 TopBar + Sidebar + 自带 Outlet。
  */

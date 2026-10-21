@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · 缩略图应用适配器
+ * dramaxis v1.1.0 · 缩略图应用适配器
  *
  * 将 @dramaxis/ui 的纯展示型 ThumbnailImage 组件绑定到应用的 useAssets().thumbnail
  */

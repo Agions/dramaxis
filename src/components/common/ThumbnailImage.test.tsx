@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · ThumbnailImage 组件单测
+ * dramaxis v1.1.0 · ThumbnailImage 组件单测
  *
  * 状态机:
  * - 挂载 → "loading" (显示 "生成缩略图...")

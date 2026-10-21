@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# splicr v1.0.1  · Rust + TypeScript 统一覆盖率脚本
+# dramaxis v1.1.0  · Rust + TypeScript 统一覆盖率脚本
 #
 # 双端测量：
 #   - Rust    : cargo tarpaulin(workspace 元数据自动加载)

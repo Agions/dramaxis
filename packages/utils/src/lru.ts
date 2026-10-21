@@ -1,5 +1,5 @@
 /**
- * splicr · 高性能 LRU 内存缓存 (用于波形数据/缩略图/探针结果防抖复用)
+ * dramaxis v1.1.0 · 高性能 LRU 内存缓存 (用于波形数据/缩略图/探针结果防抖复用)
  */
 export class LRUCache<K, V> {
   private readonly max: number;

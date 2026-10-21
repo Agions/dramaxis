@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · 首页 旗舰级电影调光室 Dashboard (全景多智能体态势与工程中枢)
+ * dramaxis v1.1.0 · 首页 旗舰级电影调光室 Dashboard (全景多智能体态势与工程中枢)
  */
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";

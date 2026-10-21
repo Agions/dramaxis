@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · settings store (Zustand)
+ * dramaxis v1.1.0 · settings store (Zustand)
  *
  * 架构规范:
  * - 确立 Tauri 后端 config.json 为唯一权威持久化源

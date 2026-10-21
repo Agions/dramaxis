@@ -131,7 +131,7 @@ pub enum UpdateEvent {
 /// 应用更新器服务
 ///
 /// - 当前版本从构造参数传入(由 src-tauri/Cargo.toml 的 package.version 决定)
-/// - 仓库 / tag 模板可配置(默认 `qingshanyanyu/splicr`)
+/// - 仓库 / tag 模板可配置(默认 `Agions/dramaxis`)
 /// - 进度通过 `broadcast::Sender<UpdateEvent>` 推送,前端 listen `updater:*`
 pub struct UpdateService {
     current_version: String,

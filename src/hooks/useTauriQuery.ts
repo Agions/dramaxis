@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · useTauriQuery — React Query + Tauri Invoke 通用封装
+ * dramaxis v1.1.0 · useTauriQuery — React Query + Tauri Invoke 通用封装
  *
  * 自动处理:
  * - Query Key 命名空间 (避免与其它 query 冲突)

@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · CinemaMonitor · 居中专业视听监看台
+ * dramaxis v1.1.0 · CinemaMonitor · 居中专业视听监看台
  *
  * 核心功能:
  * - 9:16 短剧竖屏与画幅居中自适应

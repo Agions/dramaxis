@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · Tauri Command 类型契约 (单源真相)
+ * dramaxis v1.1.0 · Tauri Command 类型契约 (单源真相)
  *
  * M3+ 由 pnpm `gen:ipc` 自动生成两段:
  *   - "gen-ipc start" 标记: IpcContracts (commands/*.rs 的 #[tauri::command] 函数)
@@ -30,7 +30,7 @@ export type LlmProviderKind =
   | "qwen37";
 
 // ────────────────────────────────────────────────────────────────────────
-// 错误类型 (与 splicr-core::SplicrError 手工 wire 格式 1:1)
+// 错误类型 (与 dramaxis-core::SplicrError / DramaxisError wire 格式 1:1)
 // ────────────────────────────────────────────────────────────────────────
 
 export interface SplicrError {

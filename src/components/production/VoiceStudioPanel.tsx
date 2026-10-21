@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · VoiceStudioPanel · 48kHz 配音与零样本人声克隆工坊
+ * dramaxis v1.1.0 · VoiceStudioPanel · 48kHz 配音与零样本人声克隆工坊
  */
 
 import { memo, useState } from "react";

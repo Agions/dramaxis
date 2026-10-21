@@ -3,7 +3,7 @@
 //! ## 责任范围
 //! - `assets_scan`        : 扫描目录,按 MIME 白名单返回可导入素材
 //! - `assets_metadata`    : ffprobe 抽 metadata (duration / resolution / codec / size)
-//! - `assets_thumbnail`   : ffmpeg 抽首帧 JPEG,落盘到 `~/.cache/splicr/thumb/`
+//! - `assets_thumbnail`   : ffmpeg 抽首帧 JPEG,落盘到 `~/.cache/dramaxis/thumb/`
 //! - `assets_search`      : 在项目已有 media_files 中按 name/path substring 过滤
 //!
 //! ## 安全

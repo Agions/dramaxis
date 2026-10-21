@@ -52,14 +52,14 @@ impl Translator {
     pub fn with_backend_defaults() -> Self {
         let t = Self::new(Locale::ZhCn);
         let mut zh = HashMap::new();
-        zh.insert("app.name".into(), "叙影 · Splicr".into());
+        zh.insert("app.name".into(), "剧枢 · Dramaxis".into());
         zh.insert("common.success".into(), "操作成功".into());
         zh.insert("common.failed".into(), "操作失败".into());
         zh.insert("export.completed".into(), "视频工程导出完成".into());
         zh.insert("detect.completed".into(), "场景切片识别完成".into());
 
         let mut en = HashMap::new();
-        en.insert("app.name".into(), "Splicr Studio".into());
+        en.insert("app.name".into(), "Dramaxis Studio".into());
         en.insert("common.success".into(), "Success".into());
         en.insert("common.failed".into(), "Failed".into());
         en.insert("export.completed".into(), "Export Completed".into());

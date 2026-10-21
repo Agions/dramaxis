@@ -23,7 +23,7 @@ vi.mock("sonner", () => ({
 
 describe("ExportStudioPanel", () => {
   const mockProject: ProjectRecord = {
-    path: "/projects/sample.splicr",
+    path: "/projects/sample.dramaxis",
     project: {
       id: "proj_test_1",
       name: "千万短剧项目",
@@ -83,8 +83,8 @@ describe("ExportStudioPanel", () => {
   it("点击剪映导出按钮成功触发 exportIpc.capcutDraft 并传递真实多轨数据", async () => {
     vi.mocked(exportIpc.capcutDraft).mockResolvedValueOnce({
       draftFolder:
-        "/Movies/JianyingPro/User Data/Projects/com.lveditor.draft/splicr_123",
-      draftId: "splicr_123",
+        "/Movies/JianyingPro/User Data/Projects/com.lveditor.draft/dramaxis_123",
+      draftId: "dramaxis_123",
       createdAt: "2026-09-22T10:00:00Z",
       isJianyingInstalled: true,
       totalDurationSeconds: 45,
@@ -132,7 +132,7 @@ describe("ExportStudioPanel", () => {
 
   it("点击平台预设按钮成功触发 exportIpc.renderVideo 硬件加速压制", async () => {
     vi.mocked(exportIpc.renderVideo).mockResolvedValueOnce({
-      outputPath: "/downloads/splicr_douyin.mp4",
+      outputPath: "/downloads/dramaxis_douyin.mp4",
       durationSeconds: 45,
       sizeBytes: 25 * 1024 * 1024,
     });

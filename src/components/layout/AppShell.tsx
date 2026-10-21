@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · AppShell
+ * dramaxis v1.1.0 · AppShell
  * - TopBar + Sidebar + 内容区
  * - 主题初始化 (data-theme 同步到根节点)
  */

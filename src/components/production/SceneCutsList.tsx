@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · SceneCutsList · 镜头分镜与关键帧切片列表
+ * dramaxis v1.1.0 · SceneCutsList · 镜头分镜与关键帧切片列表
  */
 
 import { memo, useState } from "react";

@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · ScriptStudioPanel · AI 独白与剧本创作工坊
+ * dramaxis v1.1.0 · ScriptStudioPanel · AI 独白与剧本创作工坊
  *
  * 核心功能:
  * - 11 大主流 LLM 大模型选择 (Qwen 3.8 / GPT-5.6 / DeepSeek V4...)

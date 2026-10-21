@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · 流水线派生函数 纯函数单测
+ * dramaxis v1.1.0 · 流水线派生函数 纯函数单测
  *
  * 覆盖:
  * - deriveSteps: 后端 status 缺/短/长/null/undefined

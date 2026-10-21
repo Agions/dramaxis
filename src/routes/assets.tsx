@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · 项目与资产管理中心 (深度模块化与组件化架构)
+ * dramaxis v1.1.0 · 项目与资产管理中心 (深度模块化与组件化架构)
  */
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";

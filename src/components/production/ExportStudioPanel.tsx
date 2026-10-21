@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.1 · ExportStudioPanel · 剪映原生工程草稿与多平台交付工坊
+ * dramaxis v1.1.0 · ExportStudioPanel · 剪映原生工程草稿与多平台交付工坊
  *
  * 全真实数据导出与硬件加速渲染中枢:
  * - 剪映原生 PC 工程草稿 (.draft) 全真实材料与多轨组装导出

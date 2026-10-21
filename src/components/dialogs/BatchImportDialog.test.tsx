@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · BatchImportDialog 组件单测
+ * dramaxis v1.1.0 · BatchImportDialog 组件单测
  *
  * 流程:
  * 1. 打开 dialog (open=true) → 显示空状态

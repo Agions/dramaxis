@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · update store (Zustand)
+ * dramaxis v1.1.0 · update store (Zustand)
  *
  * 设计 (M4 完整实装):
  * - 镜像后端 UpdateState 完整快照 (单源真相)
@@ -40,12 +40,20 @@ interface UpdateStoreState {
   reset: (currentVersion: string) => void;
 }
 
-const STORAGE_KEY = "splicr_skipped_versions";
+const STORAGE_KEY = "dramaxis_skipped_versions";
+const LEGACY_STORAGE_KEY = "splicr_skipped_versions";
 
 function getInitialSkippedVersions(): string[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (raw) return JSON.parse(raw);
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy) {
+      localStorage.setItem(STORAGE_KEY, legacy);
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+      return JSON.parse(legacy);
+    }
+    return [];
   } catch {
     return [];
   }

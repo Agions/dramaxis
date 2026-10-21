@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error("[splicr ErrorBoundary caught error]:", error, errorInfo);
+    console.error("[Dramaxis ErrorBoundary caught error]:", error, errorInfo);
   }
 
   handleReset = (): void => {

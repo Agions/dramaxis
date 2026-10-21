@@ -1,5 +1,5 @@
 /**
- * splicr v1.0.0 · SplicrError → 用户可读
+ * dramaxis v1.1.0 · SplicrError → 用户可读
  *
  * 设计 (README §06):
  * - 后端 9 类 SplicrError (Io/Config/Llm/Tts/Ffmpeg/Project/Pipeline/Plugin/Updater/Other)
