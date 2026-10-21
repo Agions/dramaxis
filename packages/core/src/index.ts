@@ -6,4 +6,6 @@ export * from "./stores/settings-store";
 export * from "./stores/theme-store";
 export * from "./stores/ui-store";
 export * from "./stores/update-store";
+export * from "./stores/playback-store";
+export * from "./stores/workshop-store";
 export * from "./platform";

@@ -52,7 +52,7 @@ export function CommandPalette() {
     const id = toast.loading("正在检查更新...");
     try {
       const r = await fetch(
-        "https://api.github.com/repos/qingshanyanyu/splicr/releases/latest",
+        "https://api.github.com/repos/Agions/dramaxis/releases/latest",
       );
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = (await r.json()) as { tag_name?: string };
