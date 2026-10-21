@@ -144,7 +144,7 @@ export interface IpcContracts {
     args: void;
     result: PipelineStepDef[];
   };
-  // ─────── settings · 2 个 ───────
+  // ─────── settings · 3 个 ───────
   settings_get: {
     args: void;
     result: ConfigSnapshot;
@@ -154,6 +154,15 @@ export interface IpcContracts {
       snapshot: ConfigSnapshot;
     };
     result: void;
+  };
+  settings_test_llm: {
+    args: {
+      provider: string;
+      apiKey: string;
+      model: string | null;
+      baseUrl: string | null;
+    };
+    result: LlmTestResult;
   };
   // ─────── update · 5 个 ───────
   update_check: {
@@ -204,7 +213,7 @@ export interface IpcContracts {
     };
     result: ThumbnailResult;
   };
-  // ─────── export · 7 个 ───────
+  // ─────── export · 9 个 ───────
   export_batch_fission: {
     args: {
       params: BatchFissionParams;
@@ -222,6 +231,16 @@ export interface IpcContracts {
       intensity: DedupIntensity;
     };
     result: DedupOptions;
+  };
+  export_launch_jianying: {
+    args: void;
+    result: void;
+  };
+  export_open_folder: {
+    args: {
+      path: string;
+    };
+    result: void;
   };
   export_plan: {
     args: {
@@ -505,6 +524,14 @@ export interface ScriptGenerateResult {
   hookText?: string | null;
   wordCount: number;
   estimatedDurationSec: number;
+}
+
+// Rust 端 LlmTestResult (pub struct, rename_all = "camelCase")
+export interface LlmTestResult {
+  success: boolean;
+  latencyMs: number;
+  message: string;
+  model: string;
 }
 
 // Rust 端 SubtitleGenerateParams (pub struct, rename_all = "camelCase")

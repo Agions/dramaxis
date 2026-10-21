@@ -571,7 +571,30 @@ pub fn gemini(api_key: impl Into<String>) -> GeminiProvider {
 
 /// 工厂: 按 `LlmProviderKind` 构造(API key 必传)
 pub fn factory(kind: LlmProviderKind, api_key: impl Into<String>) -> Box<dyn LlmProvider> {
+    factory_custom(kind, api_key, None)
+}
+
+/// 扩展工厂: 支持传入自定义 API Base URL (兼容反代与私有部署)
+pub fn factory_custom(
+    kind: LlmProviderKind,
+    api_key: impl Into<String>,
+    custom_base_url: Option<String>,
+) -> Box<dyn LlmProvider> {
     let key: String = api_key.into();
+    if let Some(base) = custom_base_url.filter(|b| !b.trim().is_empty()) {
+        let base_url = if !base.ends_with("/chat/completions") {
+            let trimmed = base.trim_end_matches('/');
+            if trimmed.ends_with("/v1") {
+                format!("{trimmed}/chat/completions")
+            } else {
+                format!("{trimmed}/v1/chat/completions")
+            }
+        } else {
+            base
+        };
+        return Box::new(OpenAiCompatible::new(kind, key, base_url, "default-model"));
+    }
+
     match kind {
         LlmProviderKind::OpenAi => Box::new(openai(key)),
         LlmProviderKind::Qwen => Box::new(qwen(key)),

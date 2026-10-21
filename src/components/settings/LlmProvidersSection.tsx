@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { scriptIpc, type ConfigSnapshot } from "@dramaxis/ipc";
+import { settingsIpc, type ConfigSnapshot, type LlmTestResult } from "@dramaxis/ipc";
 import { Badge, Card } from "@dramaxis/ui";
 import { toast } from "sonner";
 
@@ -116,36 +116,41 @@ export function LlmProvidersSection({
   setForm,
 }: LlmProvidersSectionProps) {
   const [showKey, setShowKey] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<LlmTestResult | null>(null);
+
   const currentLlm =
     LLM_OPTIONS.find((o) => o.id === form.llm_provider) ?? LLM_OPTIONS[0]!;
 
-  const handleTestConnection = () => {
+  const handleTestConnection = async () => {
     if (!form.llm_api_key && form.llm_provider !== "local") {
       toast.error("请先填写 API Key 后再测试连通性");
       return;
     }
-    toast.promise(
-      scriptIpc.generate({
+    setTesting(true);
+    setTestResult(null);
+    const toastId = toast.loading(`正在测试与 ${currentLlm.name} 的连通性...`);
+    try {
+      const res = await settingsIpc.testLlm({
         provider: form.llm_provider,
-        apiKey: form.llm_api_key ?? null,
-        baseUrl: form.llm_base_url ?? null,
-        model: form.llm_model ?? null,
-        prompt: "你好，请回复'pong'进行连通性测试",
-        style: null,
-        emotionDensity: null,
-        wordCountTarget: 10,
-        hookStyle: null,
-        includeHook: false,
-        imagesBase64: null,
-      }),
-      {
-        loading: `正在测试与 ${currentLlm.name} 的连通性...`,
-        success: (res) =>
-          `✓ ${currentLlm.name} 连通正常 (响应: ${res.text.slice(0, 20)}...)`,
-        error: (err) =>
-          `连通性测试失败: ${err?.message ?? "请检查 API Key 或网络"}`,
-      },
-    );
+        apiKey: form.llm_api_key || "no-key-required",
+        model: form.llm_model || currentLlm.defaultModel,
+        baseUrl: form.llm_base_url || null,
+      });
+      setTestResult(res);
+      if (res.success) {
+        toast.success(
+          `✓ ${currentLlm.name} 连通正常 (${res.latencyMs}ms)`,
+          { id: toastId },
+        );
+      } else {
+        toast.error(`连通失败: ${res.message}`, { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(`连通异常: ${err?.message || String(err)}`, { id: toastId });
+    } finally {
+      setTesting(false);
+    }
   };
 
   return (
@@ -275,6 +280,42 @@ export function LlmProvidersSection({
             placeholder="留空使用官方默认地址 (如 https://api.openai.com/v1)"
             className="w-full rounded-xl border border-border bg-surface-elevated px-3.5 py-2.5 text-xs font-mono text-text-primary focus:border-gold focus:outline-none"
           />
+        </div>
+
+        {/* 连通性测试与快速诊断栏 */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={testing}
+              onClick={handleTestConnection}
+              className="inline-flex items-center gap-2 rounded-xl bg-gold/10 hover:bg-gold/20 border border-gold/40 px-4 py-2 text-xs font-bold text-gold transition-colors disabled:opacity-50"
+            >
+              <span>{testing ? "⚡ 正在测速中..." : "⚡ 测试大模型连通性"}</span>
+            </button>
+            <span className="text-[11px] text-text-muted">
+              发送轻量探针测试 Token 与往返延迟
+            </span>
+          </div>
+
+          {testResult && (
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-medium ${
+                  testResult.success
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                    : "bg-red-500/10 text-red-400 border border-red-500/30"
+                }`}
+              >
+                <span>{testResult.success ? "✓" : "✗"}</span>
+                <span>{testResult.latencyMs}ms</span>
+                <span className="text-text-muted">|</span>
+                <span className="truncate max-w-[200px]" title={testResult.message}>
+                  {testResult.message}
+                </span>
+              </span>
+            </div>
+          )}
         </div>
       </Card>
     </div>

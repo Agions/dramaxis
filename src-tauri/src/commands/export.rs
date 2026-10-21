@@ -528,3 +528,92 @@ pub async fn export_batch_fission(
         total_duration_seconds: total_duration,
     })
 }
+
+/// 在操作系统文件资源管理器中打开指定路径或选中指定文件
+#[tauri::command]
+pub async fn export_open_folder(path: String) -> Result<(), SplicrError> {
+    let p = std::path::PathBuf::from(&path);
+    if !p.exists() {
+        return Err(SplicrError::Io(format!("目标路径不存在: {path}")));
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let _ = tokio::process::Command::new("open")
+            .arg("-R")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| SplicrError::Io(format!("调用 open 命令失败: {e}")))?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let _ = tokio::process::Command::new("explorer")
+            .arg(format!("/select,\"{}\"", path))
+            .spawn()
+            .map_err(|e| SplicrError::Io(format!("调用 explorer 失败: {e}")))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let target = if p.is_dir() {
+            p
+        } else {
+            p.parent().unwrap_or(&p).to_path_buf()
+        };
+        let _ = tokio::process::Command::new("xdg-open")
+            .arg(target)
+            .spawn()
+            .map_err(|e| SplicrError::Io(format!("调用 xdg-open 失败: {e}")))?;
+    }
+
+    Ok(())
+}
+
+/// 唤起本机剪映 PC 客户端
+#[tauri::command]
+pub async fn export_launch_jianying() -> Result<(), SplicrError> {
+    #[cfg(target_os = "macos")]
+    {
+        let status = tokio::process::Command::new("open")
+            .args(["-a", "JianyingPro"])
+            .status()
+            .await;
+        if status.is_err() || !status.as_ref().unwrap().success() {
+            let alt_status = tokio::process::Command::new("open")
+                .args(["-a", "剪映专业版"])
+                .status()
+                .await;
+            if alt_status.is_err() || !alt_status.unwrap().success() {
+                return Err(SplicrError::Other(
+                    "未能在本机发现已安装的剪映专业版应用程序".into(),
+                ));
+            }
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(local_app_data) = dirs::data_local_dir() {
+            let possible_exe = local_app_data.join("JianyingPro/Apps/JianyingPro.exe");
+            if possible_exe.exists() {
+                let _ = tokio::process::Command::new(possible_exe)
+                    .spawn()
+                    .map_err(|e| SplicrError::Io(format!("启动剪映失败: {e}")))?;
+                return Ok(());
+            }
+        }
+        return Err(SplicrError::Other(
+            "未能在本机默认路径发现剪映可执行文件".into(),
+        ));
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        return Err(SplicrError::Other(
+            "Linux 平台暂不支持剪映客户端启动".into(),
+        ));
+    }
+
+    Ok(())
+}

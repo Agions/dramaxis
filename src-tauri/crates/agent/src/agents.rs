@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use dramaxis_core::domain::{Clip, ScriptSegment, Timeline};
 use dramaxis_core::error::{LlmProviderKind, SplicrResult};
 use dramaxis_detect::Ffmpeg;
-use dramaxis_script::{factory, LlmRequest};
+use dramaxis_script::LlmRequest;
 use dramaxis_voice::{EdgeTtsEngine, EdgeTtsOptions, TtsEngine, TtsRequest};
 use std::path::{Path, PathBuf};
 
@@ -214,7 +214,8 @@ impl Agent for ScreenwriterAgent {
                 _ => LlmProviderKind::Qwen,
             };
 
-            let provider = factory(kind, api_key.clone());
+            let base_url = ctx.memory.get("llm_base_url").cloned();
+            let provider = dramaxis_script::factory_custom(kind, api_key.clone(), base_url);
             let req = LlmRequest {
                 system: "你是一名拥有千万播放量的爆款短剧解说与电影编剧。请结合多模态镜头关键帧，以主角第一人称【我】输出 0~3s 抓人眼球的黄金 Hook，以及扣人心弦的高能悬疑独白，字数在 150~300 字之间。".into(),
                 user: format!("剧名/工程: {}，场景切片数量: {}，请结合关键帧视觉画面撰写第一人称解说台词。", project_name, cuts),

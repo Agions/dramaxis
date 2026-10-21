@@ -18,6 +18,7 @@ import {
   type DedupIntensity,
   type DedupOptions,
   type FissionProgressPayload,
+  type CapcutDraftResult,
 } from "@dramaxis/ipc";
 import { useTauriEvent } from "@hooks/useTauriEvent";
 
@@ -80,6 +81,42 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
   const [fissionCount, setFissionCount] = useState(3);
   const [fissionProgress, setFissionProgress] = useState(0);
   const [fissionMessage, setFissionMessage] = useState("");
+
+  // 交付产物与系统交互状态
+  const [exportedDraft, setExportedDraft] =
+    useState<CapcutDraftResult | null>(null);
+  const [renderedVideoPath, setRenderedVideoPath] = useState<string | null>(
+    null,
+  );
+
+  const handleOpenDraftFolder = async () => {
+    if (!exportedDraft) return;
+    try {
+      await exportIpc.openFolder(exportedDraft.draftFolder);
+      toast.success("已在文件资源管理器中定位草稿文件夹");
+    } catch (e: any) {
+      toast.error(`打开草稿目录失败: ${e?.message || String(e)}`);
+    }
+  };
+
+  const handleLaunchJianying = async () => {
+    try {
+      await exportIpc.launchJianying();
+      toast.success("已尝试唤起剪映 PC 端");
+    } catch (e: any) {
+      toast.error(`唤起剪映失败: ${e?.message || String(e)}`);
+    }
+  };
+
+  const handleOpenVideoFolder = async () => {
+    if (!renderedVideoPath) return;
+    try {
+      await exportIpc.openFolder(renderedVideoPath);
+      toast.success("已在文件资源管理器中定位成片文件");
+    } catch (e: any) {
+      toast.error(`定位成片文件失败: ${e?.message || String(e)}`);
+    }
+  };
 
   const handleApplyPreset = useCallback((preset: DedupIntensity) => {
     setDedupIntensity(preset);
@@ -231,6 +268,7 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
         subtitleStyle,
       });
 
+      setExportedDraft(draftResult);
       if (draftResult.isJianyingInstalled) {
         toast.success("剪映草稿工程已直接同步至剪映首页！", {
           description: `草稿已写入剪映草稿库: ${draftResult.draftFolder}，打开剪映 PC 端即可直接二次微调`,
@@ -296,6 +334,7 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
         outputPath: null,
       });
 
+      setRenderedVideoPath(res.outputPath);
       toast.success(`${presetName} 格式压制渲染成功！`, {
         description: `成片已保存至: ${res.outputPath} (文件大小: ${(res.sizeBytes / (1024 * 1024)).toFixed(1)} MB)`,
       });
@@ -598,6 +637,39 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
             {isExportingDraft ? "正在导出多轨草稿..." : "一键导出至剪映草稿库"}
           </span>
         </button>
+
+        {/* 导出成功后的系统联动操作 */}
+        {exportedDraft && (
+          <div className="flex flex-col gap-1.5 pt-2 border-t border-border/80">
+            <div className="flex items-center justify-between text-[10px] text-text-muted">
+              <span className="text-emerald-400 font-bold flex items-center gap-1">
+                <span>✓</span>
+                <span>草稿就绪: {exportedDraft.draftId}</span>
+              </span>
+              <span className="font-mono opacity-80">{exportedDraft.totalDurationSeconds.toFixed(1)}s</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={handleOpenDraftFolder}
+                className="flex items-center justify-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[11px] font-bold text-text-primary hover:border-gold hover:text-gold transition-colors"
+                title="在文件资源管理器中打开草稿工程文件夹"
+              >
+                <span>📂</span>
+                <span>打开草稿目录</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleLaunchJianying}
+                className="flex items-center justify-center gap-1 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-[11px] font-bold text-gold hover:bg-gold/20 transition-colors"
+                title="尝试唤起本机安装的剪映 PC 端"
+              >
+                <span>🚀</span>
+                <span>启动剪映</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 8 维全频消重矩阵参数 */}
@@ -929,6 +1001,24 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
             </button>
           ))}
         </div>
+
+        {/* 成片压制完成后的定位操作 */}
+        {renderedVideoPath && (
+          <div className="flex items-center justify-between pt-2 border-t border-border">
+            <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 truncate max-w-[200px]">
+              <span>✓</span>
+              <span>成片已保存</span>
+            </span>
+            <button
+              type="button"
+              onClick={handleOpenVideoFolder}
+              className="flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-[11px] font-bold text-text-primary hover:border-gold hover:text-gold transition-colors"
+            >
+              <span>📂</span>
+              <span>在文件夹中定位成片</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

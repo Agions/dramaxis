@@ -17,6 +17,7 @@ import { AudioVisualizerCanvas } from "./AudioVisualizerCanvas";
 interface CinemaMonitorProps {
   hasUploadedVideo: boolean;
   mediaPath: string | null;
+  voiceAudioPath?: string | null;
   isPlaying: boolean;
   currentTime: number;
   duration?: number;
@@ -30,6 +31,7 @@ interface CinemaMonitorProps {
 export const CinemaMonitor = memo(function CinemaMonitor({
   hasUploadedVideo,
   mediaPath,
+  voiceAudioPath,
   isPlaying,
   currentTime,
   duration = 100,
@@ -40,31 +42,47 @@ export const CinemaMonitor = memo(function CinemaMonitor({
   onEnded,
 }: CinemaMonitorProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const videoSrc = mediaPath ? convertFileSrc(mediaPath) : undefined;
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // 1. 同步外部 isPlaying 状态至原生 video 元素
+  const videoSrc = mediaPath ? convertFileSrc(mediaPath) : undefined;
+  const voiceSrc = voiceAudioPath ? convertFileSrc(voiceAudioPath) : undefined;
+
+  // 1. 同步外部 isPlaying 状态至原生 video 与 audio 元素
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    const audio = audioRef.current;
 
     if (isPlaying) {
-      video.play().catch(() => {
-        // 忽略自动播放受限或切换时的异常
-      });
+      video?.play().catch(() => {});
+      audio?.play().catch(() => {});
     } else {
-      video.pause();
+      video?.pause();
+      audio?.pause();
     }
   }, [isPlaying]);
 
-  // 2. 外部 seek 时间跳转时同步 video 当前位置
+  // 2. 外部 seek 时间跳转时同步 video 和 audio 当前位置
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    const audio = audioRef.current;
 
-    if (Math.abs(video.currentTime - currentTime) > 0.4) {
+    if (video && Math.abs(video.currentTime - currentTime) > 0.4) {
       video.currentTime = currentTime;
     }
+    if (audio && Math.abs(audio.currentTime - currentTime) > 0.4) {
+      audio.currentTime = currentTime;
+    }
   }, [currentTime]);
+
+  // 3. 智能音量避让: 当有 AI 旁白配音时，原视频声音自动降低至 20%，保证旁白清晰
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = voiceSrc ? 0.25 : 1.0;
+    }
+    if (audioRef.current) {
+      audioRef.current.volume = 1.0;
+    }
+  }, [voiceSrc]);
 
   const formatTime = (secs: number) => {
     const safeSecs = Math.max(0, Math.floor(secs || 0));
@@ -136,6 +154,17 @@ export const CinemaMonitor = memo(function CinemaMonitor({
         </div>
       </div>
 
+      {/* 隐藏的旁白配音音频播放器 (实现音画绝对同频试听) */}
+      {voiceSrc && (
+        <audio
+          ref={audioRef}
+          src={voiceSrc}
+          controls={false}
+          playsInline
+          className="hidden"
+        />
+      )}
+
       {/* 下方悬浮播控条 */}
       <div className="flex items-center gap-3 mt-2">
         <button
@@ -149,6 +178,12 @@ export const CinemaMonitor = memo(function CinemaMonitor({
         <span className="font-mono text-[11px] text-text-secondary">
           {formatTime(currentTime)} / {formatTime(duration)}
         </span>
+        {voiceSrc && (
+          <span className="hidden sm:inline-flex items-center gap-1 rounded bg-gold/10 border border-gold/30 px-1.5 py-0.5 font-mono text-[9px] text-gold font-bold">
+            <span>🎙️</span>
+            <span>AI旁白声画同频试听中</span>
+          </span>
+        )}
       </div>
     </div>
   );

@@ -53,6 +53,7 @@ import type {
   DedupOptions,
   BatchFissionParams,
   BatchFissionResult,
+  LlmTestResult,
   FissionVariantResult,
   FissionProgressPayload,
   SceneVisualFeature,
@@ -73,6 +74,7 @@ export type {
   DedupOptions,
   BatchFissionParams,
   BatchFissionResult,
+  LlmTestResult,
   FissionVariantResult,
   FissionProgressPayload,
   SceneVisualFeature,
@@ -146,6 +148,18 @@ export const settingsIpc = {
   get: (): Promise<ConfigSnapshot> => callIpc("settings_get"),
   set: (snapshot: ConfigSnapshot): Promise<void> =>
     callIpc("settings_set", { snapshot }),
+  testLlm: (params: {
+    provider: string;
+    apiKey: string;
+    model?: string | null;
+    baseUrl?: string | null;
+  }): Promise<LlmTestResult> =>
+    callIpc("settings_test_llm", {
+      provider: params.provider,
+      apiKey: params.apiKey,
+      model: params.model ?? null,
+      baseUrl: params.baseUrl ?? null,
+    }),
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -194,6 +208,10 @@ export const exportIpc = {
     callIpc("export_get_dedup_preset", { intensity }),
   batchFission: (params: BatchFissionParams): Promise<BatchFissionResult> =>
     callIpc("export_batch_fission", { params }),
+  openFolder: (path: string): Promise<void> =>
+    callIpc("export_open_folder", { path }),
+  launchJianying: (): Promise<void> =>
+    callIpc("export_launch_jianying"),
 } as const;
 
 export const detectIpc = {

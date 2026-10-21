@@ -13,6 +13,7 @@ import { memo, useState } from "react";
 import { toast } from "sonner";
 import {
   scriptIpc,
+  settingsIpc,
   type HookCandidate,
   type StyleProfile,
   type RetentionTensionArc,
@@ -62,6 +63,34 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
     null,
   );
   const [isAnalyzingArc, setIsAnalyzingArc] = useState(false);
+
+  // 3. 模型连通性快速测速
+  const [testingModel, setTestingModel] = useState(false);
+  const [modelLatency, setModelLatency] = useState<number | null>(null);
+
+  const handleQuickTest = async () => {
+    setTestingModel(true);
+    try {
+      const cfg = await settingsIpc.get();
+      const res = await settingsIpc.testLlm({
+        provider: llmProvider,
+        apiKey: cfg.llm_api_key || "no-key-required",
+        model: cfg.llm_model,
+        baseUrl: cfg.llm_base_url,
+      });
+      if (res.success) {
+        setModelLatency(res.latencyMs);
+        toast.success(`✓ ${llmProvider} 连通正常 (${res.latencyMs}ms)`);
+      } else {
+        setModelLatency(null);
+        toast.error(`连通失败: ${res.message}，请在「设置」中检查 API Key`);
+      }
+    } catch (e: any) {
+      toast.error(`测试异常: ${e?.message || String(e)}`);
+    } finally {
+      setTestingModel(false);
+    }
+  };
 
   const handleGenerateHooks = async () => {
     setIsGeneratingHooks(true);
@@ -139,9 +168,26 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
   return (
     <div className="flex flex-col gap-3">
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-text-secondary">
-          大模型选择
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-semibold text-text-secondary">
+            大模型选择
+          </label>
+          <div className="flex items-center gap-1.5">
+            {modelLatency !== null && (
+              <span className="font-mono text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                {modelLatency}ms
+              </span>
+            )}
+            <button
+              type="button"
+              disabled={testingModel}
+              onClick={handleQuickTest}
+              className="text-[11px] font-bold text-gold hover:text-gold-hover transition-colors disabled:opacity-50"
+            >
+              {testingModel ? "测速中..." : "⚡ 测速"}
+            </button>
+          </div>
+        </div>
         <select
           value={llmProvider}
           onChange={(e) => onLlmProviderChange(e.target.value)}

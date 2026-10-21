@@ -93,6 +93,7 @@ export const ProductionWorkspace = memo(function ProductionWorkspace({
       <CinemaMonitor
         hasUploadedVideo={hasUploadedVideo}
         mediaPath={mediaPath ?? null}
+        voiceAudioPath={voiceAudioPath}
         isPlaying={isPlaying}
         currentTime={currentTime}
         duration={duration}
