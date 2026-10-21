@@ -1,7 +1,9 @@
 //! dramaxis v1.1.0 · FFmpeg 智能拆条与镜头检测 Tauri 命令
 
 use dramaxis_core::error::SplicrError;
-use dramaxis_detect::{Ffmpeg, FfmpegProbe, HardwareAccelerationKind, SceneCut};
+use dramaxis_detect::{
+    Ffmpeg, FfmpegProbe, HardwareAccelerationKind, SceneCut, SceneRagEngine, SceneVisualFeature,
+};
 use std::path::Path;
 
 #[derive(serde::Serialize)]
@@ -55,4 +57,33 @@ pub async fn detect_hardware_acceleration() -> Result<Vec<HardwareAccelerationKi
             "FFmpeg 未安装或不在 PATH 中，请安装 FFmpeg 后重试".into(),
         ))
     }
+}
+
+/// 执行多模态视听感知与 Scene-RAG 镜头特征提取
+#[tauri::command]
+pub async fn detect_analyze_scenes_rag(
+    file_path: String,
+    cuts: Option<Vec<f64>>,
+) -> Result<Vec<SceneVisualFeature>, SplicrError> {
+    let path = Path::new(&file_path);
+    if !path.exists() {
+        return Err(SplicrError::InvalidInput(format!(
+            "视频文件不存在: {file_path}"
+        )));
+    }
+
+    let ffmpeg = Ffmpeg::discover()
+        .map_err(|_| SplicrError::Ffmpeg("FFmpeg 未安装或不在 PATH 中".into()))?;
+
+    let probe = ffmpeg.probe(path).await.ok();
+    let total_duration = probe.as_ref().map(|p| p.duration_seconds).unwrap_or(60.0);
+
+    let cut_list = match cuts {
+        Some(c) if !c.is_empty() => c,
+        _ => ffmpeg.detect_scenes(path, 0.3).await.unwrap_or_default(),
+    };
+
+    let engine = SceneRagEngine::new();
+    let features = engine.analyze_scenes(&cut_list, total_duration, None);
+    Ok(features)
 }

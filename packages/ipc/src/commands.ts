@@ -55,6 +55,11 @@ import type {
   BatchFissionResult,
   FissionVariantResult,
   FissionProgressPayload,
+  SceneVisualFeature,
+  StyleProfile,
+  RetentionTensionArc,
+  AlignmentPlan,
+  AlignmentMatch,
 } from "./types.gen";
 
 export type {
@@ -70,6 +75,11 @@ export type {
   BatchFissionResult,
   FissionVariantResult,
   FissionProgressPayload,
+  SceneVisualFeature,
+  StyleProfile,
+  RetentionTensionArc,
+  AlignmentPlan,
+  AlignmentMatch,
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -116,6 +126,16 @@ export const pipelineIpc = {
     callIpc("pipeline_start", { project, workdir: workdir ?? null }),
   cancel: (): Promise<void> => callIpc("pipeline_cancel"),
   reset: (): Promise<void> => callIpc("pipeline_reset"),
+  alignScriptWithScenes: (
+    scenes: SceneVisualFeature[],
+    scriptLines: string[],
+    voiceDuration?: number | null,
+  ): Promise<AlignmentPlan> =>
+    callIpc("compose_align_script_with_scenes", {
+      scenes,
+      scriptLines,
+      voiceDuration: voiceDuration ?? null,
+    }),
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -182,6 +202,11 @@ export const detectIpc = {
     threshold?: number | null,
   ): Promise<DetectScenesResult> =>
     callIpc("detect_scenes", { filePath, threshold: threshold ?? null }),
+  analyzeScenesRag: (
+    filePath: string,
+    cuts?: number[] | null,
+  ): Promise<SceneVisualFeature[]> =>
+    callIpc("detect_analyze_scenes_rag", { filePath, cuts: cuts ?? null }),
 } as const;
 
 export const subtitleIpc = {
@@ -252,6 +277,16 @@ export const scriptIpc = {
     callIpc("script_generate", { params }),
   generateHooks: (synopsis: string): Promise<HookCandidate[]> =>
     callIpc("script_generate_hooks", { synopsis }),
+  deconstructReference: (text: string): Promise<StyleProfile> =>
+    callIpc("script_deconstruct_reference", { text }),
+  calculateRetentionArc: (
+    script: string,
+    durationSec?: number | null,
+  ): Promise<RetentionTensionArc> =>
+    callIpc("script_calculate_retention_arc", {
+      script,
+      durationSec: durationSec ?? null,
+    }),
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -288,6 +323,8 @@ export const ipc = {
   theme: themeIpc,
   voice: voiceIpc,
   script: scriptIpc,
+  detect: detectIpc,
+  subtitle: subtitleIpc,
   agent: agentIpc,
 } as const;
 

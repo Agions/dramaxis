@@ -10,11 +10,11 @@ use std::sync::Arc;
 
 use dramaxis_compose::executors::PipelineDeps;
 use dramaxis_compose::service::{PipelineService, PipelineStatus};
-use dramaxis_compose::{Project, StepDef, STEPS};
+use dramaxis_compose::{AlignmentPlan, DualDrivenAligner, Project, StepDef, STEPS};
 use dramaxis_core::error::SplicrError;
 use dramaxis_core::services::{ConfigService, ConfigSnapshot};
 use dramaxis_core::AppContext;
-use dramaxis_detect::Ffmpeg;
+use dramaxis_detect::{Ffmpeg, SceneVisualFeature};
 use dramaxis_script::factory;
 use dramaxis_script::LlmProviderKind;
 use dramaxis_voice::engine;
@@ -232,4 +232,16 @@ impl ProviderKindExt for TtsProviderKind {
             _ => None,
         }
     }
+}
+
+/// 语义 + 情绪双驱动时空对齐与微变速规划
+#[tauri::command]
+pub fn compose_align_script_with_scenes(
+    scenes: Vec<SceneVisualFeature>,
+    script_lines: Vec<String>,
+    voice_duration: Option<f64>,
+) -> Result<AlignmentPlan, SplicrError> {
+    let aligner = DualDrivenAligner::new();
+    let duration = voice_duration.unwrap_or(0.0);
+    Ok(aligner.align(&scenes, &script_lines, duration))
 }

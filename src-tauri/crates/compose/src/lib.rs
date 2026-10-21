@@ -16,8 +16,11 @@
 
 #![allow(dead_code)]
 
+pub mod alignment;
 pub mod executors;
 pub mod service;
+
+pub use alignment::*;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};

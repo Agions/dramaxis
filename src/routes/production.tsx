@@ -29,7 +29,14 @@ import {
   SceneCutsList,
   type SceneCut,
 } from "@components/production/SceneCutsList";
-import { projectIpc, scriptIpc, type ProjectRecord } from "@dramaxis/ipc";
+import {
+  projectIpc,
+  scriptIpc,
+  pipelineIpc,
+  type ProjectRecord,
+  type AlignmentPlan,
+  type SceneVisualFeature,
+} from "@dramaxis/ipc";
 import { useAssets } from "@hooks/useAssets";
 import { useTauriEvent } from "@hooks/useTauriEvent";
 import { useAgentWorkflow } from "@hooks/useAgentWorkflow";
@@ -104,7 +111,9 @@ function ProductionCinemaStudio() {
 
   // 2. 工坊分阶状态
   const [activeWorkshop, setActiveWorkshop] = useState<WorkshopKind>("assets");
-  const [activeTab, setActiveTab] = useState<"agent" | "script" | "voice" | "export">("agent");
+  const [activeTab, setActiveTab] = useState<
+    "agent" | "script" | "voice" | "export"
+  >("agent");
   const [showImport, setShowImport] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -170,6 +179,12 @@ function ProductionCinemaStudio() {
   const [voiceAudioPath, setVoiceAudioPath] = useState<string | null>(null);
   const [voiceDuration, setVoiceDuration] = useState<number>(0);
 
+  // 声画时空对齐状态
+  const [alignmentPlan, setAlignmentPlan] = useState<AlignmentPlan | null>(
+    null,
+  );
+  const [isAligning, setIsAligning] = useState(false);
+
   // 混流与 8 维防重参数
   const [antiDupZoom, setAntiDupZoom] = useState(1.03);
   const [enableAmbientBlur, setEnableAmbientBlur] = useState(true);
@@ -199,16 +214,31 @@ function ProductionCinemaStudio() {
     },
     onSceneCutsGenerated: (cuts) => {
       setSceneCuts(cuts);
-      setDirtyState((d) => ({ ...d, scenesDirty: false, timelineDirty: true, exportDirty: true }));
+      setDirtyState((d) => ({
+        ...d,
+        scenesDirty: false,
+        timelineDirty: true,
+        exportDirty: true,
+      }));
     },
     onScriptGenerated: (script) => {
       setScriptText(script);
-      setDirtyState((d) => ({ ...d, scriptDirty: false, voiceDirty: true, exportDirty: true }));
+      setDirtyState((d) => ({
+        ...d,
+        scriptDirty: false,
+        voiceDirty: true,
+        exportDirty: true,
+      }));
     },
     onVoiceGenerated: (path, dur) => {
       setVoiceAudioPath(path);
       setVoiceDuration(dur);
-      setDirtyState((d) => ({ ...d, voiceDirty: false, timelineDirty: true, exportDirty: true }));
+      setDirtyState((d) => ({
+        ...d,
+        voiceDirty: false,
+        timelineDirty: true,
+        exportDirty: true,
+      }));
     },
     onSubtitlesGenerated: (subs) => {
       setSubtitleSegments(subs);
@@ -301,7 +331,9 @@ function ProductionCinemaStudio() {
             timelineDirty: true,
             exportDirty: true,
           }));
-          toast.success("素材已载入监看台，正在自动触发 6-Agent 智能体流水线...");
+          toast.success(
+            "素材已载入监看台，正在自动触发 6-Agent 智能体流水线...",
+          );
           setTimeout(() => {
             void handleStartMultiAgent(agentAutoMode);
           }, 300);
@@ -351,6 +383,39 @@ function ProductionCinemaStudio() {
     }
   }, [userPrompt, scriptStyle, llmProvider]);
 
+  // 语义与情绪双驱动声画对齐
+  const handleAutoAlign = useCallback(async () => {
+    if (sceneCuts.length === 0 || !scriptText.trim()) {
+      toast.warning("需同时具备镜头切片与剧本文案方可进行声画对齐");
+      return;
+    }
+    setIsAligning(true);
+    const toastId = toast.loading("正在执行语义与情绪双驱动声画对齐...");
+    try {
+      const rawScenes = sceneCuts
+        .map((sc) => sc.rawFeature)
+        .filter(Boolean) as SceneVisualFeature[];
+      const lines = scriptText
+        .split(/[\n。！？]/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const plan = await pipelineIpc.alignScriptWithScenes(
+        rawScenes,
+        lines,
+        voiceDuration || duration,
+      );
+      setAlignmentPlan(plan);
+      toast.success(
+        `声画时空对齐完成！整体契合指数: ${plan.overallSyncScore.toFixed(0)}%`,
+        { id: toastId },
+      );
+    } catch (e) {
+      toast.error(`声画对齐失败: ${String(e)}`, { id: toastId });
+    } finally {
+      setIsAligning(false);
+    }
+  }, [sceneCuts, scriptText, voiceDuration, duration]);
+
   // 工坊切换联动
   const handleSelectWorkshop = (w: WorkshopKind) => {
     setActiveWorkshop(w);
@@ -382,7 +447,9 @@ function ProductionCinemaStudio() {
           <div className="flex items-center gap-1 border-l border-border pl-2">
             <button
               type="button"
-              onClick={() => void undoProject().then(() => toast.info("已撤销 (Undo)"))}
+              onClick={() =>
+                void undoProject().then(() => toast.info("已撤销 (Undo)"))
+              }
               className="rounded p-1 text-[11px] text-text-muted hover:bg-surface-elevated hover:text-gold transition-colors"
               title="撤销 (⌘Z)"
             >
@@ -390,7 +457,9 @@ function ProductionCinemaStudio() {
             </button>
             <button
               type="button"
-              onClick={() => void redoProject().then(() => toast.info("已重做 (Redo)"))}
+              onClick={() =>
+                void redoProject().then(() => toast.info("已重做 (Redo)"))
+              }
               className="rounded p-1 text-[11px] text-text-muted hover:bg-surface-elevated hover:text-gold transition-colors"
               title="重做 (⇧⌘Z)"
             >
@@ -407,17 +476,18 @@ function ProductionCinemaStudio() {
               s.id === "assets"
                 ? isW1Ready
                 : s.id === "script"
-                ? isW2Ready
-                : s.id === "timeline"
-                ? isW3Ready
-                : isW4Ready;
+                  ? isW2Ready
+                  : s.id === "timeline"
+                    ? isW3Ready
+                    : isW4Ready;
 
             const isDirty =
               s.id === "script" && dirtyState.scriptDirty
                 ? true
-                : s.id === "timeline" && (dirtyState.voiceDirty || dirtyState.timelineDirty)
-                ? true
-                : s.id === "export" && dirtyState.exportDirty;
+                : s.id === "timeline" &&
+                    (dirtyState.voiceDirty || dirtyState.timelineDirty)
+                  ? true
+                  : s.id === "export" && dirtyState.exportDirty;
 
             return (
               <button
@@ -431,11 +501,18 @@ function ProductionCinemaStudio() {
                 }`}
               >
                 <span>{s.icon}</span>
-                <span>{s.step}. {s.name}</span>
+                <span>
+                  {s.step}. {s.name}
+                </span>
                 {isDirty ? (
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber animate-ping" title="下游待同步重算" />
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-amber animate-ping"
+                    title="下游待同步重算"
+                  />
                 ) : isReady ? (
-                  <span className="text-[10px] text-emerald-400 font-bold">✓</span>
+                  <span className="text-[10px] text-emerald-400 font-bold">
+                    ✓
+                  </span>
                 ) : null}
               </button>
             );
@@ -539,7 +616,11 @@ function ProductionCinemaStudio() {
             sceneCuts={sceneCuts}
             onSetSceneCuts={(cuts) => {
               setSceneCuts(cuts);
-              setDirtyState((d) => ({ ...d, timelineDirty: true, exportDirty: true }));
+              setDirtyState((d) => ({
+                ...d,
+                timelineDirty: true,
+                exportDirty: true,
+              }));
             }}
             mediaPath={mediaPath}
           />
@@ -584,6 +665,9 @@ function ProductionCinemaStudio() {
                 isPlaying={isPlaying}
                 onSeek={(t) => setCurrentTime(t)}
                 subtitleClips={subtitleSegments}
+                alignmentPlan={alignmentPlan}
+                onAutoAlign={handleAutoAlign}
+                isAligning={isAligning}
                 voiceClips={
                   voiceAudioPath
                     ? [
@@ -598,19 +682,27 @@ function ProductionCinemaStudio() {
                 }
                 videoClips={
                   sceneCuts.length > 0
-                    ? sceneCuts.map((c) => {
+                    ? sceneCuts.map((c, idx) => {
                         const parts = c.time.split(" - ").map((t) => {
                           const [m, s] = t.split(":").map(Number);
                           return (m || 0) * 60 + (s || 0);
                         });
                         const start = parts[0] ?? 0;
                         const end = parts[1] ?? start + 15;
+                        const matched = alignmentPlan?.matches.find(
+                          (m) =>
+                            m.matchedSceneId === c.id ||
+                            m.scriptIndex === idx + 1,
+                        );
                         return {
                           id: `v-clip-${c.id}`,
                           title: c.tag,
                           start,
                           duration: Math.max(1, end - start),
                           emotion: c.emotion,
+                          matchScore: matched?.matchScore,
+                          speedAdjustment: matched?.speedAdjustment,
+                          isBroll: matched?.isBrollInserted,
                         };
                       })
                     : hasUploadedVideo

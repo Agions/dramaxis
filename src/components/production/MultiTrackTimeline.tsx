@@ -8,6 +8,7 @@
  */
 
 import { useState, useRef } from "react";
+import type { AlignmentPlan } from "@dramaxis/ipc";
 
 interface MultiTrackTimelineProps {
   durationSeconds?: number;
@@ -20,6 +21,9 @@ interface MultiTrackTimelineProps {
     start: number;
     duration: number;
     emotion?: string;
+    matchScore?: number;
+    speedAdjustment?: number;
+    isBroll?: boolean;
   }[];
   hookClip?: {
     title: string;
@@ -37,6 +41,9 @@ interface MultiTrackTimelineProps {
   bgmMixRatio?: number;
   autoDucking?: boolean;
   onDuckingChange?: (enabled: boolean) => void;
+  alignmentPlan?: AlignmentPlan | null;
+  onAutoAlign?: () => void;
+  isAligning?: boolean;
 }
 
 export function MultiTrackTimeline({
@@ -51,6 +58,9 @@ export function MultiTrackTimeline({
   bgmMixRatio = 18,
   autoDucking = true,
   onDuckingChange,
+  alignmentPlan = null,
+  onAutoAlign,
+  isAligning = false,
 }: MultiTrackTimelineProps) {
   const [zoomLevel, setZoomLevel] = useState(1);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -101,6 +111,28 @@ export function MultiTrackTimeline({
         </div>
 
         <div className="flex items-center gap-4">
+          {alignmentPlan ? (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-[10px]">
+              <span className="font-bold text-emerald-400">
+                🎯 声画契合: {alignmentPlan.overallSyncScore.toFixed(0)}%
+              </span>
+              <span className="text-text-muted">
+                ({alignmentPlan.matches.length} 处对齐微调)
+              </span>
+            </div>
+          ) : (
+            onAutoAlign && (
+              <button
+                type="button"
+                onClick={onAutoAlign}
+                disabled={isAligning}
+                className="px-2 py-0.5 rounded-lg border border-gold/40 bg-gold/15 text-[10px] font-bold text-gold hover:bg-gold/25 transition-all disabled:opacity-50"
+              >
+                {isAligning ? "⚡ 对齐中..." : "⚡ 语义+情绪双驱动对齐"}
+              </button>
+            )
+          )}
+
           <label className="flex items-center gap-1.5 text-[11px] cursor-pointer text-text-secondary hover:text-text-primary transition-colors">
             <input
               type="checkbox"
@@ -185,11 +217,29 @@ export function MultiTrackTimeline({
                       }}
                     >
                       <span className="truncate">{c.title}</span>
-                      {c.emotion && (
-                        <span className="rounded bg-sky-900/60 px-1 py-0.2 text-[8px] text-sky-200 shrink-0">
-                          {c.emotion}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {c.matchScore !== undefined && (
+                          <span className="rounded bg-emerald-950/80 border border-emerald-500/50 px-1 py-0.2 text-[8px] text-emerald-300 font-mono font-bold">
+                            {c.matchScore.toFixed(0)}%
+                          </span>
+                        )}
+                        {c.speedAdjustment &&
+                        Math.abs(c.speedAdjustment - 1.0) > 0.02 ? (
+                          <span className="rounded bg-amber-950/80 border border-amber-500/50 px-1 py-0.2 text-[8px] text-amber-300 font-mono">
+                            {c.speedAdjustment.toFixed(2)}x
+                          </span>
+                        ) : null}
+                        {c.isBroll && (
+                          <span className="rounded bg-purple-950/80 border border-purple-500/50 px-1 py-0.2 text-[8px] text-purple-300 font-bold">
+                            B-roll
+                          </span>
+                        )}
+                        {c.emotion && (
+                          <span className="rounded bg-sky-900/60 px-1 py-0.2 text-[8px] text-sky-200 shrink-0">
+                            {c.emotion}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

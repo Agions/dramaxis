@@ -141,10 +141,28 @@ pub async fn script_generate(
     })
 }
 
-use dramaxis_script::HookCandidate;
+use dramaxis_script::{HookCandidate, RetentionTensionArc, ScriptFlywheelEngine, StyleProfile};
 
 /// 启发式生成 4 种不同公式的 3 秒 Hook 候选文案 (离线高保真兜底 + 算法赋能)
 #[tauri::command]
 pub async fn script_generate_hooks(synopsis: String) -> Result<Vec<HookCandidate>, SplicrError> {
     Ok(dramaxis_script::generate_heuristic_hooks(&synopsis))
+}
+
+/// 解构对标参考爆款文案，提炼风格画像与 Few-Shot Prompt
+#[tauri::command]
+pub fn script_deconstruct_reference(text: String) -> Result<StyleProfile, SplicrError> {
+    let engine = ScriptFlywheelEngine::new();
+    Ok(engine.deconstruct_reference(&text))
+}
+
+/// 计算剧本文案留存曲线与四大阶段张力指数
+#[tauri::command]
+pub fn script_calculate_retention_arc(
+    script: String,
+    duration_sec: Option<f64>,
+) -> Result<RetentionTensionArc, SplicrError> {
+    let engine = ScriptFlywheelEngine::new();
+    let duration = duration_sec.unwrap_or(60.0);
+    Ok(engine.calculate_retention_arc(&script, duration))
 }

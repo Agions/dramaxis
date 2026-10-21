@@ -16,6 +16,9 @@
 
 #![allow(dead_code)]
 
+pub mod multimodal;
+pub use multimodal::{SceneRagEngine, SceneVisualFeature};
+
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 

@@ -11,7 +11,12 @@
 
 import { memo, useState } from "react";
 import { toast } from "sonner";
-import { scriptIpc, type HookCandidate } from "@dramaxis/ipc";
+import {
+  scriptIpc,
+  type HookCandidate,
+  type StyleProfile,
+  type RetentionTensionArc,
+} from "@dramaxis/ipc";
 
 interface ScriptStudioPanelProps {
   llmProvider: string;
@@ -42,12 +47,28 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
 }: ScriptStudioPanelProps) {
   const [hooks, setHooks] = useState<HookCandidate[]>([]);
   const [isGeneratingHooks, setIsGeneratingHooks] = useState(false);
-  const [selectedHookIndex, setSelectedHookIndex] = useState<number | null>(null);
+  const [selectedHookIndex, setSelectedHookIndex] = useState<number | null>(
+    null,
+  );
+
+  // 1. Few-Shot 对标爆款解构状态
+  const [showDeconstruct, setShowDeconstruct] = useState(false);
+  const [referenceText, setReferenceText] = useState("");
+  const [isDeconstructing, setIsDeconstructing] = useState(false);
+  const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
+
+  // 2. 留存张力波形分析状态
+  const [retentionArc, setRetentionArc] = useState<RetentionTensionArc | null>(
+    null,
+  );
+  const [isAnalyzingArc, setIsAnalyzingArc] = useState(false);
 
   const handleGenerateHooks = async () => {
     setIsGeneratingHooks(true);
     try {
-      const candidates = await scriptIpc.generateHooks(userPrompt || "这个故事");
+      const candidates = await scriptIpc.generateHooks(
+        userPrompt || "这个故事",
+      );
       setHooks(candidates);
       setSelectedHookIndex(null);
       toast.success("成功生成 4 大公式爆款 Hook (0~3s 黄金留存)");
@@ -68,6 +89,52 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
       onScriptTextChange(`${hook.hookText}\n\n${trimmed}`);
     }
     toast.success(`已采纳【${hook.formulaName}】为黄金 3 秒开场！`);
+  };
+
+  // 解构对标参考爆款
+  const handleDeconstruct = async () => {
+    if (!referenceText.trim()) {
+      toast.warning("请输入对标爆款剧本文案");
+      return;
+    }
+    setIsDeconstructing(true);
+    try {
+      const profile = await scriptIpc.deconstructReference(referenceText);
+      setStyleProfile(profile);
+      toast.success(`爆款风格画像解构成功：${profile.titleOrGenre}`);
+    } catch (e) {
+      toast.error(`解构失败: ${String(e)}`);
+    } finally {
+      setIsDeconstructing(false);
+    }
+  };
+
+  // 将解构出的 Few-Shot 指导注入提示词
+  const handleApplyStyleToPrompt = () => {
+    if (!styleProfile) return;
+    const addition = `\n\n【对标爆款风格画像】\n流派：${styleProfile.titleOrGenre}\n特征：${styleProfile.formulaSummary}\n指导：${styleProfile.fewShotPrompt}`;
+    onUserPromptChange((userPrompt + addition).trim());
+    toast.success("已将对标爆款画像注入提示词输入框！");
+  };
+
+  // 计算留存张力曲线
+  const handleCalculateRetentionArc = async () => {
+    if (!scriptText.trim()) {
+      toast.warning("文案为空，无法计算留存曲线");
+      return;
+    }
+    setIsAnalyzingArc(true);
+    try {
+      const arc = await scriptIpc.calculateRetentionArc(scriptText, 60.0);
+      setRetentionArc(arc);
+      toast.success(
+        `留存曲线计算完成！综合留存指数: ${arc.overallRetentionIndex.toFixed(1)}%`,
+      );
+    } catch (e) {
+      toast.error(`计算留存曲线失败: ${String(e)}`);
+    } finally {
+      setIsAnalyzingArc(false);
+    }
   };
   return (
     <div className="flex flex-col gap-3">
@@ -116,9 +183,18 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-text-secondary">
-          提示词 / 剧情脉络
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-semibold text-text-secondary">
+            提示词 / 剧情脉络
+          </label>
+          <button
+            type="button"
+            onClick={() => setShowDeconstruct(!showDeconstruct)}
+            className="text-[10px] text-gold hover:underline font-medium"
+          >
+            {showDeconstruct ? "收起对标解构 ▲" : "🔍 对标爆款 Few-Shot 解构 ▼"}
+          </button>
+        </div>
         <input
           type="text"
           value={userPrompt}
@@ -126,6 +202,68 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
           placeholder="输入剧本核心梗概、情感走向..."
           className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-xs text-text-primary outline-none focus:border-gold"
         />
+
+        {/* Few-Shot 对标爆款文案解构器 */}
+        {showDeconstruct && (
+          <div className="rounded-xl border border-gold/40 bg-surface/70 p-3 space-y-2 mt-1.5 animate-fadeIn">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-gold flex items-center gap-1">
+                <span>🎯</span> 爆款参考文案解构
+              </span>
+              <button
+                type="button"
+                onClick={handleDeconstruct}
+                disabled={isDeconstructing}
+                className="px-2 py-0.5 rounded bg-gold text-zinc-950 font-bold text-[10px] hover:brightness-110 disabled:opacity-50"
+              >
+                {isDeconstructing ? "解构中..." : "⚡ 一键解构画像"}
+              </button>
+            </div>
+            <textarea
+              rows={3}
+              value={referenceText}
+              onChange={(e) => setReferenceText(e.target.value)}
+              placeholder="在此粘贴同赛道爆款解说词片段（自动提取均句长、网感词与情绪走向）..."
+              className="w-full rounded-lg border border-border bg-bg p-2 text-[11px] text-text-primary outline-none focus:border-gold resize-none"
+            />
+            {styleProfile && (
+              <div className="rounded-lg border border-border/80 bg-bg/80 p-2.5 space-y-1.5 text-[10px]">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-text-primary">
+                    画像: {styleProfile.titleOrGenre}
+                  </span>
+                  <span className="font-mono text-gold font-bold">
+                    均句长: {styleProfile.avgSentenceLength}字 · 语速:{" "}
+                    {styleProfile.estimatedWpm}字/分
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1 items-center">
+                  <span className="text-text-muted">爆款热词:</span>
+                  {styleProfile.viralKeywords.map((kw, i) => (
+                    <span
+                      key={i}
+                      className="px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-400 font-bold border border-amber-500/30"
+                    >
+                      {kw}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-border/60">
+                  <span className="text-text-secondary truncate max-w-[200px]">
+                    {styleProfile.formulaSummary}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleApplyStyleToPrompt}
+                    className="text-gold font-bold hover:underline"
+                  >
+                    + 注入提示词
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 黄金 3 秒爆款 Hook 开场公式引擎 */}
@@ -157,10 +295,10 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
                 h.formula === "result_first"
                   ? "text-red-400 border-red-500/30 bg-red-500/10"
                   : h.formula === "counter_intuitive"
-                  ? "text-purple-400 border-purple-500/30 bg-purple-500/10"
-                  : h.formula === "high_stakes_empathy"
-                  ? "text-amber-400 border-amber-500/30 bg-amber-500/10"
-                  : "text-cyan-400 border-cyan-500/30 bg-cyan-500/10";
+                    ? "text-purple-400 border-purple-500/30 bg-purple-500/10"
+                    : h.formula === "high_stakes_empathy"
+                      ? "text-amber-400 border-amber-500/30 bg-amber-500/10"
+                      : "text-cyan-400 border-cyan-500/30 bg-cyan-500/10";
 
               return (
                 <div
@@ -206,7 +344,8 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
               短视频算法完播率关键在于前 3 秒！
             </p>
             <p className="text-[10px] text-text-muted">
-              点击上方「⚡ 一键推导 4 大公式」基于梗概实时计算高潮前置、认知颠覆、生存危机与强悬念候选。
+              点击上方「⚡ 一键推导 4
+              大公式」基于梗概实时计算高潮前置、认知颠覆、生存危机与强悬念候选。
             </p>
           </div>
         )}
@@ -237,6 +376,127 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
           placeholder="等待 AI 智能体生成或直接在此输入/编辑解说词..."
           className="w-full rounded-xl border border-border bg-bg p-3 text-xs leading-relaxed text-text-primary outline-none focus:border-gold font-sans"
         />
+
+        {/* 留存曲线张力引擎 (Retention Tension Arc) */}
+        <div className="rounded-xl border border-border bg-surface/60 p-3 space-y-2 mt-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-text-primary flex items-center gap-1.5">
+              <span>📈</span> 留存曲线张力分析 (Retention Arc)
+            </span>
+            <button
+              type="button"
+              onClick={handleCalculateRetentionArc}
+              disabled={isAnalyzingArc || !scriptText.trim()}
+              className="text-[10px] font-bold text-gold hover:underline disabled:opacity-50"
+            >
+              {isAnalyzingArc ? "⏳ 计算中..." : "⚡ 测评留存波形"}
+            </button>
+          </div>
+
+          {retentionArc ? (
+            <div className="space-y-2.5">
+              {/* 四维留存评分指标 */}
+              <div className="grid grid-cols-4 gap-1.5 text-center">
+                <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-1.5">
+                  <div className="text-[9px] text-text-muted">0~3s Hook</div>
+                  <div className="font-mono text-xs font-bold text-red-400">
+                    {retentionArc.hookScore.toFixed(0)}%
+                  </div>
+                </div>
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-1.5">
+                  <div className="text-[9px] text-text-muted">3~15s 代入</div>
+                  <div className="font-mono text-xs font-bold text-amber-400">
+                    {retentionArc.setupEmpathyScore.toFixed(0)}%
+                  </div>
+                </div>
+                <div className="rounded-lg border border-purple-500/20 bg-purple-500/10 p-1.5">
+                  <div className="text-[9px] text-text-muted">15~45s 高潮</div>
+                  <div className="font-mono text-xs font-bold text-purple-400">
+                    {retentionArc.climaxIntensity.toFixed(0)}%
+                  </div>
+                </div>
+                <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 p-1.5">
+                  <div className="text-[9px] text-text-muted">45s+ 悬念</div>
+                  <div className="font-mono text-xs font-bold text-cyan-400">
+                    {retentionArc.cliffhangerRetention.toFixed(0)}%
+                  </div>
+                </div>
+              </div>
+
+              {/* 留存波形曲线 (SVG 动态渲染) */}
+              <div className="relative h-16 w-full rounded-lg bg-bg border border-border/80 px-2 py-1 flex flex-col justify-between">
+                <div className="flex justify-between items-center text-[8px] font-mono text-text-muted">
+                  <span>开篇 Hook</span>
+                  <span>痛点展开</span>
+                  <span>冲突爆发</span>
+                  <span>反转悬念</span>
+                </div>
+                <svg
+                  className="w-full h-8 overflow-visible"
+                  preserveAspectRatio="none"
+                  viewBox="0 0 100 40"
+                >
+                  <defs>
+                    <linearGradient
+                      id="arcGrad"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="0%"
+                    >
+                      <stop offset="0%" stopColor="#ef4444" />
+                      <stop offset="25%" stopColor="#f59e0b" />
+                      <stop offset="70%" stopColor="#a855f7" />
+                      <stop offset="100%" stopColor="#06b6d4" />
+                    </linearGradient>
+                  </defs>
+                  {/* 折线图路径 */}
+                  <polyline
+                    fill="none"
+                    stroke="url(#arcGrad)"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={retentionArc.curvePoints
+                      .map((pt, i, arr) => {
+                        const x = (i / Math.max(1, arr.length - 1)) * 100;
+                        const y = 40 - (pt.tensionLevel / 100) * 36;
+                        return `${x.toFixed(1)},${y.toFixed(1)}`;
+                      })
+                      .join(" ")}
+                  />
+                  {retentionArc.curvePoints.map((pt, i, arr) => {
+                    const x = (i / Math.max(1, arr.length - 1)) * 100;
+                    const y = 40 - (pt.tensionLevel / 100) * 36;
+                    return (
+                      <circle
+                        key={i}
+                        cx={x}
+                        cy={y}
+                        r="2.5"
+                        fill="#fbbf24"
+                        stroke="#09090b"
+                        strokeWidth="1"
+                      />
+                    );
+                  })}
+                </svg>
+                <div className="flex justify-between items-center text-[9px]">
+                  <span className="font-bold text-text-secondary">
+                    综合爆款留存指数:
+                  </span>
+                  <span className="font-mono font-bold text-gold">
+                    {retentionArc.overallRetentionIndex.toFixed(1)}% 完播可能
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[10px] text-text-muted text-center py-1">
+              生成或输入文案后，点击右上角「⚡ 测评留存波形」评估完播留存张力。
+            </p>
+          )}
+        </div>
       </div>
 
       <button

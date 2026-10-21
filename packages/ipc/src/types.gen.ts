@@ -282,7 +282,20 @@ export interface IpcContracts {
     };
     result: VoicePreviewResult;
   };
-  // ─────── script · 2 个 ───────
+  // ─────── script · 4 个 ───────
+  script_calculate_retention_arc: {
+    args: {
+      script: string;
+      durationSec: number | null;
+    };
+    result: RetentionTensionArc;
+  };
+  script_deconstruct_reference: {
+    args: {
+      text: string;
+    };
+    result: StyleProfile;
+  };
   script_generate: {
     args: {
       params: ScriptGenerateParams;
@@ -295,7 +308,14 @@ export interface IpcContracts {
     };
     result: HookCandidate[];
   };
-  // ─────── detect · 2 个 ───────
+  // ─────── detect · 3 个 ───────
+  detect_analyze_scenes_rag: {
+    args: {
+      filePath: string;
+      cuts: number[] | null;
+    };
+    result: SceneVisualFeature[];
+  };
   detect_hardware_acceleration: {
     args: void;
     result: HardwareAccelerationKind[];
@@ -372,6 +392,15 @@ export interface IpcContracts {
       stepIdx: number;
     };
     result: BreakpointRequest | null;
+  };
+  // ─────── compose · 1 个 ───────
+  compose_align_script_with_scenes: {
+    args: {
+      scenes: SceneVisualFeature[];
+      scriptLines: string[];
+      voiceDuration: number | null;
+    };
+    result: AlignmentPlan;
   };
 }
 /* <<< gen-ipc end */
@@ -619,6 +648,27 @@ export type AgentEventPayload =
   | "workflow_completed"
   | "error";
 
+// Rust 端 AlignmentMatch (pub struct, rename_all = "camelCase")
+export interface AlignmentMatch {
+  scriptIndex: number;
+  scriptText: string;
+  scriptEmotion: string;
+  matchedSceneId: number;
+  sceneStart: number;
+  sceneEnd: number;
+  sceneEmotion: string;
+  matchScore: number;
+  speedAdjustment: number;
+  isBrollInserted: boolean;
+}
+
+// Rust 端 AlignmentPlan (pub struct, rename_all = "camelCase")
+export interface AlignmentPlan {
+  overallSyncScore: number;
+  matches: AlignmentMatch[];
+  totalDuration: number;
+}
+
 // Rust 端 StepDef (pub struct)
 export interface PipelineStepDef {
   id: string;
@@ -831,6 +881,19 @@ export type HardwareAccelerationKind =
   | "vaapi"
   | "none";
 
+// Rust 端 SceneVisualFeature (pub struct, rename_all = "camelCase")
+export interface SceneVisualFeature {
+  sceneId: number;
+  startTime: number;
+  endTime: number;
+  duration: number;
+  keyframePath?: string | null;
+  motionIntensity: number;
+  emotionTag: string;
+  conflictScore: number;
+  visualSummary: string;
+}
+
 // Rust 端 CapcutSubtitleItem (pub struct, rename_all = "camelCase")
 export interface CapcutSubtitleItem {
   text: string;
@@ -945,6 +1008,35 @@ export interface OutputPlan {
   episode_number?: number | null;
   episode_label?: string | null;
   series_context?: string | null;
+}
+
+// Rust 端 TensionPoint (pub struct, rename_all = "camelCase")
+export interface TensionPoint {
+  timestampSec: number;
+  tensionLevel: number;
+  phaseName: string;
+  cueText: string;
+}
+
+// Rust 端 RetentionTensionArc (pub struct, rename_all = "camelCase")
+export interface RetentionTensionArc {
+  hookScore: number;
+  setupEmpathyScore: number;
+  climaxIntensity: number;
+  cliffhangerRetention: number;
+  overallRetentionIndex: number;
+  curvePoints: TensionPoint[];
+}
+
+// Rust 端 StyleProfile (pub struct, rename_all = "camelCase")
+export interface StyleProfile {
+  titleOrGenre: string;
+  avgSentenceLength: number;
+  estimatedWpm: number;
+  primaryEmotion: string;
+  viralKeywords: string[];
+  formulaSummary: string;
+  fewShotPrompt: string;
 }
 
 // Rust 端 HookCandidate (pub struct, rename_all = "camelCase")

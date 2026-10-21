@@ -25,7 +25,9 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
+pub mod flywheel;
 pub mod hooks;
+pub use flywheel::*;
 pub use hooks::*;
 
 pub use dramaxis_core::error::{LlmProviderKind, SplicrError, SplicrResult};

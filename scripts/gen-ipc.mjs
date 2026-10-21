@@ -366,6 +366,7 @@ function renderContracts(sigs) {
     "video",
     "i18n",
     "agent",
+    "compose",
     "window",
     "diagnostics",
     "llm",
@@ -388,7 +389,11 @@ function renderContracts(sigs) {
     "    result: string;",
     "  };",
   );
-  for (const domain of domainOrder) {
+  const allDomains = [
+    ...domainOrder,
+    ...Array.from(grouped.keys()).filter((d) => !domainOrder.includes(d)),
+  ];
+  for (const domain of allDomains) {
     const list = grouped.get(domain) ?? [];
     if (list.length === 0) continue;
     const bar = "─".repeat(7);
@@ -442,7 +447,10 @@ function parseStructBody(body) {
 
   const fields = [];
   for (const seg of segments) {
-    const cleanSeg = seg.replace(/#\[[^\]]*\]/g, "").replace(/\/\/[^\n]*/g, "").trim();
+    const cleanSeg = seg
+      .replace(/#\[[^\]]*\]/g, "")
+      .replace(/\/\/[^\n]*/g, "")
+      .trim();
     const m = /^pub\s+(\w+)\s*:\s*(.+)$/.exec(cleanSeg);
     if (!m) continue;
     fields.push({
