@@ -191,11 +191,18 @@ pub async fn project_add_media(
 
     if media_dir.is_dir() {
         if let Some(file_name) = media.path.file_name() {
-            let link_dest = media_dir.join(file_name);
             #[cfg(unix)]
             {
+                let link_dest = media_dir.join(file_name);
                 if !link_dest.exists() {
                     let _ = std::os::unix::fs::symlink(&media.path, &link_dest);
+                }
+            }
+            #[cfg(windows)]
+            {
+                let link_dest = media_dir.join(file_name);
+                if !link_dest.exists() {
+                    let _ = std::os::windows::fs::symlink_file(&media.path, &link_dest);
                 }
             }
         }

@@ -892,7 +892,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -920,7 +920,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-agent"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -941,7 +941,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-compose"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -959,7 +959,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-core"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -976,7 +976,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-detect"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "dramaxis-core",
  "dramaxis-subtitle",
@@ -989,7 +989,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-export"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "chrono",
  "dirs 5.0.1",
@@ -1002,7 +1002,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-intake"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "dramaxis-core",
  "serde",
@@ -1012,7 +1012,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-script"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "async-trait",
  "dramaxis-core",
@@ -1027,7 +1027,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-storage"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "chrono",
  "dirs 5.0.1",
@@ -1047,7 +1047,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-subtitle"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1063,7 +1063,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-update"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "anyhow",
  "dramaxis-core",
@@ -1081,7 +1081,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-voice"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "async-trait",
  "chrono",
