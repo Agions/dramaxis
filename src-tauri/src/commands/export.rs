@@ -590,6 +590,7 @@ pub async fn export_launch_jianying() -> Result<(), SplicrError> {
                 ));
             }
         }
+        Ok(())
     }
 
     #[cfg(target_os = "windows")]
@@ -603,17 +604,15 @@ pub async fn export_launch_jianying() -> Result<(), SplicrError> {
                 return Ok(());
             }
         }
-        return Err(SplicrError::Other(
+        Err(SplicrError::Other(
             "未能在本机默认路径发现剪映可执行文件".into(),
-        ));
+        ))
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     {
-        return Err(SplicrError::Other(
-            "Linux 平台暂不支持剪映客户端启动".into(),
-        ));
+        Err(SplicrError::Other(
+            "Linux 及其他平台暂不支持直接唤起剪映客户端".into(),
+        ))
     }
-
-    Ok(())
 }
