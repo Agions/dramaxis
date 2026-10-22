@@ -8,7 +8,7 @@
 
 > **电影级多智能体影视叙事与智能解说创作平台 · 本地优先 · 6 大智能体编导群 · 4 步工坊向导 · 5 轨毫秒级剪辑 · 剪映/CapCut 草稿深度互通 · 8 大平台消重发布矩阵**
 
-[![Version](https://img.shields.io/badge/Version-v1.1.0-F5C842?style=flat-square&logo=git&logoColor=1A1A20)](https://github.com/Agions/dramaxis/releases)
+[![Version](https://img.shields.io/badge/Version-v1.2.0-F5C842?style=flat-square&logo=git&logoColor=1A1A20)](https://github.com/Agions/dramaxis/releases)
 [![Merged](https://img.shields.io/badge/Merger-Fablr%20%2B%20splicr-10B981?style=flat-square&logo=git)](https://github.com/Agions/dramaxis)
 [![Tauri](https://img.shields.io/badge/Tauri-v2.0-7C3AED?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app)
 [![Rust](https://img.shields.io/badge/Rust-1.85%2B-F97316?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org)
@@ -40,17 +40,17 @@
 
 ---
 
-## 🖥️ 桌面端真实运行界面展示
+## 🖥️ 核心工坊界面概览 (Studio Interface Preview)
 
 <div align="center">
 
 |                                                                     工坊 1: 控制台仪表盘 (Home Dashboard)                                                                      |                                                                工坊 2: 素材拆条工坊 (Asset Hub)                                                                 |
 | :--------------------------------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="public/branding/dramaxis_home_dashboard.jpg" width="460" alt="Dramaxis 首页仪表盘界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/dramaxis_asset_hub.jpg" width="460" alt="Dramaxis 素材拆条工坊界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> |
+| <img src="public/branding/dramaxis_home_dashboard.jpg" width="460" alt="Dramaxis 控制台仪表盘" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/dramaxis_asset_hub.jpg" width="460" alt="Dramaxis 素材拆条工坊" style="border-radius: 8px; border: 1px solid #27272A;" /> |
 
 |                                                                      工坊 3: 剧本研磨工坊 (Script Studio)                                                                      |                                                                   工坊 4: 音画剪辑工作台 (Workspace)                                                                   |
 | :--------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="public/branding/dramaxis_script_studio.jpg" width="460" alt="Dramaxis 剧本研磨工坊界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/dramaxis_workspace.jpg" width="460" alt="Dramaxis 剪辑工作台界面截图" style="border-radius: 8px; border: 1px solid #27272A;" /> |
+| <img src="public/branding/dramaxis_script_studio.jpg" width="460" alt="Dramaxis 剧本研磨工坊" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/dramaxis_workspace.jpg" width="460" alt="Dramaxis 音画剪辑工作台" style="border-radius: 8px; border: 1px solid #27272A;" /> |
 
 </div>
 
