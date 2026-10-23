@@ -649,15 +649,97 @@ fn tail_lines(s: &str, n: usize) -> String {
     lines[start..].join("\n")
 }
 
-/// 极简 which: PATH 探测
+/// 增强型 which: PATH 探测 + 系统常见包管理目录与 Sidecar 兜底探测
 fn which(bin: &str) -> Option<PathBuf> {
-    let path_var = std::env::var_os("PATH")?;
-    for dir in std::env::split_paths(&path_var) {
-        let candidate = dir.join(bin);
-        if candidate.is_file() {
-            return Some(candidate);
+    let bin_names: Vec<String> = if cfg!(target_os = "windows") && !bin.ends_with(".exe") {
+        vec![format!("{bin}.exe"), bin.to_string()]
+    } else {
+        vec![bin.to_string()]
+    };
+
+    // 1. 优先扫描系统环境变量 PATH
+    if let Some(path_var) = std::env::var_os("PATH") {
+        for dir in std::env::split_paths(&path_var) {
+            for b in &bin_names {
+                let candidate = dir.join(b);
+                if candidate.is_file() {
+                    return Some(candidate);
+                }
+            }
         }
     }
+
+    // 2. 扫描当前应用程序所在目录及 sidecar 资源目录
+    if let Ok(current_exe) = std::env::current_exe() {
+        if let Some(parent) = current_exe.parent() {
+            for b in &bin_names {
+                let candidate = parent.join(b);
+                if candidate.is_file() {
+                    return Some(candidate);
+                }
+                // macOS Bundle 资源结构: Contents/MacOS -> Contents/Resources/bin
+                let mac_res = parent.join("../Resources/bin").join(b);
+                if mac_res.is_file() {
+                    return Some(mac_res);
+                }
+            }
+        }
+    }
+
+    // 3. 常见系统包管理默认路径 (避免 macOS GUI 启动时不继承 shell PATH)
+    #[cfg(target_os = "macos")]
+    {
+        let common_mac_paths = [
+            "/opt/homebrew/bin",
+            "/usr/local/bin",
+            "/usr/bin",
+            "/bin",
+            "/opt/local/bin",
+        ];
+        for dir_str in common_mac_paths {
+            for b in &bin_names {
+                let candidate = PathBuf::from(dir_str).join(b);
+                if candidate.is_file() {
+                    return Some(candidate);
+                }
+            }
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(local_app_data) = std::env::var_os("LOCALAPPDATA") {
+            for b in &bin_names {
+                let candidate = PathBuf::from(local_app_data)
+                    .join("ffmpeg")
+                    .join("bin")
+                    .join(b);
+                if candidate.is_file() {
+                    return Some(candidate);
+                }
+            }
+        }
+        for b in &bin_names {
+            let candidate = PathBuf::from(r"C:\ffmpeg\bin").join(b);
+            if candidate.is_file() {
+                return Some(candidate);
+            }
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let common_linux_paths = ["/usr/bin", "/usr/local/bin", "/bin", "/snap/bin"];
+        for dir_str in common_linux_paths {
+            for b in &bin_names {
+                let candidate = PathBuf::from(dir_str).join(b);
+                if candidate.is_file() {
+                    return Some(candidate);
+                }
+            }
+        }
+    }
+
     None
 }
 
