@@ -505,7 +505,7 @@ export interface ProjectRecord {
 
 // Rust 端 ScriptGenerateParams (pub struct, rename_all = "camelCase")
 export interface ScriptGenerateParams {
-  provider: string;
+  provider?: string | null;
   apiKey?: string | null;
   baseUrl?: string | null;
   model?: string | null;
@@ -513,6 +513,8 @@ export interface ScriptGenerateParams {
   style?: string | null;
   emotionDensity?: number | null;
   wordCountTarget?: number | null;
+  videoDurationSec?: number | null;
+  videoPath?: string | null;
   hookStyle?: string | null;
   includeHook?: boolean | null;
   imagesBase64?: string[] | null;

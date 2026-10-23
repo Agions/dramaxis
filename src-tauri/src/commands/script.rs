@@ -1,13 +1,16 @@
 //! dramaxis v1.1.0 · AI 脚本生成 Tauri 命令
 
 use dramaxis_core::error::SplicrError;
-use dramaxis_script::{factory, LlmProviderKind, LlmRequest};
+use dramaxis_core::services::ConfigService;
+use dramaxis_core::AppContext;
+use dramaxis_script::{factory_custom, LlmProviderKind, LlmRequest};
+use tauri::State;
 
 #[allow(dead_code)]
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScriptGenerateParams {
-    pub provider: String,
+    pub provider: Option<String>,
     pub api_key: Option<String>,
     pub base_url: Option<String>,
     pub model: Option<String>,
@@ -15,6 +18,8 @@ pub struct ScriptGenerateParams {
     pub style: Option<String>, // "immersive" | "critic" | "story" | "roast"
     pub emotion_density: Option<f32>,
     pub word_count_target: Option<u32>,
+    pub video_duration_sec: Option<f64>,
+    pub video_path: Option<String>,
     /// 黄金前3秒爆款钩子策略 ("conflict" | "paradox" | "survival" | "emotion")
     pub hook_style: Option<String>,
     pub include_hook: Option<bool>,
@@ -51,6 +56,7 @@ fn parse_provider(kind: &str) -> LlmProviderKind {
 pub async fn script_generate(
     app: tauri::AppHandle,
     params: ScriptGenerateParams,
+    app_ctx: State<'_, AppContext>,
 ) -> Result<ScriptGenerateResult, SplicrError> {
     if params.prompt.trim().is_empty() {
         return Err(SplicrError::InvalidInput("提示词不能为空".into()));
@@ -59,12 +65,87 @@ pub async fn script_generate(
     use tauri::Emitter;
     let _ = app.emit("script:token", "[AI 智能体初始化剧情设定...]\n");
 
-    let kind = parse_provider(&params.provider);
-    let api_key = params.api_key.unwrap_or_default();
-    let generator = factory(kind, api_key);
+    // 自动装配已持久化的设置 (当调用未显式提供凭证时优雅回退)
+    let (saved_api_key, saved_base_url, saved_model, saved_provider) =
+        if let Ok(cfg_svc) = app_ctx.service::<ConfigService>().await {
+            let snap = cfg_svc.snapshot().await;
+            (
+                snap.llm_api_key,
+                snap.llm_base_url,
+                snap.llm_model,
+                Some(snap.llm_provider.to_string()),
+            )
+        } else {
+            (None, None, None, None)
+        };
+
+    let final_provider = params
+        .provider
+        .or(saved_provider)
+        .unwrap_or_else(|| "qwen".into());
+    let final_api_key = params.api_key.or(saved_api_key).unwrap_or_default();
+    let final_base_url = params.base_url.or(saved_base_url);
+    let final_model = params.model.or(saved_model);
+
+    let kind = parse_provider(&final_provider);
+    let generator = factory_custom(kind, final_api_key, final_base_url);
+
+    // 探测或适配视频总时长，并推导黄金语速字数预算 (4.2 ~ 4.5 字/秒)
+    let mut duration_sec = params.video_duration_sec;
+    if duration_sec.is_none() {
+        if let Some(ref vpath) = params.video_path {
+            let p = std::path::Path::new(vpath);
+            if p.exists() {
+                if let Ok(ffmpeg) = dramaxis_detect::Ffmpeg::discover() {
+                    if let Ok(probe) = ffmpeg.probe(p).await {
+                        duration_sec = Some(probe.duration_seconds);
+                    }
+                }
+            }
+        }
+    }
+
+    let target_words = if let Some(target) = params.word_count_target {
+        target
+    } else if let Some(dur) = duration_sec {
+        ((dur * 4.3).round() as u32).clamp(40, 1500)
+    } else {
+        300
+    };
+
+    // 关键帧视觉多模态数据提取：若未提供 Base64 但提供了视频路径，自动抽取关键帧
+    let mut images_base64 = params.images_base64.unwrap_or_default();
+    if images_base64.is_empty() {
+        if let Some(ref vpath) = params.video_path {
+            let p = std::path::Path::new(vpath);
+            if p.exists() {
+                if let Ok(ffmpeg) = dramaxis_detect::Ffmpeg::discover() {
+                    let cuts = ffmpeg
+                        .detect_scenes(p, 0.3)
+                        .await
+                        .unwrap_or_else(|_| vec![3.0, 8.0, 15.0]);
+                    let sample_cuts: Vec<f64> = cuts.iter().take(4).cloned().collect();
+                    let temp_dir = std::env::temp_dir()
+                        .join(format!("dramaxis_script_frames_{}", uuid::Uuid::new_v4()));
+                    if let Ok(saved_frames) = ffmpeg
+                        .extract_scene_keyframes(p, &sample_cuts, &temp_dir)
+                        .await
+                    {
+                        for frame_path in saved_frames {
+                            if let Ok(bytes) = tokio::fs::read(&frame_path).await {
+                                use base64::Engine;
+                                let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+                                images_base64.push(b64);
+                            }
+                        }
+                    }
+                    let _ = tokio::fs::remove_dir_all(temp_dir).await;
+                }
+            }
+        }
+    }
 
     let style_str = params.style.as_deref().unwrap_or("immersive");
-    let target_words = params.word_count_target.unwrap_or(800);
     let hook_strategy = params.hook_style.as_deref().unwrap_or("conflict");
     let include_hook = params.include_hook.unwrap_or(true);
 
@@ -79,16 +160,29 @@ pub async fn script_generate(
         ""
     };
 
+    let vision_guidance = if !images_base64.is_empty() {
+        format!(
+            "\n6. 视听多模态锚定：已为你挂载视频真实关键帧画面（共 {} 张）。请仔细识别画面中发生的动作、人物面部表情与冲突场景，让每一句台词均与画面中真实发生的事件严丝合缝对齐，严禁脱离画面的无端臆造！",
+            images_base64.len()
+        )
+    } else {
+        String::new()
+    };
+
+    let dur_display = duration_sec
+        .map(|d| format!("{:.1}s", d))
+        .unwrap_or_else(|| "自适应".into());
+
     let system_prompt = format!(
         r#"你是一名拥有千万播放爆款短剧解说编剧与影视结构导演。
 任务目标：根据给定的视频剧情画面与要求，创作一段节奏飞快、抓耳吸睛、第一人称沉浸式的爆款解说台词文案。
 
 【核心创作法则】
 1. 风格模式：{style_str}
-2. 目标字数：严格控制在 {target_words} 字左右
+2. 目标字数与时长红线：当前视频基底有效时长为 {dur_display}，解说词总字数必须严格控制在约 {target_words} 字以内（短剧黄金语速约 4.3 字/秒，严控字数预算避免音画脱节）
 3. 语调基调：去翻译腔、去机械AI味、使用短句、高信息密度
 4. 爆款前置：{hook_guidance}
-5. 节奏控制：每隔 15~20 秒设置一次小反转或情绪高潮点（可适当使用 [激烈冲突]、[情绪高潮] 等情绪标签）
+5. 节奏控制：每隔 15~20 秒设置一次小反转或情绪高潮点（可适当使用 [激烈冲突]、[情绪高潮] 等情绪标签）{vision_guidance}
 
 请直接输出剧本正文文本，不要包含任何多余的开场白或解释。"#
     );
@@ -96,11 +190,11 @@ pub async fn script_generate(
     let req = LlmRequest {
         system: system_prompt,
         user: params.prompt.clone(),
-        model: params.model.clone(),
+        model: final_model,
         max_tokens: Some(2048),
         temperature: Some(0.7),
         stream: false,
-        images_base64: params.images_base64.unwrap_or_default(),
+        images_base64,
     };
 
     let resp = generator.chat(&req).await?;

@@ -62,6 +62,8 @@ tokio-tungstenite = { version = "0.24", features = ["rustls-tls-webpki-roots"] }
 
 # 系统调用
 dirs = "5"
+uuid = { version = "1", features = ["v4", "serde"] }
+base64 = "0.22"
 
 # 进程 & IO
 serde_with = "3"
@@ -118,6 +120,8 @@ anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1"
+uuid = { workspace = true }
+base64 = { workspace = true }
 
 # ── dramaxis 工作流 crates ──
 # 基础层

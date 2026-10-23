@@ -216,9 +216,31 @@ impl Agent for ScreenwriterAgent {
 
             let base_url = ctx.memory.get("llm_base_url").cloned();
             let provider = dramaxis_script::factory_custom(kind, api_key.clone(), base_url);
+
+            let video_dur_str = ctx
+                .memory
+                .get("video_duration")
+                .cloned()
+                .unwrap_or_else(|| "60.0".into());
+            let video_duration: f64 = video_dur_str.parse().unwrap_or(60.0);
+            // 短剧解说黄金语速：4.2 ~ 4.5 字/秒，严控字数预算避免音画脱节
+            let target_word_count = ((video_duration * 4.3).round() as usize).clamp(40, 1200);
+
+            let system_prompt = format!(
+                "你是一名拥有千万播放量的爆款短剧解说与电影编剧。\n\
+                【绝对字数与时长红线】\n\
+                本段视频有效播放总时长为 {:.1} 秒。按照短剧解说黄金语速（约 4.3 汉字/秒），你的解说词总字数必须严格控制在约 {} 字以内（允许 ±10% 误差），切忌废话与过长台词导致音画失配！\n\
+                【多模态视听要求】\n\
+                已传入本视频关键帧画面（共 {} 张）。请仔细观察画面中人物的动作、表情、所处环境及发生的冲突事件，以主角第一人称【我】输出 0~3s 抓人眼球的黄金 Hook 以及扣人心弦的高能解说，必须做到每一句话都与镜头画面真实事件严密对应。",
+                video_duration, target_word_count, images_base64.len()
+            );
+
             let req = LlmRequest {
-                system: "你是一名拥有千万播放量的爆款短剧解说与电影编剧。请结合多模态镜头关键帧，以主角第一人称【我】输出 0~3s 抓人眼球的黄金 Hook，以及扣人心弦的高能悬疑独白，字数在 150~300 字之间。".into(),
-                user: format!("剧名/工程: {}，场景切片数量: {}，请结合关键帧视觉画面撰写第一人称解说台词。", project_name, cuts),
+                system: system_prompt,
+                user: format!(
+                    "剧名/工程: {}，场景切片数量: {}，有效总时长: {:.1}s。请结合关键帧视觉画面撰写第一人称解说台词，严格控制在约 {} 字以内。",
+                    project_name, cuts, video_duration, target_word_count
+                ),
                 model: ctx.memory.get("llm_model").cloned(),
                 max_tokens: Some(1024),
                 temperature: Some(0.75),

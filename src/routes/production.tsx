@@ -223,6 +223,11 @@ function ProductionCinemaStudio() {
   const handleScriptGenerate = useCallback(async () => {
     setIsGeneratingScript(true);
     try {
+      const activeMedia = currentProject?.project?.media_files?.[0];
+      const videoDuration = activeMedia?.duration_seconds || 30.0;
+      // 短剧解说黄金语速：4.2 ~ 4.5 字/秒，严控字数预算避免音画脱节
+      const targetWords = Math.max(40, Math.round(videoDuration * 4.3));
+
       const resp = await scriptIpc.generate({
         prompt: userPrompt || "短剧第一人称独白反转",
         style: scriptStyle,
@@ -231,7 +236,9 @@ function ProductionCinemaStudio() {
         baseUrl: null,
         model: null,
         emotionDensity: null,
-        wordCountTarget: 800,
+        wordCountTarget: targetWords,
+        videoDurationSec: videoDuration,
+        videoPath: mediaPath,
         hookStyle: "conflict",
         includeHook: true,
         imagesBase64: null,
@@ -239,7 +246,9 @@ function ProductionCinemaStudio() {
       setScriptText(resp.text);
       markDirty("voiceDirty", true);
       markDirty("exportDirty", true);
-      toast.success("ScreenwriterAgent: AI 独白脚本生成完成！");
+      toast.success(
+        `ScreenwriterAgent: AI 独白脚本生成完成（精准适配 ${videoDuration.toFixed(1)}s 画面，约 ${resp.wordCount} 字）！`,
+      );
     } catch {
       setScriptText(
         "【第一人称沉浸独白】\n我叫林渊。所有人都以为三年前那场大火彻底烧死了我，直到今天我以千亿总裁的身份再次站在这里。那个曾经背叛我的人，现在正颤抖着跪在我的脚下求饶...但我知道，真正的幕后黑手，还藏在那扇紧闭的铁门后面！",
@@ -254,6 +263,8 @@ function ProductionCinemaStudio() {
     userPrompt,
     scriptStyle,
     llmProvider,
+    currentProject?.project?.media_files,
+    mediaPath,
     setIsGeneratingScript,
     setScriptText,
     markDirty,

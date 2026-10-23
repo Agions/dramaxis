@@ -895,6 +895,7 @@ name = "dramaxis"
 version = "1.2.0"
 dependencies = [
  "anyhow",
+ "base64 0.22.1",
  "chrono",
  "dramaxis-agent",
  "dramaxis-compose",
@@ -916,6 +917,7 @@ dependencies = [
  "thiserror 2.0.20",
  "tokio",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
