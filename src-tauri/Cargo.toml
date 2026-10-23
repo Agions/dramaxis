@@ -122,6 +122,7 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1"
 uuid = { workspace = true }
 base64 = { workspace = true }
+dirs = { workspace = true }
 
 # ── dramaxis 工作流 crates ──
 # 基础层
