@@ -180,8 +180,7 @@ cargo test --manifest-path src-tauri/Cargo.toml --all
 pnpm test
 ```
 
-> **💡 macOS 安装提示**：若打开下载的安装包时提示 `“已损坏，无法打开”`，系 macOS Gatekeeper 安全机制对未签名文件的隔离标记，请在终端执行：  
-> `sudo xattr -rd com.apple.quarantine /Applications/Dramaxis.app` 即可正常启动。
+> **macOS 安全提示**：若 Gatekeeper 报告应用已损坏或无法验证，请勿使用 `sudo xattr` 移除隔离标记或关闭 Gatekeeper。该提示可能表示应用未签名/未公证，也可能是下载损坏。请仅从官方发布页获取应用，并在维护者提供时校验签名或哈希；若仍被拦截，请停止运行并联系维护者获取可验证的发布包。
 
 ---
 
