@@ -595,8 +595,11 @@ pub async fn export_launch_jianying() -> Result<(), SplicrError> {
 
     #[cfg(target_os = "windows")]
     {
-        if let Some(local_app_data) = dirs::data_local_dir() {
-            let possible_exe = local_app_data.join("JianyingPro/Apps/JianyingPro.exe");
+        if let Some(local_app_data) = std::env::var_os("LOCALAPPDATA") {
+            let possible_exe = std::path::PathBuf::from(local_app_data)
+                .join("JianyingPro")
+                .join("Apps")
+                .join("JianyingPro.exe");
             if possible_exe.exists() {
                 let _ = tokio::process::Command::new(possible_exe)
                     .spawn()

@@ -709,18 +709,17 @@ fn which(bin: &str) -> Option<PathBuf> {
     #[cfg(target_os = "windows")]
     {
         if let Some(local_app_data) = std::env::var_os("LOCALAPPDATA") {
+            let base_dir = PathBuf::from(local_app_data).join("ffmpeg").join("bin");
             for b in &bin_names {
-                let candidate = PathBuf::from(local_app_data)
-                    .join("ffmpeg")
-                    .join("bin")
-                    .join(b);
+                let candidate = base_dir.join(b);
                 if candidate.is_file() {
                     return Some(candidate);
                 }
             }
         }
+        let default_c_bin = PathBuf::from(r"C:\ffmpeg\bin");
         for b in &bin_names {
-            let candidate = PathBuf::from(r"C:\ffmpeg\bin").join(b);
+            let candidate = default_c_bin.join(b);
             if candidate.is_file() {
                 return Some(candidate);
             }

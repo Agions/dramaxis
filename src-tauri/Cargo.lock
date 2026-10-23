@@ -897,6 +897,7 @@ dependencies = [
  "anyhow",
  "base64 0.22.1",
  "chrono",
+ "dirs 5.0.1",
  "dramaxis-agent",
  "dramaxis-compose",
  "dramaxis-core",
