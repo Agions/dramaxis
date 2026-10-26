@@ -98,6 +98,7 @@ pub struct ConfigSnapshot {
     pub tts_api_key: Option<String>,
     pub tts_base_url: Option<String>,
     pub tts_voice: Option<String>,
+    pub tts_model: Option<String>,
     /// GPT-SoVITS 本地参考音频路径
     pub tts_ref_audio_path: Option<String>,
     /// GPT-SoVITS 参考音频对应文本

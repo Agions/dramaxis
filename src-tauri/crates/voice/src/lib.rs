@@ -115,10 +115,14 @@ impl TtsEngine for OpenAiTtsEngine {
     }
 
     async fn synthesize(&self, req: &TtsRequest) -> SplicrResult<TtsOutcome> {
-        let url = format!(
-            "{}/v1/audio/speech",
-            self.opts.base_url.trim_end_matches('/')
-        );
+        let base = self.opts.base_url.trim().trim_end_matches('/');
+        let url = if base.ends_with("/audio/speech") {
+            base.to_string()
+        } else if base.ends_with("/v1") {
+            format!("{base}/audio/speech")
+        } else {
+            format!("{base}/v1/audio/speech")
+        };
         let speed = (100 + req.rate_percent).clamp(50, 150) as f64 / 100.0;
         let body = serde_json::json!({
             "model": self.opts.model,

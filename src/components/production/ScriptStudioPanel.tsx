@@ -193,12 +193,23 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
           onChange={(e) => onLlmProviderChange(e.target.value)}
           className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-xs font-semibold text-text-primary outline-none focus:border-gold"
         >
-          <option value="qwen">通义千问 (qwen3.8-max 推荐)</option>
-          <option value="deepseek">DeepSeek (deepseek-v4-pro)</option>
-          <option value="open-ai">OpenAI (gpt-5.6-sol)</option>
-          <option value="claude">Claude (claude-sonnet-5)</option>
-          <option value="gemini">Gemini (gemini-3.6-flash)</option>
+          <option value="qwen">通义千问 (qwen-plus 推荐)</option>
+          <option value="deepseek">DeepSeek (deepseek-chat / R1)</option>
+          <option value="open-ai">OpenAI (gpt-4o)</option>
+          <option value="claude">Claude (claude-sonnet-4)</option>
+          <option value="gemini">Gemini (gemini-2.5-flash)</option>
+          <option value="kimi">Kimi · 月之暗面 (moonshot-v1)</option>
+          <option value="glm5">智谱 GLM (glm-4-flash)</option>
+          <option value="doubao">豆包 Doubao (doubao-pro)</option>
+          <option value="hunyuan">腾讯混元 (hunyuan-standard)</option>
+          <option value="local">本地 Ollama (llama3.2)</option>
+          <option value="custom">⚙️ 自定义模型 (OpenAI兼容/中转)</option>
         </select>
+        {llmProvider === "custom" && (
+          <div className="rounded-lg bg-surface-muted border border-border/80 p-2 text-[11px] text-text-secondary flex items-center justify-between">
+            <span>⚙️ 自定义 OpenAI 兼容端点：将在「设置」中读取自定义 Base URL 与模型名称</span>
+          </div>
+        )}
       </div>
 
       <div className="space-y-1.5">

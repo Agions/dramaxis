@@ -104,6 +104,15 @@ export const LLM_OPTIONS: LlmMeta[] = [
     defaultModel: "llama3.2",
     color: "from-zinc-500/20 to-zinc-600/10",
   },
+  {
+    id: "custom",
+    name: "自定义大模型",
+    badge: "中转/兼容",
+    desc: "兼容 OpenAI 规范 / SiliconFlow / OneAPI / 任意中转",
+    icon: "⚙️",
+    defaultModel: "deepseek-chat",
+    color: "from-amber-500/20 to-yellow-500/10",
+  },
 ];
 
 interface LlmProvidersSectionProps {
@@ -245,9 +254,16 @@ export function LlmProvidersSection({
 
           {/* 指定模型 */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-text-secondary">
-              指定模型名称 (Model)
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-text-secondary">
+                指定模型名称 (Model)
+              </label>
+              {form.llm_provider === "custom" && (
+                <span className="text-[10px] text-gold font-medium">
+                  可填任意 OpenAI 兼容模型
+                </span>
+              )}
+            </div>
             <input
               type="text"
               value={form.llm_model || currentLlm.defaultModel}
@@ -260,6 +276,28 @@ export function LlmProvidersSection({
               placeholder={currentLlm.defaultModel}
               className="w-full rounded-xl border border-border bg-surface-elevated px-3.5 py-2.5 text-xs font-mono text-text-primary focus:border-gold focus:outline-none"
             />
+            {form.llm_provider === "custom" && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] text-text-muted">常用快捷填入:</span>
+                {[
+                  "deepseek-chat",
+                  "deepseek-reasoner",
+                  "gpt-4o",
+                  "gpt-4o-mini",
+                  "qwen-plus",
+                  "claude-3-5-sonnet-20241022",
+                ].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, llm_model: m }))}
+                    className="rounded px-1.5 py-0.5 text-[10px] font-mono bg-surface-muted hover:bg-gold/20 hover:text-gold text-text-secondary border border-border transition-colors"
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -277,7 +315,11 @@ export function LlmProvidersSection({
                 llm_base_url: e.target.value || null,
               }))
             }
-            placeholder="留空使用官方默认地址 (如 https://api.openai.com/v1)"
+            placeholder={
+              form.llm_provider === "custom"
+                ? "如 https://api.siliconflow.cn/v1 或中转代理地址 (必填)"
+                : "留空使用官方默认地址 (如 https://api.openai.com/v1)"
+            }
             className="w-full rounded-xl border border-border bg-surface-elevated px-3.5 py-2.5 text-xs font-mono text-text-primary focus:border-gold focus:outline-none"
           />
         </div>

@@ -4,7 +4,7 @@ import { Badge, Card } from "@dramaxis/ui";
 import { toast } from "sonner";
 
 export interface TtsMeta {
-  id: "edge" | "mimo" | "open-ai" | "gpt-sovits";
+  id: "edge" | "mimo" | "open-ai" | "gpt-sovits" | "mossland" | "custom";
   label: string;
   tag: string;
   hint: string;
@@ -12,6 +12,7 @@ export interface TtsMeta {
   needApiKey: boolean;
   defaultBaseUrl?: string;
   defaultModel?: string;
+  defaultVoice?: string;
 }
 
 export const TTS_OPTIONS: TtsMeta[] = [
@@ -22,16 +23,18 @@ export const TTS_OPTIONS: TtsMeta[] = [
     hint: "微软官方 · 48kHz 高清采样 · 50+ 电影声优",
     icon: "🎙️",
     needApiKey: false,
+    defaultVoice: "zh-CN-YunxiNeural",
   },
   {
-    id: "mimo",
-    label: "MiniMax / MiMo",
-    tag: "商业旗舰",
-    hint: "speech-02-hd · 情感细腻自然人声 (需填写 API Key)",
-    icon: "📱",
+    id: "mossland",
+    label: "Mossland 摩斯配音",
+    tag: "影视情绪推荐",
+    hint: "mossland.studio · 影视解说专属电影情绪声线 (OpenAI TTS 协议)",
+    icon: "🎭",
     needApiKey: true,
-    defaultBaseUrl: "https://api.minimax.chat/v1",
-    defaultModel: "speech-02-hd",
+    defaultBaseUrl: "https://api.mossland.studio/v1",
+    defaultModel: "moss-tts-v1",
+    defaultVoice: "moss-narrator-male",
   },
   {
     id: "open-ai",
@@ -42,6 +45,18 @@ export const TTS_OPTIONS: TtsMeta[] = [
     needApiKey: true,
     defaultBaseUrl: "https://api.openai.com/v1",
     defaultModel: "tts-1-hd",
+    defaultVoice: "alloy",
+  },
+  {
+    id: "mimo",
+    label: "MiniMax / MiMo",
+    tag: "商业旗舰",
+    hint: "speech-02-hd · 情感细腻自然人声 (需填写 API Key)",
+    icon: "📱",
+    needApiKey: true,
+    defaultBaseUrl: "https://api.minimax.chat/v1",
+    defaultModel: "speech-02-hd",
+    defaultVoice: "female-shaonv",
   },
   {
     id: "gpt-sovits",
@@ -51,6 +66,18 @@ export const TTS_OPTIONS: TtsMeta[] = [
     icon: "🧬",
     needApiKey: false,
     defaultBaseUrl: "http://127.0.0.1:9880",
+    defaultVoice: "default",
+  },
+  {
+    id: "custom",
+    label: "自定义 OpenAI TTS",
+    tag: "自建/中转",
+    hint: "兼容 /v1/audio/speech 的任意 TTS 平台、聚合反代或第三方声音 API",
+    icon: "⚙️",
+    needApiKey: true,
+    defaultBaseUrl: "https://api.openai.com/v1",
+    defaultModel: "tts-1",
+    defaultVoice: "alloy",
   },
 ];
 
@@ -68,12 +95,12 @@ export function TtsVoicesSection({ form, setForm }: TtsVoicesSectionProps) {
     toast.promise(
       voiceIpc.preview({
         provider: form.tts_provider ?? "edge",
-        voice: form.tts_voice ?? null,
+        voice: form.tts_voice ?? currentTts.defaultVoice ?? null,
         ratePercent: 0,
         text: "叙影，致力于打造高水准多智能体影视解说自动化工坊。",
         apiKey: form.tts_api_key ?? null,
-        baseUrl: form.tts_base_url ?? null,
-        model: null,
+        baseUrl: form.tts_base_url || currentTts.defaultBaseUrl || null,
+        model: form.tts_model || currentTts.defaultModel || null,
         refAudioPath: form.tts_ref_audio_path ?? null,
         promptText: form.tts_prompt_text ?? null,
       }),
@@ -88,7 +115,7 @@ export function TtsVoicesSection({ form, setForm }: TtsVoicesSectionProps) {
   return (
     <div className="space-y-6">
       {/* TTS 厂商选择 */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {TTS_OPTIONS.map((item) => {
           const selected = form.tts_provider === item.id;
           return (
@@ -101,6 +128,8 @@ export function TtsVoicesSection({ form, setForm }: TtsVoicesSectionProps) {
                   ...prev,
                   tts_provider: item.id,
                   tts_base_url: item.defaultBaseUrl || prev.tts_base_url,
+                  tts_voice: item.defaultVoice || prev.tts_voice,
+                  tts_model: item.defaultModel || prev.tts_model,
                 }))
               }
               className={`p-4 text-left ${selected ? "border-gold bg-gold-muted" : ""}`}
@@ -169,7 +198,7 @@ export function TtsVoicesSection({ form, setForm }: TtsVoicesSectionProps) {
           </div>
         )}
 
-        {/* 默认声线选择 */}
+        {/* 默认声线与模型选择 */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-text-secondary">
@@ -177,35 +206,73 @@ export function TtsVoicesSection({ form, setForm }: TtsVoicesSectionProps) {
             </label>
             <input
               type="text"
-              value={form.tts_voice || "zh-CN-YunxiNeural"}
+              value={form.tts_voice || currentTts.defaultVoice || "zh-CN-YunxiNeural"}
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
                   tts_voice: e.target.value || null,
                 }))
               }
-              placeholder="zh-CN-YunxiNeural / alloy / onyx"
+              placeholder={currentTts.defaultVoice || "如 moss-narrator-male / zh-CN-YunxiNeural"}
               className="w-full rounded-xl border border-border bg-surface-elevated px-3.5 py-2.5 text-xs font-mono text-text-primary focus:border-gold focus:outline-none"
             />
+            {form.tts_provider === "mossland" && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] text-text-muted">推荐解说声线:</span>
+                {[
+                  { id: "moss-narrator-male", label: "沉浸电影男声" },
+                  { id: "moss-suspense-01", label: "悬疑解说" },
+                  { id: "moss-narrator-female", label: "情感叙事女声" },
+                ].map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, tts_voice: v.id }))}
+                    className="rounded px-1.5 py-0.5 text-[10px] font-mono bg-surface-muted hover:bg-gold/20 hover:text-gold text-text-secondary border border-border transition-colors"
+                  >
+                    {v.label} ({v.id})
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-text-secondary">
-              服务 Base URL
+              TTS 模型名称 (Model)
             </label>
             <input
               type="text"
-              value={form.tts_base_url || currentTts.defaultBaseUrl || ""}
+              value={form.tts_model || currentTts.defaultModel || ""}
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  tts_base_url: e.target.value || null,
+                  tts_model: e.target.value || null,
                 }))
               }
-              placeholder={currentTts.defaultBaseUrl || "官方默认地址"}
+              placeholder={currentTts.defaultModel || "如 moss-tts-v1 / tts-1 / tts-1-hd"}
               className="w-full rounded-xl border border-border bg-surface-elevated px-3.5 py-2.5 text-xs font-mono text-text-primary focus:border-gold focus:outline-none"
             />
           </div>
+        </div>
+
+        {/* 服务 Base URL */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-text-secondary">
+            服务 Base URL
+          </label>
+          <input
+            type="text"
+            value={form.tts_base_url || currentTts.defaultBaseUrl || ""}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                tts_base_url: e.target.value || null,
+              }))
+            }
+            placeholder={currentTts.defaultBaseUrl || "官方默认地址"}
+            className="w-full rounded-xl border border-border bg-surface-elevated px-3.5 py-2.5 text-xs font-mono text-text-primary focus:border-gold focus:outline-none"
+          />
         </div>
       </Card>
     </div>

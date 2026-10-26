@@ -887,6 +887,7 @@ export interface ConfigSnapshot {
   tts_api_key?: string | null;
   tts_base_url?: string | null;
   tts_voice?: string | null;
+  tts_model?: string | null;
   tts_ref_audio_path?: string | null;
   tts_prompt_text?: string | null;
 }

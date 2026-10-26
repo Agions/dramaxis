@@ -1,6 +1,8 @@
 //! dramaxis v1.1.0 · TTS 试听与合成 Tauri 命令
 
 use dramaxis_core::error::SplicrError;
+use dramaxis_core::services::ConfigService;
+use dramaxis_core::AppContext;
 use dramaxis_voice::{
     engine, EdgeTtsOptions, GptSovitsOptions, MimoTtsOptions, OpenAiTtsOptions, TtsEngineConfig,
     TtsRequest,
@@ -12,7 +14,7 @@ use tauri::Manager;
 #[serde(rename_all = "camelCase")]
 pub struct VoicePreviewParams {
     pub text: String,
-    pub provider: String, // "edge" | "open-ai" | "mimo" | "gpt-sovits"
+    pub provider: String, // "edge" | "open-ai" | "mimo" | "gpt-sovits" | "mossland" | "custom"
     pub voice: Option<String>,
     pub rate_percent: i32,
     pub api_key: Option<String>,
@@ -32,14 +34,41 @@ pub struct VoicePreviewResult {
 
 fn build_tts_engine(params: &VoicePreviewParams) -> Box<dyn dramaxis_voice::TtsEngine> {
     let config = match params.provider.as_str() {
-        "open-ai" => TtsEngineConfig::OpenAi(OpenAiTtsOptions {
+        "mossland" => TtsEngineConfig::OpenAi(OpenAiTtsOptions {
             api_key: params.api_key.clone().unwrap_or_default(),
             base_url: params
                 .base_url
                 .clone()
-                .unwrap_or_else(|| "https://api.openai.com".into()),
-            model: params.model.clone().unwrap_or_else(|| "tts-1".into()),
-            voice: params.voice.clone().unwrap_or_else(|| "alloy".into()),
+                .filter(|u| !u.trim().is_empty())
+                .unwrap_or_else(|| "https://api.mossland.studio/v1".into()),
+            model: params
+                .model
+                .clone()
+                .filter(|m| !m.trim().is_empty())
+                .unwrap_or_else(|| "moss-tts-v1".into()),
+            voice: params
+                .voice
+                .clone()
+                .filter(|v| !v.trim().is_empty())
+                .unwrap_or_else(|| "moss-narrator-male".into()),
+        }),
+        "custom" | "open-ai" => TtsEngineConfig::OpenAi(OpenAiTtsOptions {
+            api_key: params.api_key.clone().unwrap_or_default(),
+            base_url: params
+                .base_url
+                .clone()
+                .filter(|u| !u.trim().is_empty())
+                .unwrap_or_else(|| "https://api.openai.com/v1".into()),
+            model: params
+                .model
+                .clone()
+                .filter(|m| !m.trim().is_empty())
+                .unwrap_or_else(|| "tts-1".into()),
+            voice: params
+                .voice
+                .clone()
+                .filter(|v| !v.trim().is_empty())
+                .unwrap_or_else(|| "alloy".into()),
         }),
         "mimo" => TtsEngineConfig::Mimo(MimoTtsOptions {
             api_key: params.api_key.clone().unwrap_or_default(),
@@ -69,7 +98,7 @@ fn build_tts_engine(params: &VoicePreviewParams) -> Box<dyn dramaxis_voice::TtsE
             voice: params
                 .voice
                 .clone()
-                .unwrap_or_else(|| "zh-CN-XiaoxiaoNeural".into()),
+                .unwrap_or_else(|| "zh-CN-YunxiNeural".into()),
         }),
     };
     engine(config)
@@ -85,6 +114,32 @@ pub async fn voice_preview(
         return Err(SplicrError::InvalidInput("试听文本不能为空".into()));
     }
 
+    // 回退已保存的配置
+    let (saved_api_key, saved_base_url, saved_voice, saved_model) =
+        if let Ok(cfg_svc) = app_handle.state::<AppContext>().service::<ConfigService>().await {
+            let snap = cfg_svc.snapshot().await;
+            (
+                snap.tts_api_key,
+                snap.tts_base_url,
+                snap.tts_voice,
+                snap.tts_model,
+            )
+        } else {
+            (None, None, None, None)
+        };
+
+    let resolved_params = VoicePreviewParams {
+        text: params.text,
+        provider: params.provider,
+        voice: params.voice.or(saved_voice),
+        rate_percent: params.rate_percent,
+        api_key: params.api_key.or(saved_api_key),
+        base_url: params.base_url.or(saved_base_url),
+        model: params.model.or(saved_model),
+        ref_audio_path: params.ref_audio_path,
+        prompt_text: params.prompt_text,
+    };
+
     // 默认缓存目录
     let cache_dir = app_handle
         .path()
@@ -96,19 +151,19 @@ pub async fn voice_preview(
         .map_err(|e| SplicrError::Io(format!("创建 TTS 缓存目录失败: {e}")))?;
 
     let file_id = chrono::Utc::now().timestamp_millis();
-    let ext = if params.provider == "gpt-sovits" {
+    let ext = if resolved_params.provider == "gpt-sovits" {
         "wav"
     } else {
         "mp3"
     };
     let output_path = tts_cache_dir.join(format!("preview_{file_id}.{ext}"));
 
-    let tts_engine = build_tts_engine(&params);
+    let tts_engine = build_tts_engine(&resolved_params);
     let outcome = tts_engine
         .synthesize(&TtsRequest {
-            text: params.text.clone(),
-            voice: params.voice.clone(),
-            rate_percent: params.rate_percent,
+            text: resolved_params.text.clone(),
+            voice: resolved_params.voice.clone(),
+            rate_percent: resolved_params.rate_percent,
             output_path: output_path.clone(),
         })
         .await
@@ -124,6 +179,7 @@ pub async fn voice_preview(
 /// 完整配音合成导出: 将文本合成至指定目标文件路径
 #[tauri::command]
 pub async fn voice_synthesize(
+    app_handle: tauri::AppHandle,
     params: VoicePreviewParams,
     output_path: String,
 ) -> Result<VoicePreviewResult, SplicrError> {
@@ -131,14 +187,40 @@ pub async fn voice_synthesize(
         return Err(SplicrError::InvalidInput("合成文本不能为空".into()));
     }
 
+    // 回退已保存的配置
+    let (saved_api_key, saved_base_url, saved_voice, saved_model) =
+        if let Ok(cfg_svc) = app_handle.state::<AppContext>().service::<ConfigService>().await {
+            let snap = cfg_svc.snapshot().await;
+            (
+                snap.tts_api_key,
+                snap.tts_base_url,
+                snap.tts_voice,
+                snap.tts_model,
+            )
+        } else {
+            (None, None, None, None)
+        };
+
+    let resolved_params = VoicePreviewParams {
+        text: params.text,
+        provider: params.provider,
+        voice: params.voice.or(saved_voice),
+        rate_percent: params.rate_percent,
+        api_key: params.api_key.or(saved_api_key),
+        base_url: params.base_url.or(saved_base_url),
+        model: params.model.or(saved_model),
+        ref_audio_path: params.ref_audio_path,
+        prompt_text: params.prompt_text,
+    };
+
     let out_path = PathBuf::from(&output_path);
 
-    let tts_engine = build_tts_engine(&params);
+    let tts_engine = build_tts_engine(&resolved_params);
     let outcome = tts_engine
         .synthesize(&TtsRequest {
-            text: params.text.clone(),
-            voice: params.voice.clone(),
-            rate_percent: params.rate_percent,
+            text: resolved_params.text.clone(),
+            voice: resolved_params.voice.clone(),
+            rate_percent: resolved_params.rate_percent,
             output_path: out_path.clone(),
         })
         .await

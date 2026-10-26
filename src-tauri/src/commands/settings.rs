@@ -92,6 +92,7 @@ pub async fn settings_test_llm(
         "claude" => LlmProviderKind::Claude,
         "gemini" => LlmProviderKind::Gemini,
         "local" => LlmProviderKind::Local,
+        "custom" => LlmProviderKind::OpenAi,
         _ => LlmProviderKind::DeepSeek,
     };
 
