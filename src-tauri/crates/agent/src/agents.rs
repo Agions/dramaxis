@@ -49,7 +49,13 @@ pub fn resolve_agent_llm(
             ov.temperature.unwrap_or(0.75),
         )
     } else {
-        (default_provider_str, default_api_key, default_base_url, default_model, 0.75)
+        (
+            default_provider_str,
+            default_api_key,
+            default_base_url,
+            default_model,
+            0.75,
+        )
     };
 
     let kind = match prov_str.to_lowercase().as_str() {
@@ -335,12 +341,7 @@ impl Agent for ScreenwriterAgent {
         ctx.memory
             .insert("script_text".to_string(), final_script.clone());
         let critique_feedback = ctx.memory.get("critique_feedback").cloned();
-        let first_sentence = final_script
-            .lines()
-            .next()
-            .unwrap_or("")
-            .trim()
-            .to_string();
+        let first_sentence = final_script.lines().next().unwrap_or("").trim().to_string();
         let ver = ctx.blackboard.push_script_version(
             self.role(),
             "第一人称解说台词生成",

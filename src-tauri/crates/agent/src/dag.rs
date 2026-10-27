@@ -233,9 +233,10 @@ impl DagOrchestrator {
 
             // 检查就绪节点中是否包含人机协同断点 (HITL)
             let auto_mode = self.context.read().await.auto_mode;
-            let hitl_idx = ready_indices.iter().copied().find(|&idx| {
-                self.nodes[idx].is_hitl_checkpoint && !auto_mode
-            });
+            let hitl_idx = ready_indices
+                .iter()
+                .copied()
+                .find(|&idx| self.nodes[idx].is_hitl_checkpoint && !auto_mode);
 
             if let Some(node_idx) = hitl_idx {
                 let (role, name) = {
@@ -332,14 +333,16 @@ impl DagOrchestrator {
                             let ctx = self.context.read().await;
                             if let Some(rep) = &ctx.blackboard.quality_report {
                                 if let Some(emitter) = &self.event_emitter {
-                                    emitter(AgentEventPayload::QualityGateEvaluated(QualityReport {
-                                        hook_score: rep.hook_score,
-                                        sync_tolerance_ms: rep.sync_tolerance_ms,
-                                        pacing_score: rep.pacing_score,
-                                        compliance_passed: rep.compliance_passed,
-                                        overall_score: rep.overall_score,
-                                        suggestions: rep.suggestions.clone(),
-                                    }));
+                                    emitter(AgentEventPayload::QualityGateEvaluated(
+                                        QualityReport {
+                                            hook_score: rep.hook_score,
+                                            sync_tolerance_ms: rep.sync_tolerance_ms,
+                                            pacing_score: rep.pacing_score,
+                                            compliance_passed: rep.compliance_passed,
+                                            overall_score: rep.overall_score,
+                                            suggestions: rep.suggestions.clone(),
+                                        },
+                                    ));
                                 }
                             }
                         }
@@ -379,9 +382,7 @@ impl DagOrchestrator {
                         ctx.memory
                             .get("critique_feedback")
                             .cloned()
-                            .unwrap_or_else(|| {
-                                "开篇前3秒悬念不足，建议加入突发冲突钩子".into()
-                            })
+                            .unwrap_or_else(|| "开篇前3秒悬念不足，建议加入突发冲突钩子".into())
                     };
 
                     if let Some(emitter) = &self.event_emitter {
@@ -428,7 +429,10 @@ impl DagOrchestrator {
 
             // 重新挂起编剧与审稿质检节点，重新生成
             for n in &mut self.nodes {
-                if n.id == "screenwriter_draft" || n.id == "critic_review" || n.id == "hitl_approval" {
+                if n.id == "screenwriter_draft"
+                    || n.id == "critic_review"
+                    || n.id == "hitl_approval"
+                {
                     n.status = DagNodeStatus::Pending;
                 }
             }
@@ -474,15 +478,16 @@ impl DagOrchestrator {
                     .as_ref()
                     .map(|v| v.total_duration_sec)
                     .unwrap_or(60.0);
-                ctx.blackboard.set_audio_brief(crate::blackboard::AudioBriefArtifact {
-                    has_original_speech: true,
-                    speech_intervals: vec![crate::blackboard::SpeechInterval {
-                        start: 0.0,
-                        end: dur_sec * 0.45,
-                    }],
-                    bgm_intensity_peaks: vec![3.0, 15.0, 30.0],
-                    dialogue_summary: "原片对话时长占比 45%，背景声场完整".into(),
-                });
+                ctx.blackboard
+                    .set_audio_brief(crate::blackboard::AudioBriefArtifact {
+                        has_original_speech: true,
+                        speech_intervals: vec![crate::blackboard::SpeechInterval {
+                            start: 0.0,
+                            end: dur_sec * 0.45,
+                        }],
+                        bgm_intensity_peaks: vec![3.0, 15.0, 30.0],
+                        dialogue_summary: "原片对话时长占比 45%，背景声场完整".into(),
+                    });
                 ctx.memory.insert(
                     "dialogue_summary".into(),
                     "原片对话时长占比 45%，背景声场完整".into(),

@@ -58,7 +58,8 @@ pub async fn agent_start(
         }
         if let Some(matrix) = snap.agent_model_matrix {
             if let Ok(matrix_json) = serde_json::to_string(&matrix) {
-                ctx.memory.insert("agent_model_matrix_json".to_string(), matrix_json);
+                ctx.memory
+                    .insert("agent_model_matrix_json".to_string(), matrix_json);
             }
         }
         ctx.memory

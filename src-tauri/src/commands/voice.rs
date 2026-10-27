@@ -115,18 +115,21 @@ pub async fn voice_preview(
     }
 
     // 回退已保存的配置
-    let (saved_api_key, saved_base_url, saved_voice, saved_model) =
-        if let Ok(cfg_svc) = app_handle.state::<AppContext>().service::<ConfigService>().await {
-            let snap = cfg_svc.snapshot().await;
-            (
-                snap.tts_api_key,
-                snap.tts_base_url,
-                snap.tts_voice,
-                snap.tts_model,
-            )
-        } else {
-            (None, None, None, None)
-        };
+    let (saved_api_key, saved_base_url, saved_voice, saved_model) = if let Ok(cfg_svc) = app_handle
+        .state::<AppContext>()
+        .service::<ConfigService>()
+        .await
+    {
+        let snap = cfg_svc.snapshot().await;
+        (
+            snap.tts_api_key,
+            snap.tts_base_url,
+            snap.tts_voice,
+            snap.tts_model,
+        )
+    } else {
+        (None, None, None, None)
+    };
 
     let resolved_params = VoicePreviewParams {
         text: params.text,
@@ -188,18 +191,21 @@ pub async fn voice_synthesize(
     }
 
     // 回退已保存的配置
-    let (saved_api_key, saved_base_url, saved_voice, saved_model) =
-        if let Ok(cfg_svc) = app_handle.state::<AppContext>().service::<ConfigService>().await {
-            let snap = cfg_svc.snapshot().await;
-            (
-                snap.tts_api_key,
-                snap.tts_base_url,
-                snap.tts_voice,
-                snap.tts_model,
-            )
-        } else {
-            (None, None, None, None)
-        };
+    let (saved_api_key, saved_base_url, saved_voice, saved_model) = if let Ok(cfg_svc) = app_handle
+        .state::<AppContext>()
+        .service::<ConfigService>()
+        .await
+    {
+        let snap = cfg_svc.snapshot().await;
+        (
+            snap.tts_api_key,
+            snap.tts_base_url,
+            snap.tts_voice,
+            snap.tts_model,
+        )
+    } else {
+        (None, None, None, None)
+    };
 
     let resolved_params = VoicePreviewParams {
         text: params.text,

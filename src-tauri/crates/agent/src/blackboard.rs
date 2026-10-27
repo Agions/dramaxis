@@ -147,7 +147,11 @@ impl Blackboard {
 
     /// 回滚生效剧本到指定版本号
     pub fn rollback_script_to_version(&mut self, target_version: u32) -> bool {
-        if let Some(pos) = self.script_versions.iter().position(|s| s.version == target_version) {
+        if let Some(pos) = self
+            .script_versions
+            .iter()
+            .position(|s| s.version == target_version)
+        {
             self.active_script_index = pos;
             true
         } else {
