@@ -231,72 +231,90 @@ impl DagOrchestrator {
                 break;
             }
 
-            // 2. 依次推进就绪节点（支持分支与状态切换）
-            for node_idx in ready_indices {
-                let (node_id, role, name, is_hitl) = {
+            // 检查就绪节点中是否包含人机协同断点 (HITL)
+            let auto_mode = self.context.read().await.auto_mode;
+            let hitl_idx = ready_indices.iter().copied().find(|&idx| {
+                self.nodes[idx].is_hitl_checkpoint && !auto_mode
+            });
+
+            if let Some(node_idx) = hitl_idx {
+                let (role, name) = {
                     let node = &self.nodes[node_idx];
-                    (
-                        node.id,
-                        node.role,
-                        node.name.to_string(),
-                        node.is_hitl_checkpoint,
-                    )
+                    (node.role, node.name.to_string())
                 };
 
-                // 人机协同断点处理 (HITL)
-                let auto_mode = self.context.read().await.auto_mode;
-                if is_hitl && !auto_mode {
-                    self.nodes[node_idx].status = DagNodeStatus::Running;
-                    self.emit_progress().await;
-
-                    let mut ctx = self.context.write().await;
-                    ctx.status = AgentStatus::AwaitingApproval;
-
-                    let script_summary = ctx
-                        .project
-                        .scripts
-                        .iter()
-                        .map(|s| s.text.as_str())
-                        .collect::<Vec<_>>()
-                        .join("\n");
-
-                    let req = BreakpointRequest {
-                        agent: role,
-                        step_title: name,
-                        content: if script_summary.is_empty() {
-                            "剧本初稿推演完毕，请审核定稿。".into()
-                        } else {
-                            script_summary
-                        },
-                        options: vec!["批准定稿并进入配音".into(), "重新微调剧本".into()],
-                    };
-
-                    if let Some(emitter) = &self.event_emitter {
-                        emitter(AgentEventPayload::BreakpointRequired(req.clone()));
-                    }
-
-                    return Ok(Some(req));
-                }
-
-                // 标记节点运行中
                 self.nodes[node_idx].status = DagNodeStatus::Running;
                 self.emit_progress().await;
 
+                let mut ctx = self.context.write().await;
+                ctx.status = AgentStatus::AwaitingApproval;
+
+                let script_summary = ctx
+                    .blackboard
+                    .active_script()
+                    .map(|s| s.text.clone())
+                    .unwrap_or_else(|| {
+                        ctx.project
+                            .scripts
+                            .iter()
+                            .map(|s| s.text.as_str())
+                            .collect::<Vec<_>>()
+                            .join("\n")
+                    });
+
+                let req = BreakpointRequest {
+                    agent: role,
+                    step_title: name,
+                    content: if script_summary.is_empty() {
+                        "剧本初稿推演完毕，请审核定稿。".into()
+                    } else {
+                        script_summary
+                    },
+                    options: vec!["批准定稿并进入配音".into(), "重新微调剧本".into()],
+                };
+
+                if let Some(emitter) = &self.event_emitter {
+                    emitter(AgentEventPayload::BreakpointRequired(req.clone()));
+                }
+
+                return Ok(Some(req));
+            }
+
+            // 2. 并行异步推进无依赖就绪节点 (基于 Tokio 任务池 + 并发资源信号量控制)
+            for &node_idx in &ready_indices {
+                self.nodes[node_idx].status = DagNodeStatus::Running;
                 if let Some(emitter) = &self.event_emitter {
                     emitter(AgentEventPayload::StepStarted {
                         step_idx: node_idx,
-                        role,
-                        name: name.clone(),
+                        role: self.nodes[node_idx].role,
+                        name: self.nodes[node_idx].name.to_string(),
                     });
                 }
+            }
+            self.emit_progress().await;
 
-                // 执行当前节点任务
-                let step_timer = Instant::now();
-                let result = self.execute_node_logic(node_id).await;
+            let sem = Arc::new(tokio::sync::Semaphore::new(2));
+            let mut tasks = Vec::new();
+            for &node_idx in &ready_indices {
+                let node_id = self.nodes[node_idx].id;
+                let sem_clone = sem.clone();
+                let ctx_clone = self.context.clone();
+                tasks.push(async move {
+                    let _permit = sem_clone.acquire().await;
+                    let start = Instant::now();
+                    let res = Self::execute_static_node_logic(ctx_clone, node_id).await;
+                    (node_idx, node_id, res, start.elapsed().as_millis() as u64)
+                });
+            }
 
+            let outcomes = futures::future::join_all(tasks).await;
+
+            let mut critic_ran = false;
+            for (node_idx, node_id, result, dur_ms) in outcomes {
+                let role = self.nodes[node_idx].role;
                 match result {
                     Ok(summary) => {
-                        self.nodes[node_idx].duration_ms = step_timer.elapsed().as_millis() as u64;
+                        self.nodes[node_idx].duration_ms = dur_ms;
                         self.nodes[node_idx].summary = Some(summary.clone());
                         self.nodes[node_idx].status = DagNodeStatus::Completed;
 
@@ -308,43 +326,21 @@ impl DagOrchestrator {
                             });
                         }
 
-                        // 3. 检查反思评审闭环 (Critic Loop)
                         if node_id == "critic_review" {
-                            let should_loop = {
-                                let ctx = self.context.read().await;
-                                if let Some(score_str) = ctx.memory.get("critic_score") {
-                                    score_str.parse::<f32>().unwrap_or(85.0) < 80.0
-                                } else {
-                                    false
-                                }
-                            };
-
-                            if should_loop && self.critique_count < self.max_critique_rounds {
-                                self.critique_count += 1;
-                                let feedback = {
-                                    let ctx = self.context.read().await;
-                                    ctx.memory.get("critique_feedback").cloned().unwrap_or_else(
-                                        || "开篇前3秒悬念不足，建议加入突发冲突钩子".into(),
-                                    )
-                                };
-
+                            critic_ran = true;
+                        } else if node_id == "quality_gate" {
+                            let ctx = self.context.read().await;
+                            if let Some(rep) = &ctx.blackboard.quality_report {
                                 if let Some(emitter) = &self.event_emitter {
-                                    emitter(AgentEventPayload::CritiqueLoopTriggered {
-                                        round: self.critique_count,
-                                        max_rounds: self.max_critique_rounds,
-                                        current_score: 72.0,
-                                        feedback: feedback.clone(),
-                                    });
+                                    emitter(AgentEventPayload::QualityGateEvaluated(QualityReport {
+                                        hook_score: rep.hook_score,
+                                        sync_tolerance_ms: rep.sync_tolerance_ms,
+                                        pacing_score: rep.pacing_score,
+                                        compliance_passed: rep.compliance_passed,
+                                        overall_score: rep.overall_score,
+                                        suggestions: rep.suggestions.clone(),
+                                    }));
                                 }
-
-                                // 将编剧节点与自身重置为 Pending 触发回路重算
-                                for n in &mut self.nodes {
-                                    if n.id == "screenwriter_draft" || n.id == "critic_review" {
-                                        n.status = DagNodeStatus::Pending;
-                                    }
-                                }
-                                self.emit_progress().await;
-                                continue;
                             }
                         }
                     }
@@ -359,25 +355,83 @@ impl DagOrchestrator {
                                 message: err.to_string(),
                             });
                         }
+                        self.emit_progress().await;
                         return Err(err);
                     }
                 }
-
-                self.emit_progress().await;
             }
+
+            // 3. 检查反思评审闭环 (Critic Loop)
+            if critic_ran {
+                let should_loop = {
+                    let ctx = self.context.read().await;
+                    if let Some(score_str) = ctx.memory.get("critic_score") {
+                        score_str.parse::<f32>().unwrap_or(85.0) < 80.0
+                    } else {
+                        false
+                    }
+                };
+
+                if should_loop && self.critique_count < self.max_critique_rounds {
+                    self.critique_count += 1;
+                    let feedback = {
+                        let ctx = self.context.read().await;
+                        ctx.memory
+                            .get("critique_feedback")
+                            .cloned()
+                            .unwrap_or_else(|| {
+                                "开篇前3秒悬念不足，建议加入突发冲突钩子".into()
+                            })
+                    };
+
+                    if let Some(emitter) = &self.event_emitter {
+                        emitter(AgentEventPayload::CritiqueLoopTriggered {
+                            round: self.critique_count,
+                            max_rounds: self.max_critique_rounds,
+                            current_score: 72.0,
+                            feedback: feedback.clone(),
+                        });
+                    }
+
+                    // 将编剧节点与审稿节点重置为 Pending 触发自愈重算
+                    for n in &mut self.nodes {
+                        if n.id == "screenwriter_draft" || n.id == "critic_review" {
+                            n.status = DagNodeStatus::Pending;
+                        }
+                    }
+                    self.emit_progress().await;
+                    continue;
+                }
+            }
+
+            self.emit_progress().await;
         }
 
         Ok(None)
     }
 
-    /// 恢复人机协同断点
+    /// 恢复人机协同断点 (支持可选自然语言靶向精修指令)
     pub async fn resume_breakpoint(
         &mut self,
         action: &str,
+        feedback: Option<String>,
     ) -> SplicrResult<Option<BreakpointRequest>> {
         if let Some(hitl_node) = self.nodes.iter_mut().find(|n| n.id == "hitl_approval") {
             hitl_node.status = DagNodeStatus::Completed;
             hitl_node.summary = Some(format!("用户已确认: {}", action));
+        }
+
+        if let Some(fb) = feedback {
+            let mut ctx = self.context.write().await;
+            ctx.memory.insert("critique_feedback".into(), fb.clone());
+            ctx.log_thought(AgentRole::Director, format!("用户下达靶向精修指令: {fb}"));
+
+            // 重新挂起编剧与审稿质检节点，重新生成
+            for n in &mut self.nodes {
+                if n.id == "screenwriter_draft" || n.id == "critic_review" || n.id == "hitl_approval" {
+                    n.status = DagNodeStatus::Pending;
+                }
+            }
         }
 
         if let Some(emitter) = &self.event_emitter {
@@ -390,27 +444,45 @@ impl DagOrchestrator {
         self.run_dag().await
     }
 
-    /// 节点底层执行映射
-    async fn execute_node_logic(&self, node_id: &str) -> SplicrResult<String> {
-        let mut ctx = self.context.write().await;
-
+    /// 节点底层执行映射 (支持静态多任务并行调度)
+    pub async fn execute_static_node_logic(
+        context: Arc<RwLock<AgentContext>>,
+        node_id: &str,
+    ) -> SplicrResult<String> {
         match node_id {
             "director_plan" => {
+                let mut ctx = context.write().await;
                 let agent = DirectorAgent;
                 let res = agent.execute(&mut ctx).await?;
                 Ok(res.unwrap_or_else(|| "总控策划已就绪".into()))
             }
             "visual_analysis" => {
+                let mut ctx = context.write().await;
                 let agent = VisualCriticAgent;
                 let res = agent.execute(&mut ctx).await?;
                 Ok(res.unwrap_or_else(|| "画面关键帧与场景采样完成".into()))
             }
             "dialogue_probe" => {
-                // 原片对白提取与环境音频探测
+                let mut ctx = context.write().await;
                 ctx.log_thought(
                     AgentRole::SoundEngineer,
                     "启动音频通道探测器，提取原片音频并进行 Whisper 语音活动分段...",
                 );
+                let dur_sec = ctx
+                    .blackboard
+                    .visual_brief
+                    .as_ref()
+                    .map(|v| v.total_duration_sec)
+                    .unwrap_or(60.0);
+                ctx.blackboard.set_audio_brief(crate::blackboard::AudioBriefArtifact {
+                    has_original_speech: true,
+                    speech_intervals: vec![crate::blackboard::SpeechInterval {
+                        start: 0.0,
+                        end: dur_sec * 0.45,
+                    }],
+                    bgm_intensity_peaks: vec![3.0, 15.0, 30.0],
+                    dialogue_summary: "原片对话时长占比 45%，背景声场完整".into(),
+                });
                 ctx.memory.insert(
                     "dialogue_summary".into(),
                     "原片对话时长占比 45%，背景声场完整".into(),
@@ -423,22 +495,28 @@ impl DagOrchestrator {
                 Ok("原声对白与音频探测完成".into())
             }
             "screenwriter_draft" => {
+                let mut ctx = context.write().await;
                 let agent = ScreenwriterAgent;
                 let res = agent.execute(&mut ctx).await?;
                 Ok(res.unwrap_or_else(|| "第一人称叙述剧本撰写完成".into()))
             }
             "critic_review" => {
-                // 评审机制：评估剧本爆款留存率与前3秒钩子
+                let mut ctx = context.write().await;
                 let hook_ok = ctx
                     .project
                     .scripts
                     .iter()
-                    .any(|s| s.is_hook.unwrap_or(false));
+                    .any(|s| s.is_hook.unwrap_or(false))
+                    || ctx
+                        .blackboard
+                        .active_script()
+                        .map(|s| s.hook_text.len() > 5)
+                        .unwrap_or(false);
                 let score: f32 = if hook_ok { 91.5 } else { 72.0 };
                 ctx.memory.insert("critic_score".into(), score.to_string());
 
                 ctx.log_thought(
-                    AgentRole::VisualCritic,
+                    AgentRole::QualityReviewer,
                     format!("文学与画面双重视角评审完成，综合评分: {:.1} 分", score),
                 );
 
@@ -453,31 +531,21 @@ impl DagOrchestrator {
             }
             "hitl_approval" => Ok("人机协同审核通过".into()),
             "voice_synthesis" => {
+                let mut ctx = context.write().await;
                 let agent = VoiceArtistAgent;
                 let res = agent.execute(&mut ctx).await?;
                 Ok(res.unwrap_or_else(|| "48kHz 旁白人声生成完成".into()))
             }
             "timeline_compose" => {
+                let mut ctx = context.write().await;
                 let agent = SoundEngineerAgent;
                 let res = agent.execute(&mut ctx).await?;
                 Ok(res.unwrap_or_else(|| "时间轴 5 轨磁性吸附对齐完成".into()))
             }
             "quality_gate" => {
+                let mut ctx = context.write().await;
                 let agent = QualityReviewerAgent;
                 let res = agent.execute(&mut ctx).await?;
-                let report = QualityReport {
-                    hook_score: 95.0,
-                    sync_tolerance_ms: 12.0,
-                    pacing_score: 93.0,
-                    compliance_passed: true,
-                    overall_score: 94.0,
-                    suggestions: vec!["建议在第15秒处强化转场音效以烘托情绪".into()],
-                };
-
-                if let Some(emitter) = &self.event_emitter {
-                    emitter(AgentEventPayload::QualityGateEvaluated(report));
-                }
-
                 Ok(res.unwrap_or_else(|| "视听全案质检完成，已达工业级交付标准".into()))
             }
             _ => Ok("执行完毕".into()),
@@ -531,7 +599,7 @@ mod tests {
 
         // 恢复断点继续执行
         let final_bp = orchestrator
-            .resume_breakpoint("批准定稿")
+            .resume_breakpoint("批准定稿", None)
             .await
             .expect("resume");
         assert!(final_bp.is_none());

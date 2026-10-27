@@ -15,6 +15,7 @@ import { ExportStudioPanel } from "@components/production/ExportStudioPanel";
 import { useWorkshopStore, type WorkshopTab } from "@dramaxis/core";
 import type {
   AgentMessage,
+  Blackboard,
   BreakpointRequest,
   ProjectRecord,
 } from "@dramaxis/ipc";
@@ -28,6 +29,7 @@ interface ProductionInspectorProps {
   onStartAgent: () => void;
   agentMessages: AgentMessage[];
   breakpoint: BreakpointRequest | null;
+  blackboard?: Blackboard | null;
   onApproveBreakpoint: (approved: boolean, feedback?: string) => Promise<void>;
   onGenerateScript: () => Promise<void>;
 }
@@ -41,6 +43,7 @@ export const ProductionInspector = memo(function ProductionInspector({
   onStartAgent,
   agentMessages,
   breakpoint,
+  blackboard,
   onApproveBreakpoint,
   onGenerateScript,
 }: ProductionInspectorProps) {
@@ -115,6 +118,7 @@ export const ProductionInspector = memo(function ProductionInspector({
           onStartPipeline={onStartAgent}
           agentMessages={agentMessages}
           breakpoint={breakpoint}
+          blackboard={blackboard}
           onApproveBreakpoint={onApproveBreakpoint}
         />
       )}

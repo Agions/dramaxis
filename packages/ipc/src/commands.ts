@@ -61,6 +61,7 @@ import type {
   RetentionTensionArc,
   AlignmentPlan,
   AlignmentMatch,
+  Blackboard,
 } from "./types.gen";
 
 export type {
@@ -321,11 +322,18 @@ export const agentIpc = {
   step: (stepIdx: number): Promise<BreakpointRequest | null> =>
     callIpc("agent_step", { stepIdx }),
   runDag: (): Promise<BreakpointRequest | null> => callIpc("agent_run_dag"),
-  resumeBreakpoint: (action: string): Promise<BreakpointRequest | null> =>
-    callIpc("agent_resume_breakpoint", { action }),
+  resumeBreakpoint: (
+    action: string,
+    feedback: string | null = null,
+  ): Promise<BreakpointRequest | null> =>
+    callIpc("agent_resume_breakpoint", { action, feedback }),
   getDagSnapshot: (): Promise<DagSnapshot | null> =>
     callIpc("agent_get_dag_snapshot"),
   getContext: (): Promise<AgentContext | null> => callIpc("agent_get_context"),
+  getBlackboard: (): Promise<Blackboard | null> =>
+    callIpc("agent_get_blackboard"),
+  rollbackScript: (version: number): Promise<boolean> =>
+    callIpc("agent_rollback_script", { version }),
 } as const;
 
 export const ipc = {

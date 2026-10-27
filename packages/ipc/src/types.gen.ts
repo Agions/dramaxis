@@ -380,7 +380,11 @@ export interface IpcContracts {
     };
     result: string;
   };
-  // ─────── agent · 6 个 ───────
+  // ─────── agent · 8 个 ───────
+  agent_get_blackboard: {
+    args: void;
+    result: Blackboard | null;
+  };
   agent_get_context: {
     args: void;
     result: AgentContext | null;
@@ -392,8 +396,15 @@ export interface IpcContracts {
   agent_resume_breakpoint: {
     args: {
       action: string;
+      feedback: string | null;
     };
     result: BreakpointRequest | null;
+  };
+  agent_rollback_script: {
+    args: {
+      version: number;
+    };
+    result: boolean;
   };
   agent_run_dag: {
     args: void;
@@ -576,6 +587,81 @@ export interface VoicePreviewResult {
   bytesWritten: number;
 }
 
+// Rust 端 ScriptArtifact (pub struct, rename_all = "camelCase")
+export interface ScriptArtifact {
+  version: number;
+  authorAgent: AgentRole;
+  promptUsed: string;
+  text: string;
+  hookType: string;
+  hookText: string;
+  estimatedRetention: number;
+  critiqueFeedback?: string | null;
+  createdAt: number;
+}
+
+// Rust 端 VisualBriefArtifact (pub struct, rename_all = "camelCase")
+export interface VisualBriefArtifact {
+  totalDurationSec: number;
+  sceneCutsSec: number[];
+  keyframePaths: string[];
+  visualSummary: string;
+}
+
+// Rust 端 SpeechInterval (pub struct, rename_all = "camelCase")
+export interface SpeechInterval {
+  start: number;
+  end: number;
+}
+
+// Rust 端 AudioBriefArtifact (pub struct, rename_all = "camelCase")
+export interface AudioBriefArtifact {
+  hasOriginalSpeech: boolean;
+  speechIntervals: SpeechInterval[];
+  bgmIntensityPeaks: number[];
+  dialogueSummary: string;
+}
+
+// Rust 端 VoiceArtifact (pub struct, rename_all = "camelCase")
+export interface VoiceArtifact {
+  audioPath: string;
+  durationSeconds: number;
+  sampleRate: number;
+  voiceId: string;
+  provider: string;
+}
+
+// Rust 端 TimelineArtifact (pub struct, rename_all = "camelCase")
+export interface TimelineArtifact {
+  totalDuration: number;
+  tracksCount: number;
+  subtitleCount: number;
+  bRollCount: number;
+}
+
+// Rust 端 QualityReportArtifact (pub struct, rename_all = "camelCase")
+export interface QualityReportArtifact {
+  hookScore: number;
+  syncToleranceMs: number;
+  pacingScore: number;
+  compliancePassed: boolean;
+  overallScore: number;
+  suggestions: string[];
+}
+
+// Rust 端 Blackboard (pub struct, rename_all = "camelCase")
+export interface Blackboard {
+  sessionId: string;
+  createdAt: number;
+  visualBrief?: VisualBriefArtifact | null;
+  audioBrief?: AudioBriefArtifact | null;
+  scriptVersions: ScriptArtifact[];
+  activeScriptIndex: number;
+  voiceArtifact?: VoiceArtifact | null;
+  timelineArtifact?: TimelineArtifact | null;
+  qualityReport?: QualityReportArtifact | null;
+}
+
 // Rust 端 AgentContext (pub struct)
 export interface AgentContext {
   session_id: string;
@@ -584,6 +670,7 @@ export interface AgentContext {
   status: AgentStatus;
   messages: AgentMessage[];
   memory: Record<string, string>;
+  blackboard: Blackboard;
   auto_mode: boolean;
 }
 
@@ -890,6 +977,24 @@ export interface ConfigSnapshot {
   tts_model?: string | null;
   tts_ref_audio_path?: string | null;
   tts_prompt_text?: string | null;
+  agent_model_matrix?: AgentModelMatrix | null;
+}
+
+// Rust 端 AgentModelOverride (pub struct, rename_all = "camelCase")
+export interface AgentModelOverride {
+  provider?: string | null;
+  model?: string | null;
+  apiKey?: string | null;
+  baseUrl?: string | null;
+  temperature?: number | null;
+}
+
+// Rust 端 AgentModelMatrix (pub struct, rename_all = "camelCase")
+export interface AgentModelMatrix {
+  visualCritic?: AgentModelOverride | null;
+  screenwriter?: AgentModelOverride | null;
+  qualityReviewer?: AgentModelOverride | null;
+  director?: AgentModelOverride | null;
 }
 
 // Rust 端 FfmpegProbe (pub struct, rename_all = "camelCase")

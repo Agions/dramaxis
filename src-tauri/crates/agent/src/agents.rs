@@ -1,12 +1,73 @@
+use crate::blackboard::*;
 use crate::context::AgentContext;
 use crate::types::{AgentRole, AgentStatus, QualityReport};
 use async_trait::async_trait;
 use dramaxis_core::domain::{Clip, ScriptSegment, Timeline};
 use dramaxis_core::error::{LlmProviderKind, SplicrResult};
+use dramaxis_core::services::AgentModelMatrix;
 use dramaxis_detect::Ffmpeg;
 use dramaxis_script::LlmRequest;
 use dramaxis_voice::{EdgeTtsEngine, EdgeTtsOptions, TtsEngine, TtsRequest};
 use std::path::{Path, PathBuf};
+
+/// 异构模型路由解析器：支持按角色专精覆盖，未配置时优雅继承全局默认参数
+pub fn resolve_agent_llm(
+    ctx: &AgentContext,
+    role: AgentRole,
+) -> (LlmProviderKind, String, Option<String>, Option<String>, f32) {
+    let role_override = if let Some(matrix_json) = ctx.memory.get("agent_model_matrix_json") {
+        if let Ok(matrix) = serde_json::from_str::<AgentModelMatrix>(matrix_json) {
+            match role {
+                AgentRole::Director => matrix.director,
+                AgentRole::VisualCritic => matrix.visual_critic,
+                AgentRole::Screenwriter => matrix.screenwriter,
+                AgentRole::QualityReviewer => matrix.quality_reviewer,
+                _ => None,
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    let default_provider_str = ctx
+        .memory
+        .get("llm_provider")
+        .cloned()
+        .unwrap_or_else(|| "qwen".into());
+    let default_api_key = ctx.memory.get("llm_api_key").cloned().unwrap_or_default();
+    let default_base_url = ctx.memory.get("llm_base_url").cloned();
+    let default_model = ctx.memory.get("llm_model").cloned();
+
+    let (prov_str, api_key, base_url, model, temp) = if let Some(ov) = role_override {
+        (
+            ov.provider.unwrap_or(default_provider_str),
+            ov.api_key.unwrap_or(default_api_key),
+            ov.base_url.or(default_base_url),
+            ov.model.or(default_model),
+            ov.temperature.unwrap_or(0.75),
+        )
+    } else {
+        (default_provider_str, default_api_key, default_base_url, default_model, 0.75)
+    };
+
+    let kind = match prov_str.to_lowercase().as_str() {
+        "deepseek" => LlmProviderKind::DeepSeek,
+        "openai" | "open-ai" => LlmProviderKind::OpenAi,
+        "claude" => LlmProviderKind::Claude,
+        "gemini" => LlmProviderKind::Gemini,
+        "kimi" => LlmProviderKind::Kimi,
+        "glm" | "glm5" => LlmProviderKind::Glm5,
+        "doubao" => LlmProviderKind::Doubao,
+        "hunyuan" => LlmProviderKind::Hunyuan,
+        "local" => LlmProviderKind::Local,
+        "qwen" => LlmProviderKind::Qwen,
+        _ => LlmProviderKind::OpenAi,
+    };
+
+    (kind, api_key, model, base_url, temp)
+}
 
 #[async_trait]
 pub trait Agent: Send + Sync {
@@ -137,6 +198,17 @@ impl Agent for VisualCriticAgent {
         ctx.memory
             .insert("video_duration".to_string(), format!("{:.1}", duration));
 
+        ctx.blackboard.set_visual_brief(VisualBriefArtifact {
+            total_duration_sec: duration,
+            scene_cuts_sec: cuts_vec.clone(),
+            keyframe_paths: Vec::new(),
+            visual_summary: format!(
+                "提取 {} 组结构化分镜与 {} 张 Base64 关键帧",
+                cuts_count,
+                keyframes_b64.len()
+            ),
+        });
+
         ctx.log_action(
             self.role(),
             "生成镜头切片与视觉快照",
@@ -191,30 +263,11 @@ impl Agent for ScreenwriterAgent {
             project_name
         );
 
-        // 指数退避重试 (Exponential Backoff, 最多重试 2 次) + 优雅自愈降级
-        let final_script = if let Some(api_key) = ctx
-            .memory
-            .get("llm_api_key")
-            .filter(|k| !k.trim().is_empty())
-        {
-            let provider_name = ctx
-                .memory
-                .get("llm_provider")
-                .cloned()
-                .unwrap_or_else(|| "qwen".into());
-            let kind = match provider_name.to_lowercase().as_str() {
-                "deepseek" => LlmProviderKind::DeepSeek,
-                "openai" | "open-ai" => LlmProviderKind::OpenAi,
-                "claude" => LlmProviderKind::Claude,
-                "gemini" => LlmProviderKind::Gemini,
-                "kimi" => LlmProviderKind::Kimi,
-                "glm" => LlmProviderKind::Glm5,
-                "doubao" => LlmProviderKind::Doubao,
-                "hunyuan" => LlmProviderKind::Hunyuan,
-                _ => LlmProviderKind::Qwen,
-            };
+        let (kind, api_key, model_override, base_url, temperature) =
+            resolve_agent_llm(ctx, self.role());
 
-            let base_url = ctx.memory.get("llm_base_url").cloned();
+        // 指数退避重试 (Exponential Backoff, 最多重试 2 次) + 优雅自愈降级
+        let final_script = if !api_key.trim().is_empty() {
             let provider = dramaxis_script::factory_custom(kind, api_key.clone(), base_url);
 
             let video_dur_str = ctx
@@ -241,9 +294,9 @@ impl Agent for ScreenwriterAgent {
                     "剧名/工程: {}，场景切片数量: {}，有效总时长: {:.1}s。请结合关键帧视觉画面撰写第一人称解说台词，严格控制在约 {} 字以内。",
                     project_name, cuts, video_duration, target_word_count
                 ),
-                model: ctx.memory.get("llm_model").cloned(),
+                model: model_override,
                 max_tokens: Some(1024),
-                temperature: Some(0.75),
+                temperature: Some(temperature),
                 stream: false,
                 images_base64,
             };
@@ -281,11 +334,28 @@ impl Agent for ScreenwriterAgent {
 
         ctx.memory
             .insert("script_text".to_string(), final_script.clone());
+        let critique_feedback = ctx.memory.get("critique_feedback").cloned();
+        let first_sentence = final_script
+            .lines()
+            .next()
+            .unwrap_or("")
+            .trim()
+            .to_string();
+        let ver = ctx.blackboard.push_script_version(
+            self.role(),
+            "第一人称解说台词生成",
+            final_script.clone(),
+            "conflict",
+            first_sentence,
+            88.0,
+            critique_feedback,
+        );
+
         ctx.log_action(
             self.role(),
-            "输出多模态剧本文案",
+            format!("输出多模态剧本文案 (v{})", ver),
             format!(
-                "完成 {} 字第一人称剧情独白生成并载入上下文",
+                "完成 {} 字第一人称剧情独白生成并写入黑板总线",
                 final_script.chars().count()
             ),
         );
@@ -343,9 +413,17 @@ impl Agent for VoiceArtistAgent {
         };
 
         ctx.memory
-            .insert("voice_audio_path".to_string(), voice_audio_path);
+            .insert("voice_audio_path".to_string(), voice_audio_path.clone());
         ctx.memory
             .insert("voice_duration".to_string(), format!("{:.1}", est_duration));
+
+        ctx.blackboard.set_voice_artifact(VoiceArtifact {
+            audio_path: voice_audio_path,
+            duration_seconds: est_duration,
+            sample_rate: 48000,
+            voice_id: "zh-CN-YunxiNeural".into(),
+            provider: "edge".into(),
+        });
 
         ctx.log_action(
             self.role(),
@@ -491,6 +569,14 @@ impl Agent for SoundEngineerAgent {
         }
         ctx.project.scripts = script_segments;
 
+        let sub_count = subtitle_items.len();
+        ctx.blackboard.set_timeline_artifact(TimelineArtifact {
+            total_duration: curr_t,
+            tracks_count: 5,
+            subtitle_count: sub_count,
+            b_roll_count: 0,
+        });
+
         ctx.log_thought(
             self.role(),
             format!(
@@ -586,13 +672,22 @@ impl Agent for QualityReviewerAgent {
             pacing_score,
             compliance_passed,
             overall_score,
-            suggestions,
+            suggestions: suggestions.clone(),
         };
 
         let report_json = serde_json::to_string(&report).unwrap_or_else(|_| "{}".into());
         ctx.memory.insert("quality_report_json".into(), report_json);
         ctx.memory
             .insert("quality_score".into(), format!("{:.1}", overall_score));
+
+        ctx.blackboard.set_quality_report(QualityReportArtifact {
+            hook_score,
+            sync_tolerance_ms,
+            pacing_score,
+            compliance_passed,
+            overall_score,
+            suggestions: suggestions.clone(),
+        });
 
         ctx.log_thought(
             self.role(),

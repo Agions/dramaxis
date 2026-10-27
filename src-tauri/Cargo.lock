@@ -935,6 +935,7 @@ dependencies = [
  "dramaxis-script",
  "dramaxis-subtitle",
  "dramaxis-voice",
+ "futures",
  "serde",
  "serde_json",
  "tokio",

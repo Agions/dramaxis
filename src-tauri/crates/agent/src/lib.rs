@@ -5,12 +5,14 @@
 //! 组成的多智能体协同与自反思工作团队。
 
 pub mod agents;
+pub mod blackboard;
 pub mod context;
 pub mod dag;
 pub mod engine;
 pub mod types;
 
 pub use agents::*;
+pub use blackboard::*;
 pub use context::AgentContext;
 pub use dag::*;
 pub use engine::AgentOrchestrator;

@@ -147,6 +147,8 @@ pub fn run() {
             commands::agent::agent_resume_breakpoint,
             commands::agent::agent_get_dag_snapshot,
             commands::agent::agent_get_context,
+            commands::agent::agent_get_blackboard,
+            commands::agent::agent_rollback_script,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

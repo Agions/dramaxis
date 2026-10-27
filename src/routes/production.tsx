@@ -127,6 +127,7 @@ function ProductionCinemaStudio() {
     currentStepIndex,
     agentMessages,
     breakpoint,
+    blackboard,
     startWorkflow,
     approveBreakpoint,
   } = useAgentWorkflow({
@@ -341,6 +342,7 @@ function ProductionCinemaStudio() {
           onStartAgent={() => void handleStartMultiAgent(agentAutoMode)}
           agentMessages={agentMessages}
           breakpoint={breakpoint}
+          blackboard={blackboard}
           onApproveBreakpoint={handleApproveBreakpoint}
           onGenerateScript={handleScriptGenerate}
         />

@@ -2,8 +2,8 @@
  * dramaxis v1.1.0 · AgentStudioRack · 6-Agent 智能体机架与思考控制台
  */
 
-import { memo } from "react";
-import type { AgentMessage, BreakpointRequest, AgentRole } from "@dramaxis/ipc";
+import { memo, useState } from "react";
+import type { AgentMessage, BreakpointRequest, AgentRole, Blackboard } from "@dramaxis/ipc";
 
 export interface AgentStepMeta {
   id: number;
@@ -73,6 +73,7 @@ interface AgentStudioRackProps {
   onStartPipeline: () => void;
   agentMessages: AgentMessage[];
   breakpoint: BreakpointRequest | null;
+  blackboard?: Blackboard | null;
   onApproveBreakpoint: (approved: boolean, feedback?: string) => void;
 }
 
@@ -84,55 +85,120 @@ export const AgentStudioRack = memo(function AgentStudioRack({
   onStartPipeline,
   agentMessages,
   breakpoint,
+  blackboard,
   onApproveBreakpoint,
 }: AgentStudioRackProps) {
+  const [feedbackText, setFeedbackText] = useState("");
+
+  const activeScript =
+    blackboard?.scriptVersions?.[blackboard.activeScriptIndex] ||
+    blackboard?.scriptVersions?.[blackboard.scriptVersions.length - 1];
+
   return (
     <div className="flex flex-col gap-3 flex-1 min-h-0">
-      {/* 人机协同模式切换 */}
+      {/* 三档人机协同策略切换 */}
       <div className="flex items-center justify-between rounded-xl border border-border bg-bg p-2.5">
-        <span className="text-xs font-semibold text-text-secondary">
-          人机协作断点 (HITL)
-        </span>
-        <label className="flex items-center gap-1.5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={!agentAutoMode}
-            onChange={(e) => onToggleAutoMode(!e.target.checked)}
-            className="rounded accent-gold"
-          />
-          <span className="text-[11px] font-mono text-text-primary">
-            关键节点人工审核
+        <div className="flex flex-col">
+          <span className="text-xs font-semibold text-text-secondary">
+            人机协同决策策略 (HITL)
           </span>
-        </label>
+          <span className="text-[10px] text-text-muted">
+            {agentAutoMode ? "🚀 全自动批量生产模式" : "🤝 关键决策点暂停审核 (推荐)"}
+          </span>
+        </div>
+        <div className="flex items-center gap-1 bg-surface-elevated p-1 rounded-lg border border-border">
+          <button
+            type="button"
+            onClick={() => onToggleAutoMode(true)}
+            className={`px-2 py-1 text-[11px] rounded font-medium transition-colors ${
+              agentAutoMode
+                ? "bg-gold text-zinc-950 font-bold shadow-xs"
+                : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            全自动
+          </button>
+          <button
+            type="button"
+            onClick={() => onToggleAutoMode(false)}
+            className={`px-2 py-1 text-[11px] rounded font-medium transition-colors ${
+              !agentAutoMode
+                ? "bg-gold text-zinc-950 font-bold shadow-xs"
+                : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            半自动审核
+          </button>
+        </div>
       </div>
 
-      {/* HITL 决策卡片 */}
+      {/* 剧本版本链徽章 */}
+      {blackboard && blackboard.scriptVersions.length > 0 && (
+        <div className="flex items-center justify-between px-2 text-[11px] text-text-secondary">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>黑板总线: 当前草稿版本</span>
+            <span className="font-mono font-bold text-gold">
+              v{activeScript?.version || 1}
+            </span>
+            <span className="text-text-muted">
+              (共 {blackboard.scriptVersions.length} 版)
+            </span>
+          </span>
+          {activeScript?.critiqueFeedback && (
+            <span className="text-[10px] text-amber-400 truncate max-w-[140px]" title={activeScript.critiqueFeedback}>
+              已融合反思建议
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* HITL 决策卡片 (支持对话式自然语言精修) */}
       {breakpoint && (
-        <div className="rounded-xl border border-gold bg-gold-muted p-3 space-y-2 animate-fade-in shadow-lg">
+        <div className="rounded-xl border border-gold bg-gold-muted p-3 space-y-2.5 animate-fade-in shadow-lg">
           <div className="flex items-center justify-between">
             <span className="font-bold text-xs text-gold flex items-center gap-1">
               <span>⚠️</span>
-              <span>智能体断点等待批准: {breakpoint.step_title}</span>
+              <span>智能体断点等待审批: {breakpoint.step_title}</span>
             </span>
             <span className="rounded bg-surface px-1.5 py-0.5 text-[9px] font-mono text-text-secondary">
               {breakpoint.agent}
             </span>
           </div>
+
           <p className="text-[11px] text-text-primary bg-bg p-2 rounded border border-border max-h-24 overflow-y-auto whitespace-pre-wrap font-sans">
             {breakpoint.content}
           </p>
+
+          {/* 对话式精修输入框 */}
+          <div className="space-y-1">
+            <input
+              type="text"
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              placeholder="💡 输入靶向精修意见 (如：把前3秒反转加剧，主角语气更冷峻)..."
+              className="w-full rounded-lg border border-border bg-bg px-2.5 py-1.5 text-xs text-text-primary outline-none focus:border-gold placeholder:text-text-muted"
+            />
+          </div>
+
           <div className="flex gap-2 justify-end pt-1">
             <button
               type="button"
-              onClick={() => onApproveBreakpoint(false, "重写")}
-              className="rounded-lg border border-border bg-bg px-3 py-1 text-xs text-text-secondary hover:text-rose-400"
+              onClick={() => {
+                onApproveBreakpoint(false, feedbackText || "重新微调剧本");
+                setFeedbackText("");
+              }}
+              className="rounded-lg border border-border bg-bg px-3 py-1.5 text-xs text-text-secondary hover:text-amber-400 hover:border-amber-400/50 transition-colors"
             >
-              打回重拟
+              {feedbackText ? "💬 携带指令靶向改写" : "打回重拟"}
             </button>
             <button
               type="button"
-              onClick={() => onApproveBreakpoint(true)}
-              className="rounded-lg bg-gold px-3 py-1 text-xs font-bold text-zinc-950 hover:brightness-110 shadow-sm"
+              onClick={() => {
+                onApproveBreakpoint(true);
+                setFeedbackText("");
+              }}
+              className="rounded-lg bg-gold px-3.5 py-1.5 text-xs font-bold text-zinc-950 hover:brightness-110 shadow-sm transition-all"
             >
               批准并继续 ➔
             </button>

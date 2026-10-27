@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useAgentWorkflow } from "./useAgentWorkflow";
-import { agentIpc, type Project } from "@dramaxis/ipc";
+import { agentIpc, type Project, type Blackboard } from "@dramaxis/ipc";
 
 vi.mock("@dramaxis/ipc", () => ({
   agentIpc: {
@@ -11,6 +11,8 @@ vi.mock("@dramaxis/ipc", () => ({
     resumeBreakpoint: vi.fn(),
     getDagSnapshot: vi.fn(),
     getContext: vi.fn(),
+    getBlackboard: vi.fn(),
+    rollbackScript: vi.fn(),
   },
 }));
 
@@ -43,8 +45,21 @@ describe("useAgentWorkflow", () => {
     exports: [],
   };
 
+  const emptyBlackboard: Blackboard = {
+    sessionId: "session-1",
+    createdAt: 1700000000,
+    scriptVersions: [],
+    activeScriptIndex: 0,
+    visualBrief: null,
+    audioBrief: null,
+    voiceArtifact: null,
+    timelineArtifact: null,
+    qualityReport: null,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(agentIpc.getBlackboard).mockResolvedValue(emptyBlackboard);
   });
 
   it("初始状态正确且支持 resetWorkflow 重置", () => {
@@ -64,12 +79,11 @@ describe("useAgentWorkflow", () => {
     expect(result.current.isAgentRunning).toBe(false);
   });
 
-  it("startWorkflow 全自动启动并完整推进流程与流式数据回填", async () => {
+  it("startWorkflow 全自动启动并通过 Blackboard 完整回填视听产物", async () => {
     const onSceneCuts = vi.fn();
     const onScript = vi.fn();
     const onVoice = vi.fn();
-    const onSubtitles = vi.fn();
-    const onComplete = vi.fn();
+    const onQuality = vi.fn();
 
     vi.mocked(agentIpc.start).mockResolvedValueOnce({
       session_id: "session-1",
@@ -79,50 +93,66 @@ describe("useAgentWorkflow", () => {
       auto_mode: true,
       messages: [],
       memory: {},
+      blackboard: emptyBlackboard,
     });
 
-    // 模拟每一步无断点
-    vi.mocked(agentIpc.step).mockResolvedValue(null);
+    vi.mocked(agentIpc.runDag).mockResolvedValueOnce(null);
 
-    // 模拟上下文返回真实数据
-    vi.mocked(agentIpc.getContext).mockResolvedValue({
-      session_id: "session-1",
-      project: mockProject,
-      status: "thinking",
-      current_role: "director",
-      auto_mode: true,
-      messages: [],
-      memory: {
-        scene_cuts_json: JSON.stringify([10.5, 25.0]),
-        script_text: "这是一段真实生成的 AI 解说独白台词",
-        voice_audio_path: "/tmp/voice.mp3",
-        voice_duration: "32.5",
-        subtitles_json: JSON.stringify([
-          { text: "台词片段一", start: 0, end: 3.5 },
-          { text: "台词片段二", start: 3.5, end: 7.2 },
-        ]),
-        quality_score: "92.5",
-        quality_report_json: JSON.stringify({
-          hookScore: 92.0,
-          syncToleranceMs: 42.5,
-          pacingScore: 94.0,
-          compliancePassed: true,
-          overallScore: 92.5,
-          suggestions: [],
-        }),
+    const mockBlackboard: Blackboard = {
+      sessionId: "session-1",
+      createdAt: 1700000000,
+      scriptVersions: [
+        {
+          version: 1,
+          authorAgent: "screenwriter",
+          promptUsed: "爆款解说",
+          text: "这是一段真实生成的 AI 解说独白台词",
+          hookType: "悬念逆转",
+          hookText: "开头留白",
+          estimatedRetention: 92.0,
+          critiqueFeedback: null,
+          createdAt: Date.now(),
+        },
+      ],
+      activeScriptIndex: 0,
+      visualBrief: {
+        totalDurationSec: 60.0,
+        sceneCutsSec: [10.5, 25.0],
+        keyframePaths: ["/tmp/kf1.jpg"],
+        visualSummary: "视觉分析完成",
       },
-    });
+      audioBrief: {
+        hasOriginalSpeech: true,
+        speechIntervals: [{ start: 0.0, end: 15.0 }],
+        bgmIntensityPeaks: [3.0],
+        dialogueSummary: "原声对白",
+      },
+      voiceArtifact: {
+        audioPath: "/tmp/voice.mp3",
+        durationSeconds: 32.5,
+        sampleRate: 44100,
+        voiceId: "zh-CN-Yunxi",
+        provider: "edge-tts",
+      },
+      timelineArtifact: null,
+      qualityReport: {
+        hookScore: 92.0,
+        syncToleranceMs: 42.5,
+        pacingScore: 94.0,
+        compliancePassed: true,
+        overallScore: 92.5,
+        suggestions: ["留白适度"],
+      },
+    };
 
-    const onQuality = vi.fn();
+    vi.mocked(agentIpc.getBlackboard).mockResolvedValue(mockBlackboard);
 
     const { result } = renderHook(() =>
       useAgentWorkflow({
         onSceneCutsGenerated: onSceneCuts,
         onScriptGenerated: onScript,
         onVoiceGenerated: onVoice,
-        onSubtitlesGenerated: onSubtitles,
         onQualityEvaluated: onQuality,
-        onWorkflowComplete: onComplete,
       }),
     );
 
@@ -131,9 +161,9 @@ describe("useAgentWorkflow", () => {
     });
 
     expect(agentIpc.start).toHaveBeenCalledWith(mockProject, true);
-    expect(agentIpc.step).toHaveBeenCalledTimes(6);
+    expect(agentIpc.runDag).toHaveBeenCalledTimes(1);
 
-    // 验证流式回填回调
+    // 验证黑板总线产物同步与回填回调
     expect(onSceneCuts).toHaveBeenCalledWith(
       expect.arrayContaining([
         expect.objectContaining({ id: 1, time: "00:00 - 00:10" }),
@@ -141,19 +171,13 @@ describe("useAgentWorkflow", () => {
     );
     expect(onScript).toHaveBeenCalledWith("这是一段真实生成的 AI 解说独白台词");
     expect(onVoice).toHaveBeenCalledWith("/tmp/voice.mp3", 32.5);
-    expect(onSubtitles).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ id: "sub-1", text: "台词片段一" }),
-      ]),
-    );
     expect(onQuality).toHaveBeenCalledWith(
       expect.objectContaining({ overallScore: 92.5, hookScore: 92.0 }),
     );
     expect(result.current.qualityReport).toEqual(
       expect.objectContaining({ overallScore: 92.5 }),
     );
-    expect(onComplete).toHaveBeenCalled();
-    expect(result.current.isAgentRunning).toBe(false);
+    expect(result.current.blackboard).toEqual(mockBlackboard);
   });
 
   it("当节点触发断点请求时暂停并支持 approveBreakpoint 批准继续", async () => {
@@ -165,17 +189,15 @@ describe("useAgentWorkflow", () => {
       auto_mode: false,
       messages: [],
       memory: {},
+      blackboard: emptyBlackboard,
     });
 
-    // 第 0 步正常，第 1 步触发断点
-    vi.mocked(agentIpc.step)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        agent: "screenwriter",
-        step_title: "✍️ 金牌编剧独白审核",
-        content: "待审阅剧本文案",
-        options: ["通过", "驳回"],
-      });
+    vi.mocked(agentIpc.runDag).mockResolvedValueOnce({
+      agent: "screenwriter",
+      step_title: "✍️ 金牌编剧独白审核",
+      content: "待审阅剧本文案",
+      options: ["通过", "驳回"],
+    });
 
     const { result } = renderHook(() => useAgentWorkflow());
 
@@ -193,16 +215,20 @@ describe("useAgentWorkflow", () => {
     expect(result.current.isAgentRunning).toBe(false);
 
     // 批准断点并继续执行
-    vi.mocked(agentIpc.step).mockResolvedValue(null);
+    vi.mocked(agentIpc.resumeBreakpoint).mockResolvedValueOnce(null);
 
     await act(async () => {
       await result.current.approveBreakpoint(true, "台词节奏优化建议");
     });
 
+    expect(agentIpc.resumeBreakpoint).toHaveBeenCalledWith(
+      "批准定稿并进入配音",
+      "台词节奏优化建议",
+    );
     expect(result.current.breakpoint).toBeNull();
   });
 
-  it("runDagWorkflow 启动并支持 resumeDagBreakpoint 恢复断点", async () => {
+  it("runDagWorkflow 启动并支持 resumeDagBreakpoint 恢复断点与剧本版本回退", async () => {
     vi.mocked(agentIpc.start).mockResolvedValueOnce({
       session_id: "sess-dag-001",
       project: mockProject,
@@ -211,6 +237,7 @@ describe("useAgentWorkflow", () => {
       auto_mode: false,
       messages: [],
       memory: {},
+      blackboard: emptyBlackboard,
     });
 
     vi.mocked(agentIpc.runDag).mockResolvedValueOnce({
@@ -236,7 +263,17 @@ describe("useAgentWorkflow", () => {
       await result.current.resumeDagBreakpoint("批准定稿并进入配音");
     });
 
-    expect(agentIpc.resumeBreakpoint).toHaveBeenCalledWith("批准定稿并进入配音");
+    expect(agentIpc.resumeBreakpoint).toHaveBeenCalledWith(
+      "批准定稿并进入配音",
+      null,
+    );
     expect(result.current.breakpoint).toBeNull();
+
+    // 测试剧本版本回退
+    vi.mocked(agentIpc.rollbackScript).mockResolvedValueOnce(true);
+    await act(async () => {
+      await result.current.rollbackScript(1);
+    });
+    expect(agentIpc.rollbackScript).toHaveBeenCalledWith(1);
   });
 });

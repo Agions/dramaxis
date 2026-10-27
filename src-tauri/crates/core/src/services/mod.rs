@@ -103,6 +103,27 @@ pub struct ConfigSnapshot {
     pub tts_ref_audio_path: Option<String>,
     /// GPT-SoVITS 参考音频对应文本
     pub tts_prompt_text: Option<String>,
+    /// 异构多智能体模型矩阵专精覆盖 (视觉/编剧/质检专精配置)
+    pub agent_model_matrix: Option<AgentModelMatrix>,
+}
+
+#[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct AgentModelOverride {
+    pub provider: Option<String>,
+    pub model: Option<String>,
+    pub api_key: Option<String>,
+    pub base_url: Option<String>,
+    pub temperature: Option<f32>,
+}
+
+#[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct AgentModelMatrix {
+    pub visual_critic: Option<AgentModelOverride>,
+    pub screenwriter: Option<AgentModelOverride>,
+    pub quality_reviewer: Option<AgentModelOverride>,
+    pub director: Option<AgentModelOverride>,
 }
 
 #[derive(Debug, Default)]

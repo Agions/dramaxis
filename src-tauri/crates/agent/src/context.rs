@@ -1,3 +1,4 @@
+use crate::blackboard::Blackboard;
 use crate::types::{AgentMessage, AgentRole, AgentStatus};
 use dramaxis_core::domain::Project;
 use serde::{Deserialize, Serialize};
@@ -11,13 +12,16 @@ pub struct AgentContext {
     pub status: AgentStatus,
     pub messages: Vec<AgentMessage>,
     pub memory: HashMap<String, String>,
+    pub blackboard: Blackboard,
     pub auto_mode: bool,
 }
 
 impl AgentContext {
     pub fn new(project: Project, auto_mode: bool) -> Self {
+        let session_id = uuid::Uuid::new_v4().to_string();
         Self {
-            session_id: uuid::Uuid::new_v4().to_string(),
+            blackboard: Blackboard::new(session_id.clone()),
+            session_id,
             project,
             current_role: AgentRole::Director,
             status: AgentStatus::Idle,
