@@ -319,6 +319,14 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
     };
 
     try {
+      const cutPoints = sceneCuts.map((c) => {
+        const parts = c.time.split(" - ").map((t) => {
+          const [m, s] = t.split(":").map(Number);
+          return (m || 0) * 60 + (s || 0);
+        });
+        return parts[1] ?? parts[0] ?? 0;
+      });
+
       const res = await exportIpc.renderVideo({
         videoPath: mediaFile,
         voicePath: voiceAudioPath ?? null,
@@ -332,6 +340,11 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
         enableAmbientBlur,
         dedup: currentDedup,
         outputPath: null,
+        sceneCuts: cutPoints.length > 0 ? cutPoints : null,
+        bgmPath: bgmPath ?? null,
+        bgmVolume,
+        enableAudioDucking,
+        subtitleStyle,
       });
 
       setRenderedVideoPath(res.outputPath);
@@ -379,6 +392,14 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
     };
 
     try {
+      const cutPoints = sceneCuts.map((c) => {
+        const parts = c.time.split(" - ").map((t) => {
+          const [m, s] = t.split(":").map(Number);
+          return (m || 0) * 60 + (s || 0);
+        });
+        return parts[1] ?? parts[0] ?? 0;
+      });
+
       const res = await exportIpc.batchFission({
         videoPath: mediaFile,
         voicePath: voiceAudioPath ?? null,
@@ -391,6 +412,11 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
         baseDedup: currentDedup,
         count: fissionCount,
         outputDir: null,
+        sceneCuts: cutPoints.length > 0 ? cutPoints : null,
+        bgmPath: bgmPath ?? null,
+        bgmVolume,
+        enableAudioDucking,
+        subtitleStyle,
       });
 
       toast.success(`成功并发裂变 ${res.variants.length} 份独立短视频！`, {

@@ -8,7 +8,7 @@
  * - 结合 useWorkshopStore 提供声画对齐微调、B-roll、音轨和场景特征
  */
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { CinemaMonitor } from "@components/production/CinemaMonitor";
 import { MultiTrackTimeline } from "@components/production/MultiTrackTimeline";
@@ -41,11 +41,31 @@ export const ProductionWorkspace = memo(function ProductionWorkspace({
   const subtitleSegments = useWorkshopStore((s) => s.subtitleSegments);
   const voiceAudioPath = useWorkshopStore((s) => s.voiceAudioPath);
   const voiceDuration = useWorkshopStore((s) => s.voiceDuration);
+  const bgmPath = useWorkshopStore((s) => s.bgmPath);
+  const bgmVolume = useWorkshopStore((s) => s.bgmVolume);
+  const enableAudioDucking = useWorkshopStore((s) => s.enableAudioDucking);
+  const subtitleStyle = useWorkshopStore((s) => s.subtitleStyle);
   const scriptText = useWorkshopStore((s) => s.scriptText);
   const alignmentPlan = useWorkshopStore((s) => s.alignmentPlan);
   const isAligning = useWorkshopStore((s) => s.isAligning);
   const setAlignmentPlan = useWorkshopStore((s) => s.setAlignmentPlan);
   const setIsAligning = useWorkshopStore((s) => s.setIsAligning);
+
+  // 解析分镜数字时间戳
+  const parsedSceneCuts = useMemo(() => {
+    return sceneCuts
+      .map((sc) => {
+        if (typeof sc.cutSec === "number") return sc.cutSec;
+        if (sc.time.includes("-")) {
+          const parts = sc.time.split("-");
+          const endStr = parts[1]?.trim() ?? "";
+          const [m, s] = endStr.split(":").map(Number);
+          return (m || 0) * 60 + (s || 0);
+        }
+        return null;
+      })
+      .filter((n): n is number => typeof n === "number" && !isNaN(n));
+  }, [sceneCuts]);
 
   // 语义与情绪双驱动声画对齐
   const handleAutoAlign = useCallback(async () => {
@@ -94,6 +114,14 @@ export const ProductionWorkspace = memo(function ProductionWorkspace({
         hasUploadedVideo={hasUploadedVideo}
         mediaPath={mediaPath ?? null}
         voiceAudioPath={voiceAudioPath}
+        voiceDuration={voiceDuration}
+        bgmAudioPath={bgmPath}
+        bgmVolume={bgmVolume}
+        bgmDuckingLevel={0.18}
+        enableAudioDucking={enableAudioDucking}
+        subtitles={subtitleSegments}
+        subtitleStyle={subtitleStyle}
+        sceneCuts={parsedSceneCuts}
         isPlaying={isPlaying}
         currentTime={currentTime}
         duration={duration}

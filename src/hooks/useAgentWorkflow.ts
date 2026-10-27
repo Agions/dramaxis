@@ -31,7 +31,13 @@ export interface UseAgentWorkflowOptions {
   onStepChange?: (stepIndex: number) => void;
   onWorkflowComplete?: () => void;
   onSceneCutsGenerated?: (
-    cuts: { id: number; time: string; tag: string; emotion: string }[],
+    cuts: {
+      id: number;
+      time: string;
+      tag: string;
+      emotion: string;
+      cutSec?: number;
+    }[],
   ) => void;
   onScriptGenerated?: (script: string) => void;
   onVoiceGenerated?: (audioPath: string, duration: number) => void;
@@ -82,7 +88,7 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
                     ? "反转高潮段落"
                     : "下集留白钩子";
             const emotion = idx % 2 === 0 ? "高能" : "紧张";
-            return { id: idx + 1, time: timeStr, tag, emotion };
+            return { id: idx + 1, time: timeStr, tag, emotion, cutSec: cut };
           },
         );
         options?.onSceneCutsGenerated?.(sceneItems);

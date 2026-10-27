@@ -1,26 +1,41 @@
 /**
- * dramaxis v1.1.0 · CinemaMonitor · 居中专业视听监看台
+ * dramaxis v1.2.0 · CinemaMonitor · 居中专业视听监看台 (全景虚拟时钟与叠层播放引擎)
  *
- * 核心功能:
+ * 核心升级:
  * - 9:16 短剧竖屏与画幅居中自适应
- * - 原生 <video> 真实播放/暂停控制与 seek 同步
- * - 动态读取视频真实时长 (消除硬编码 01:40)
+ * - 原生 <video> 真实播放/暂停控制与虚拟时间线无缝 seek 同步
+ * - 分镜切片区间指示与跨片段平滑切镜
+ * - 60fps 实时 CSS 花字字幕叠层 (4 套短剧专业花字预设所见即所得)
+ * - 旁白与 BGM 动态闪避混音 (AI 旁白播音时 BGM 自动下压 -15dB)
  * - 浮动状态徽章 (Timecode, FPS, 1080×1920)
- * - 内嵌式右侧音频频谱图 (Audio Visualizer)
- * - 播放完毕自动复位与时间戳回传
+ * - 电影级内嵌音频频谱仪 (AudioVisualizerCanvas)
  */
 
-import { memo, useRef, useEffect } from "react";
+import { memo, useRef, useEffect, useMemo } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { AudioVisualizerCanvas } from "./AudioVisualizerCanvas";
+
+export type SubtitleStylePreset =
+  | "cinema_amber"
+  | "yellow_black"
+  | "retro_red"
+  | "minimal_white";
 
 interface CinemaMonitorProps {
   hasUploadedVideo: boolean;
   mediaPath: string | null;
   voiceAudioPath?: string | null;
+  voiceDuration?: number;
+  bgmAudioPath?: string | null;
+  bgmVolume?: number;
+  bgmDuckingLevel?: number;
+  enableAudioDucking?: boolean;
   isPlaying: boolean;
   currentTime: number;
   duration?: number;
+  sceneCuts?: number[];
+  subtitles?: { id: string; text: string; start: number; duration: number }[];
+  subtitleStyle?: SubtitleStylePreset;
   onTogglePlay: () => void;
   onImportVideo: () => void;
   onTimeUpdate?: (currentTime: number) => void;
@@ -28,13 +43,35 @@ interface CinemaMonitorProps {
   onEnded?: () => void;
 }
 
+function getSubtitleClass(style?: SubtitleStylePreset): string {
+  switch (style) {
+    case "yellow_black":
+      return "text-yellow-300 font-black text-xs sm:text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,1)] [text-shadow:_1px_1px_0_#000,_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000]";
+    case "retro_red":
+      return "text-white font-black text-xs sm:text-sm bg-red-600/90 px-2 py-0.5 rounded shadow-lg";
+    case "minimal_white":
+      return "text-white font-semibold text-xs sm:text-sm drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]";
+    case "cinema_amber":
+    default:
+      return "text-amber-200 font-extrabold text-xs sm:text-sm drop-shadow-[0_2px_8px_rgba(245,158,11,0.7)] [text-shadow:_1px_1px_2px_#000]";
+  }
+}
+
 export const CinemaMonitor = memo(function CinemaMonitor({
   hasUploadedVideo,
   mediaPath,
   voiceAudioPath,
+  voiceDuration = 0,
+  bgmAudioPath,
+  bgmVolume = 0.6,
+  bgmDuckingLevel = 0.18,
+  enableAudioDucking = true,
   isPlaying,
   currentTime,
   duration = 100,
+  sceneCuts = [],
+  subtitles = [],
+  subtitleStyle = "cinema_amber",
   onTogglePlay,
   onImportVideo,
   onTimeUpdate,
@@ -42,47 +79,99 @@ export const CinemaMonitor = memo(function CinemaMonitor({
   onEnded,
 }: CinemaMonitorProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const voiceRef = useRef<HTMLAudioElement | null>(null);
+  const bgmRef = useRef<HTMLAudioElement | null>(null);
 
   const videoSrc = mediaPath ? convertFileSrc(mediaPath) : undefined;
   const voiceSrc = voiceAudioPath ? convertFileSrc(voiceAudioPath) : undefined;
+  const bgmSrc = bgmAudioPath ? convertFileSrc(bgmAudioPath) : undefined;
 
-  // 1. 同步外部 isPlaying 状态至原生 video 与 audio 元素
+  // 1. 同步外部 isPlaying 状态至 video、voice、bgm
   useEffect(() => {
     const video = videoRef.current;
-    const audio = audioRef.current;
+    const voice = voiceRef.current;
+    const bgm = bgmRef.current;
 
     if (isPlaying) {
       video?.play().catch(() => {});
-      audio?.play().catch(() => {});
+      voice?.play().catch(() => {});
+      bgm?.play().catch(() => {});
     } else {
       video?.pause();
-      audio?.pause();
+      voice?.pause();
+      bgm?.pause();
     }
   }, [isPlaying]);
 
-  // 2. 外部 seek 时间跳转时同步 video 和 audio 当前位置
+  // 2. 外部 seek 时间跳转时同步位置
   useEffect(() => {
     const video = videoRef.current;
-    const audio = audioRef.current;
+    const voice = voiceRef.current;
+    const bgm = bgmRef.current;
 
     if (video && Math.abs(video.currentTime - currentTime) > 0.4) {
       video.currentTime = currentTime;
     }
-    if (audio && Math.abs(audio.currentTime - currentTime) > 0.4) {
-      audio.currentTime = currentTime;
+    if (voice && Math.abs(voice.currentTime - currentTime) > 0.4) {
+      voice.currentTime = currentTime;
+    }
+    if (bgm && Math.abs(bgm.currentTime - currentTime) > 0.4) {
+      bgm.currentTime = currentTime % (bgm.duration || 1);
     }
   }, [currentTime]);
 
-  // 3. 智能音量避让: 当有 AI 旁白配音时，原视频声音自动降低至 20%，保证旁白清晰
+  // 3. 动态音频避让 (Audio Ducking)
   useEffect(() => {
+    // 原视频声音在有 AI 旁白时压制至 20%
     if (videoRef.current) {
-      videoRef.current.volume = voiceSrc ? 0.25 : 1.0;
+      videoRef.current.volume = voiceSrc ? 0.2 : 1.0;
     }
-    if (audioRef.current) {
-      audioRef.current.volume = 1.0;
+
+    // BGM 音轨避让: 旁白发声区间动态压制至 duckingLevel (-15dB)
+    if (bgmRef.current) {
+      const isVoiceSpeaking = Boolean(
+        voiceSrc && currentTime < (voiceDuration || duration),
+      );
+      if (isVoiceSpeaking && enableAudioDucking) {
+        bgmRef.current.volume = bgmDuckingLevel;
+      } else {
+        bgmRef.current.volume = bgmVolume;
+      }
     }
-  }, [voiceSrc]);
+  }, [
+    voiceSrc,
+    currentTime,
+    voiceDuration,
+    duration,
+    enableAudioDucking,
+    bgmVolume,
+    bgmDuckingLevel,
+  ]);
+
+  // 4. 当前时间戳命中的字幕卡
+  const activeSubtitle = useMemo(() => {
+    if (!subtitles || subtitles.length === 0) return null;
+    return (
+      subtitles.find(
+        (s) => currentTime >= s.start && currentTime < s.start + s.duration,
+      ) ?? null
+    );
+  }, [subtitles, currentTime]);
+
+  // 5. 当前时间戳所处的分镜切片
+  const activeSceneIndex = useMemo(() => {
+    if (!sceneCuts || sceneCuts.length === 0) return null;
+    const sorted = [...sceneCuts].sort((a, b) => a - b);
+    let prev = 0;
+    for (let i = 0; i < sorted.length; i++) {
+      const cut = sorted[i];
+      if (cut !== undefined && currentTime >= prev && currentTime < cut) {
+        return i + 1;
+      }
+      prev = cut ?? prev;
+    }
+    return sorted.length + 1;
+  }, [sceneCuts, currentTime]);
 
   const formatTime = (secs: number) => {
     const safeSecs = Math.max(0, Math.floor(secs || 0));
@@ -96,21 +185,32 @@ export const CinemaMonitor = memo(function CinemaMonitor({
       {/* 视频主画幅 (9:16 短剧居中自适应) */}
       <div className="relative flex h-[210px] w-[118px] sm:w-[130px] items-center justify-center overflow-hidden rounded-xl bg-zinc-950 shadow-2xl border border-black/40">
         {hasUploadedVideo && videoSrc ? (
-          <video
-            ref={videoRef}
-            src={videoSrc}
-            className="h-full w-full object-cover"
-            controls={false}
-            playsInline
-            onTimeUpdate={(e) => onTimeUpdate?.(e.currentTarget.currentTime)}
-            onLoadedMetadata={(e) => {
-              const d = e.currentTarget.duration;
-              if (Number.isFinite(d) && d > 0) {
-                onDurationChange?.(d);
-              }
-            }}
-            onEnded={() => onEnded?.()}
-          />
+          <>
+            <video
+              ref={videoRef}
+              src={videoSrc}
+              className="h-full w-full object-cover"
+              controls={false}
+              playsInline
+              onTimeUpdate={(e) => onTimeUpdate?.(e.currentTarget.currentTime)}
+              onLoadedMetadata={(e) => {
+                const d = e.currentTarget.duration;
+                if (Number.isFinite(d) && d > 0) {
+                  onDurationChange?.(d);
+                }
+              }}
+              onEnded={() => onEnded?.()}
+            />
+
+            {/* 实时 60fps 花字字幕叠层 (Subtitle Overlay) */}
+            {activeSubtitle && (
+              <div className="absolute bottom-5 inset-x-2 flex items-center justify-center text-center pointer-events-none z-10 animate-fade-in">
+                <span className={getSubtitleClass(subtitleStyle)}>
+                  {activeSubtitle.text}
+                </span>
+              </div>
+            )}
+          </>
         ) : (
           <div
             onClick={onImportVideo}
@@ -127,7 +227,9 @@ export const CinemaMonitor = memo(function CinemaMonitor({
         {/* 悬浮时间码与画幅胶囊 */}
         <div className="absolute top-2 left-2 flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-[8px] font-mono text-gold backdrop-blur-md pointer-events-none">
           <span>●</span>
-          <span>1080×1920 · 9:16</span>
+          <span>
+            {activeSceneIndex ? `镜 ${activeSceneIndex} · ` : ""}9:16
+          </span>
         </div>
 
         {/* 画面中央播放快捷覆盖层 */}
@@ -154,13 +256,25 @@ export const CinemaMonitor = memo(function CinemaMonitor({
         </div>
       </div>
 
-      {/* 隐藏的旁白配音音频播放器 (实现音画绝对同频试听) */}
+      {/* 隐藏的旁白配音音频播放器 */}
       {voiceSrc && (
         <audio
-          ref={audioRef}
+          ref={voiceRef}
           src={voiceSrc}
           controls={false}
           playsInline
+          className="hidden"
+        />
+      )}
+
+      {/* 隐藏的背景音乐音频播放器 */}
+      {bgmSrc && (
+        <audio
+          ref={bgmRef}
+          src={bgmSrc}
+          controls={false}
+          playsInline
+          loop
           className="hidden"
         />
       )}
@@ -181,7 +295,13 @@ export const CinemaMonitor = memo(function CinemaMonitor({
         {voiceSrc && (
           <span className="hidden sm:inline-flex items-center gap-1 rounded bg-gold/10 border border-gold/30 px-1.5 py-0.5 font-mono text-[9px] text-gold font-bold">
             <span>🎙️</span>
-            <span>AI旁白声画同频试听中</span>
+            <span>旁白对齐</span>
+          </span>
+        )}
+        {bgmSrc && (
+          <span className="hidden sm:inline-flex items-center gap-1 rounded bg-cyan-500/10 border border-cyan-500/30 px-1.5 py-0.5 font-mono text-[9px] text-cyan-400 font-bold">
+            <span>🎵</span>
+            <span>BGM闪避</span>
           </span>
         )}
       </div>

@@ -28,6 +28,7 @@ import {
   useProjectStore,
   usePlaybackStore,
   useWorkshopStore,
+  deriveStandardTimeline,
   type WorkshopSceneCut,
 } from "@dramaxis/core";
 import { toast } from "sonner";
@@ -52,10 +53,14 @@ function ProductionCinemaStudio() {
   // 2. 工坊领域 Store
   const setActiveWorkshop = useWorkshopStore((s) => s.setActiveWorkshop);
   const setActiveTab = useWorkshopStore((s) => s.setActiveTab);
+  const sceneCuts = useWorkshopStore((s) => s.sceneCuts);
   const setSceneCuts = useWorkshopStore((s) => s.setSceneCuts);
   const setScriptText = useWorkshopStore((s) => s.setScriptText);
+  const voiceAudioPath = useWorkshopStore((s) => s.voiceAudioPath);
   const setVoiceAudioPath = useWorkshopStore((s) => s.setVoiceAudioPath);
+  const voiceDuration = useWorkshopStore((s) => s.voiceDuration);
   const setVoiceDuration = useWorkshopStore((s) => s.setVoiceDuration);
+  const subtitleSegments = useWorkshopStore((s) => s.subtitleSegments);
   const setSubtitleSegments = useWorkshopStore((s) => s.setSubtitleSegments);
   const setIsGeneratingScript = useWorkshopStore(
     (s) => s.setIsGeneratingScript,
@@ -143,6 +148,7 @@ function ProductionCinemaStudio() {
         time: c.time,
         tag: c.tag,
         emotion: c.emotion,
+        cutSec: c.cutSec,
       }));
       setSceneCuts(workshopCuts);
       markDirty("scenesDirty", false);
@@ -168,6 +174,47 @@ function ProductionCinemaStudio() {
       markDirty("exportDirty", true);
     },
   });
+
+  // 自动响应式将工坊/Agent产物编译并固化到当前工程的 5 轨 Timeline (SSOT)
+  useEffect(() => {
+    if (!currentProject?.project) return;
+    const cutsSecs = sceneCuts
+      .map((sc) => sc.cutSec)
+      .filter((n): n is number => typeof n === "number");
+    const activeMedia = currentProject.project.media_files?.[0];
+    const vidDur = activeMedia?.duration_seconds ?? 60.0;
+    const stdTimeline = deriveStandardTimeline({
+      videoPath: activeMedia?.path,
+      videoDuration: vidDur,
+      sceneCuts: cutsSecs,
+      voicePath: voiceAudioPath,
+      voiceDuration: voiceDuration,
+      subtitles: subtitleSegments,
+      bgmPath: useWorkshopStore.getState().bgmPath,
+    });
+    const prevTracks = currentProject.project.timeline?.tracks || [];
+    const prevClipsCount = prevTracks.reduce(
+      (acc, t) => acc + (t.clips?.length || 0),
+      0,
+    );
+    const newClipsCount = stdTimeline.tracks.reduce(
+      (acc, t) => acc + (t.clips?.length || 0),
+      0,
+    );
+    if (newClipsCount > 0 && newClipsCount !== prevClipsCount) {
+      setCurrentRecord(currentProject.path, {
+        ...currentProject.project,
+        timeline: stdTimeline,
+      });
+    }
+  }, [
+    currentProject,
+    sceneCuts,
+    voiceAudioPath,
+    voiceDuration,
+    subtitleSegments,
+    setCurrentRecord,
+  ]);
 
   const handleStartMultiAgent = useCallback(
     async (auto: boolean = true) => {

@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 import {
   computePercent,
   deriveSteps,
+  deriveStandardTimeline,
   findActiveIndex,
   pipelineStateLabel,
   stepStatusLabel,
@@ -233,5 +234,52 @@ describe("stepStatusLabel", () => {
     expect(stepStatusLabel("active")).toBe("执行中");
     expect(stepStatusLabel("done")).toBe("已完成");
     expect(stepStatusLabel("error")).toBe("失败");
+  });
+});
+
+describe("deriveStandardTimeline", () => {
+  it("空入参兜底生成标准 5 轨空时间线", () => {
+    const tl = deriveStandardTimeline({});
+    expect(tl.tracks).toHaveLength(5);
+    expect(tl.tracks.map((t) => t.kind)).toEqual([
+      "video",
+      "voice",
+      "ambient",
+      "bgm",
+      "subtitle",
+    ]);
+  });
+
+  it("多切片与配音、字幕正常组合并计算相对偏移", () => {
+    const tl = deriveStandardTimeline({
+      videoPath: "/path/to/raw.mp4",
+      videoDuration: 60.0,
+      sceneCuts: [15.0, 35.0],
+      voicePath: "/path/to/voice.mp3",
+      voiceDuration: 30.0,
+      subtitles: [
+        { id: "1", text: "第一句台词", start: 0, duration: 3.5 },
+        { id: "2", text: "第二句台词", start: 3.5, duration: 4.0 },
+      ],
+      bgmPath: "/path/to/bgm.mp3",
+      ambientPath: "/path/to/amb.mp3",
+    });
+
+    const vTrack = tl.tracks.find((t) => t.kind === "video");
+    expect(vTrack?.clips).toHaveLength(3); // 0-15, 15-35, 35-60
+    expect(vTrack?.clips[0]?.in_seconds).toBe(0);
+    expect(vTrack?.clips[0]?.out_seconds).toBe(15.0);
+    expect(vTrack?.clips[1]?.in_seconds).toBe(15.0);
+    expect(vTrack?.clips[1]?.out_seconds).toBe(35.0);
+    expect(vTrack?.clips[2]?.in_seconds).toBe(35.0);
+    expect(vTrack?.clips[2]?.out_seconds).toBe(60.0);
+
+    const voiceTrack = tl.tracks.find((t) => t.kind === "voice");
+    expect(voiceTrack?.clips).toHaveLength(1);
+    expect(voiceTrack?.clips[0]?.out_seconds).toBe(30.0);
+
+    const subTrack = tl.tracks.find((t) => t.kind === "subtitle");
+    expect(subTrack?.clips).toHaveLength(2);
+    expect(subTrack?.clips[0]?.media_ref).toBe("第一句台词");
   });
 });

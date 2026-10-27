@@ -459,6 +459,11 @@ export interface RenderVideoParams {
   enableAmbientBlur?: boolean | null;
   dedup?: DedupOptions | null;
   outputPath?: string | null;
+  sceneCuts?: number[] | null;
+  bgmPath?: string | null;
+  bgmVolume?: number | null;
+  enableAudioDucking?: boolean | null;
+  subtitleStyle?: string | null;
 }
 
 // Rust 端 RenderVideoResult (pub struct, rename_all = "camelCase")
@@ -484,6 +489,11 @@ export interface BatchFissionParams {
   baseDedup?: DedupOptions | null;
   count: number;
   outputDir?: string | null;
+  sceneCuts?: number[] | null;
+  bgmPath?: string | null;
+  bgmVolume?: number | null;
+  enableAudioDucking?: boolean | null;
+  subtitleStyle?: string | null;
 }
 
 // Rust 端 FissionVariantResult (pub struct, rename_all = "camelCase")

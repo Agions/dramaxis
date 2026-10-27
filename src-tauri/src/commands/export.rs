@@ -99,6 +99,16 @@ pub struct RenderVideoParams {
     pub dedup: Option<DedupOptions>,
     #[serde(default)]
     pub output_path: Option<String>,
+    #[serde(default)]
+    pub scene_cuts: Option<Vec<f64>>,
+    #[serde(default)]
+    pub bgm_path: Option<String>,
+    #[serde(default)]
+    pub bgm_volume: Option<f64>,
+    #[serde(default)]
+    pub enable_audio_ducking: Option<bool>,
+    #[serde(default)]
+    pub subtitle_style: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -132,6 +142,16 @@ pub struct BatchFissionParams {
     pub count: u32,
     #[serde(default)]
     pub output_dir: Option<String>,
+    #[serde(default)]
+    pub scene_cuts: Option<Vec<f64>>,
+    #[serde(default)]
+    pub bgm_path: Option<String>,
+    #[serde(default)]
+    pub bgm_volume: Option<f64>,
+    #[serde(default)]
+    pub enable_audio_ducking: Option<bool>,
+    #[serde(default)]
+    pub subtitle_style: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -167,7 +187,7 @@ fn format_srt_time(ms: u64) -> String {
     format!("{h:02}:{m:02}:{s:02},{rem_ms:03}")
 }
 
-/// 内部通用渲染流水线 (支持 8 维消重矩阵、字幕、环境模糊、音画对齐)
+/// 内部通用渲染流水线 (支持分镜切片重构、8 维消重矩阵、多花字字幕样式、BGM 侧链闪避)
 #[allow(clippy::too_many_arguments)]
 async fn render_video_pipeline(
     video_path: &str,
@@ -176,6 +196,11 @@ async fn render_video_pipeline(
     platform_preset: Option<&str>,
     enable_ambient_blur: bool,
     dedup: &DedupOptions,
+    scene_cuts: Option<&[f64]>,
+    bgm_path: Option<&str>,
+    bgm_volume: Option<f64>,
+    enable_audio_ducking: bool,
+    subtitle_style: Option<&str>,
     output_file: &Path,
     on_progress: Option<Box<dyn Fn(f64) + Send + Sync>>,
 ) -> Result<(f64, u64), SplicrError> {
@@ -233,23 +258,65 @@ async fn render_video_pipeline(
     // 3. 滤镜图谱 (Filter Complex) 构建
     let mut filter_complex = String::new();
 
-    // 3.1 画面缩放与高斯模糊底衬
+    // 3.1 分镜切片重排 (Scene cuts trim & concat)
+    let v_source_tag = if let Some(cuts) = scene_cuts {
+        if !cuts.is_empty() {
+            let mut sorted_cuts: Vec<f64> = cuts.to_vec();
+            sorted_cuts.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+            let mut prev_cut = 0.0f64;
+            let mut seg_tags = Vec::new();
+
+            for (idx, cut) in sorted_cuts.iter().enumerate() {
+                let end = cut.min(total_duration);
+                if end > prev_cut {
+                    let seg_tag = format!("vseg_{idx}");
+                    filter_complex.push_str(&format!(
+                        "[0:v]trim=start={prev_cut:.3}:end={end:.3},setpts=PTS-STARTPTS[{seg_tag}];"
+                    ));
+                    seg_tags.push(format!("[{seg_tag}]"));
+                    prev_cut = end;
+                }
+            }
+            if prev_cut < total_duration {
+                let seg_tag = format!("vseg_{}", sorted_cuts.len());
+                filter_complex.push_str(&format!(
+                    "[0:v]trim=start={prev_cut:.3}:end={total_duration:.3},setpts=PTS-STARTPTS[{seg_tag}];"
+                ));
+                seg_tags.push(format!("[{seg_tag}]"));
+            }
+
+            if seg_tags.len() > 1 {
+                let count = seg_tags.len();
+                let joined = seg_tags.join("");
+                filter_complex.push_str(&format!("{joined}concat=n={count}:v=1:a=0[vcut];"));
+                "[vcut]"
+            } else {
+                "[0:v]"
+            }
+        } else {
+            "[0:v]"
+        }
+    } else {
+        "[0:v]"
+    };
+
+    // 3.2 画面缩放与高斯模糊底衬
     if is_landscape {
-        filter_complex.push_str(
-            "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black[vbase];"
-        );
+        filter_complex.push_str(&format!(
+            "{v_source_tag}scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black[vbase];"
+        ));
     } else if enable_ambient_blur {
         // 9:16 竖屏高斯模糊底衬
-        filter_complex.push_str(
-            "[0:v]split=2[vbg][vfg];[vbg]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=25:5[vbgblur];[vfg]scale=1080:1920:force_original_aspect_ratio=decrease[vfgscaled];[vbgblur][vfgscaled]overlay=(W-w)/2:(H-h)/2[vbase];"
-        );
+        filter_complex.push_str(&format!(
+            "{v_source_tag}split=2[vbg][vfg];[vbg]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=25:5[vbgblur];[vfg]scale=1080:1920:force_original_aspect_ratio=decrease[vfgscaled];[vbgblur][vfgscaled]overlay=(W-w)/2:(H-h)/2[vbase];"
+        ));
     } else {
-        filter_complex.push_str(
-            "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black[vbase];"
-        );
+        filter_complex.push_str(&format!(
+            "{v_source_tag}scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black[vbase];"
+        ));
     }
 
-    // 3.2 8 维消重矩阵视频算子串接 (微缩放、镜像、噪点、抽插帧、微变速)
+    // 3.3 8 维消重矩阵视频算子串接 (微缩放、镜像、噪点、抽插帧、微变速)
     let v_filters = dedup.build_video_filters(tw, th);
     let current_v = if !v_filters.is_empty() {
         let chain = v_filters.join(",");
@@ -259,26 +326,50 @@ async fn render_video_pipeline(
         "[vbase]"
     };
 
-    // 3.3 字幕烧录
+    // 3.4 字幕烧录与花字映射
+    let style_str = match subtitle_style.unwrap_or("cinema_amber") {
+        "yellow_black" => {
+            "FontSize=22,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=3,Shadow=1,Bold=1"
+        }
+        "retro_red" => {
+            "FontSize=22,PrimaryColour=&H00FFFFFF,OutlineColour=&H001010D0,BorderStyle=1,Outline=3,Shadow=2,Bold=1"
+        }
+        "minimal_white" => {
+            "FontSize=20,PrimaryColour=&H00FFFFFF,OutlineColour=&H00202020,BorderStyle=1,Outline=1,Shadow=1,Bold=0"
+        }
+        "cinema_amber" => {
+            "FontSize=22,PrimaryColour=&H0030D5F5,OutlineColour=&H00000000,BorderStyle=1,Outline=2.5,Shadow=2,Bold=1"
+        }
+        _ => {
+            "FontSize=22,PrimaryColour=&H0030D5F5,OutlineColour=&H00000000,BorderStyle=1,Outline=2.5,Shadow=2,Bold=1"
+        }
+    };
+
     let v_final_tag = if let Some(ref srt) = temp_srt {
         let escaped = srt
             .to_string_lossy()
+            .replace('\\', "\\\\")
             .replace(':', "\\:")
             .replace('\'', "\\'");
         filter_complex.push_str(&format!(
-            "{current_v}subtitles='{escaped}':force_style='FontSize=22,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=2'[vsub];"
+            "{current_v}subtitles='{escaped}':force_style='{style_str}'[vsub];"
         ));
         "[vsub]"
     } else {
         current_v
     };
 
-    // 3.4 音频混流与 8 维消重音频算子 (音高微移、微变速、混响)
-    let mut has_narration = false;
-    let voice_path_str = if let Some(v_path) = voice_path {
+    // 4. 输入流注册与参数构建
+    let mut args: Vec<String> = vec!["-y".into(), "-i".into(), video_path.to_string()];
+    let mut next_idx = 1;
+
+    let voice_input_idx = if let Some(v_path) = voice_path {
         if Path::new(v_path).exists() {
-            has_narration = true;
-            Some(v_path.to_string())
+            args.push("-i".into());
+            args.push(v_path.to_string());
+            let idx = next_idx;
+            next_idx += 1;
+            Some(idx)
         } else {
             None
         }
@@ -286,43 +377,90 @@ async fn render_video_pipeline(
         None
     };
 
+    let bgm_input_idx = if let Some(b_path) = bgm_path {
+        if Path::new(b_path).exists() {
+            args.push("-i".into());
+            args.push(b_path.to_string());
+            let idx = next_idx;
+            Some(idx)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    // 3.5 音频混流与 8 维消重音频算子 (带 BGM 侧链动态闪避)
     let a_filters = dedup.build_audio_filters();
     let audio_chain_prefix = if !a_filters.is_empty() {
         format!(",{}", a_filters.join(","))
     } else {
         String::new()
     };
+    let bgm_vol = bgm_volume.unwrap_or(0.60);
 
-    let a_final_tag = if has_narration {
-        let has_orig_audio = probe.audio_codec.is_some();
-        if has_orig_audio {
-            filter_complex.push_str(&format!(
-                "[0:a]volume=0.15[a_orig];[1:a]volume=1.0{audio_chain_prefix}[a_voice];[a_orig][a_voice]amix=inputs=2:duration=first[aout]"
-            ));
-            "[aout]"
-        } else {
-            filter_complex.push_str(&format!("[1:a]volume=1.0{audio_chain_prefix}[aout]"));
-            "[aout]"
+    let a_final_tag = match (voice_input_idx, bgm_input_idx) {
+        (Some(v_idx), Some(b_idx)) => {
+            // 旁白 + BGM (带侧链闪避)
+            if enable_audio_ducking {
+                filter_complex.push_str(&format!(
+                    "[{b_idx}:a]volume={bgm_vol}[bgm_norm];[{v_idx}:a]volume=1.0{audio_chain_prefix},asplit=2[sc_voice][main_voice];[bgm_norm][sc_voice]sidechaincompress=threshold=0.08:ratio=6:attack=80:release=350[ducked_bgm];[ducked_bgm][main_voice]amix=inputs=2:duration=first:dropout_transition=2[a_mix];"
+                ));
+            } else {
+                filter_complex.push_str(&format!(
+                    "[{b_idx}:a]volume={bgm_vol}[bgm_norm];[{v_idx}:a]volume=1.0{audio_chain_prefix}[main_voice];[bgm_norm][main_voice]amix=inputs=2:duration=first[a_mix];"
+                ));
+            }
+            if probe.audio_codec.is_some() {
+                filter_complex.push_str(
+                    "[0:a]volume=0.15[a_orig];[a_mix][a_orig]amix=inputs=2:duration=first[aout]",
+                );
+                "[aout]"
+            } else {
+                "[a_mix]"
+            }
         }
-    } else if probe.audio_codec.is_some() {
-        if !a_filters.is_empty() {
-            filter_complex.push_str(&format!("[0:a]{}[aout]", a_filters.join(",")));
-            "[aout]"
-        } else {
-            "[0:a]"
+        (Some(v_idx), None) => {
+            // 仅旁白
+            if probe.audio_codec.is_some() {
+                filter_complex.push_str(&format!(
+                    "[0:a]volume=0.15[a_orig];[{v_idx}:a]volume=1.0{audio_chain_prefix}[a_voice];[a_orig][a_voice]amix=inputs=2:duration=first[aout]"
+                ));
+                "[aout]"
+            } else {
+                filter_complex
+                    .push_str(&format!("[{v_idx}:a]volume=1.0{audio_chain_prefix}[aout]"));
+                "[aout]"
+            }
         }
-    } else {
-        ""
+        (None, Some(b_idx)) => {
+            // 仅 BGM
+            if probe.audio_codec.is_some() {
+                filter_complex.push_str(&format!(
+                    "[0:a]volume=0.8[a_orig];[{b_idx}:a]volume={bgm_vol}[bgm_norm];[a_orig][bgm_norm]amix=inputs=2:duration=first[aout]"
+                ));
+                "[aout]"
+            } else {
+                filter_complex.push_str(&format!("[{b_idx}:a]volume={bgm_vol}[aout]"));
+                "[aout]"
+            }
+        }
+        (None, None) => {
+            // 原视频声音
+            if probe.audio_codec.is_some() {
+                if !a_filters.is_empty() {
+                    filter_complex.push_str(&format!("[0:a]{}[aout]", a_filters.join(",")));
+                    "[aout]"
+                } else {
+                    "[0:a]"
+                }
+            } else {
+                ""
+            }
+        }
     };
 
-    // 4. 拼装 FFmpeg 参数并执行
-    let mut args: Vec<String> = vec!["-y".into(), "-i".into(), video_path.to_string()];
-
-    if let Some(voice) = &voice_path_str {
-        args.push("-i".into());
-        args.push(voice.clone());
-    }
-
+    // 4. 拼装 filter_complex 映射并执行
     let fc_cleaned = filter_complex.trim_end_matches(';').to_string();
     if !fc_cleaned.is_empty() {
         args.push("-filter_complex".into());
@@ -422,6 +560,11 @@ pub async fn export_render_video(
         Some(preset),
         enable_blur,
         &dedup,
+        params.scene_cuts.as_deref(),
+        params.bgm_path.as_deref(),
+        params.bgm_volume,
+        params.enable_audio_ducking.unwrap_or(true),
+        params.subtitle_style.as_deref(),
         &output_file,
         Some(Box::new(move |secs: f64| {
             let pct = (secs / 60.0 * 100.0).clamp(0.0, 99.0);
@@ -499,6 +642,11 @@ pub async fn export_batch_fission(
             params.platform_preset.as_deref(),
             true,
             &variant,
+            params.scene_cuts.as_deref(),
+            params.bgm_path.as_deref(),
+            params.bgm_volume,
+            params.enable_audio_ducking.unwrap_or(true),
+            params.subtitle_style.as_deref(),
             &out_file,
             None,
         )

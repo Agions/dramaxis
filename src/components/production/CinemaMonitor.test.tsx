@@ -92,4 +92,24 @@ describe("CinemaMonitor", () => {
 
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
   });
+
+  it("当存在字幕条目并在当前播放区间内时正确渲染花字字幕卡叠层", () => {
+    render(
+      <CinemaMonitor
+        hasUploadedVideo={true}
+        mediaPath="/videos/short_drama.mp4"
+        isPlaying={true}
+        currentTime={5.0}
+        duration={90}
+        subtitles={[
+          { id: "1", text: "三年之期已到，龙王归来！", start: 3.0, duration: 4.0 },
+        ]}
+        subtitleStyle="yellow_black"
+        onTogglePlay={vi.fn()}
+        onImportVideo={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("三年之期已到，龙王归来！")).toBeInTheDocument();
+  });
 });

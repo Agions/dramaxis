@@ -28,6 +28,7 @@ export interface WorkshopSceneCut {
   time: string;
   tag: string;
   emotion: string;
+  cutSec?: number;
   conflictScore?: number;
   motionIntensity?: number;
   visualSummary?: string;
@@ -61,6 +62,10 @@ export interface WorkshopState {
   voiceEngine: string;
   voiceAudioPath: string | null;
   voiceDuration: number;
+  bgmPath: string | null;
+  bgmVolume: number;
+  enableAudioDucking: boolean;
+  subtitleStyle: "cinema_amber" | "yellow_black" | "retro_red" | "minimal_white";
   alignmentPlan: AlignmentPlan | null;
   isAligning: boolean;
 
@@ -84,6 +89,12 @@ export interface WorkshopState {
   setVoiceEngine: (engine: string) => void;
   setVoiceAudioPath: (path: string | null) => void;
   setVoiceDuration: (duration: number) => void;
+  setBgmPath: (path: string | null) => void;
+  setBgmVolume: (vol: number) => void;
+  setEnableAudioDucking: (enabled: boolean) => void;
+  setSubtitleStyle: (
+    style: "cinema_amber" | "yellow_black" | "retro_red" | "minimal_white",
+  ) => void;
   setAlignmentPlan: (plan: AlignmentPlan | null) => void;
   setIsAligning: (aligning: boolean) => void;
   setAntiDupZoom: (zoom: number) => void;
@@ -117,6 +128,10 @@ export const useWorkshopStore = create<WorkshopState>((set) => ({
   voiceEngine: "edge",
   voiceAudioPath: null,
   voiceDuration: 0,
+  bgmPath: null,
+  bgmVolume: 0.6,
+  enableAudioDucking: true,
+  subtitleStyle: "cinema_amber",
   alignmentPlan: null,
   isAligning: false,
 
@@ -137,6 +152,10 @@ export const useWorkshopStore = create<WorkshopState>((set) => ({
   setVoiceEngine: (voiceEngine) => set({ voiceEngine }),
   setVoiceAudioPath: (voiceAudioPath) => set({ voiceAudioPath }),
   setVoiceDuration: (voiceDuration) => set({ voiceDuration }),
+  setBgmPath: (bgmPath) => set({ bgmPath }),
+  setBgmVolume: (bgmVolume) => set({ bgmVolume }),
+  setEnableAudioDucking: (enableAudioDucking) => set({ enableAudioDucking }),
+  setSubtitleStyle: (subtitleStyle) => set({ subtitleStyle }),
   setAlignmentPlan: (alignmentPlan) => set({ alignmentPlan }),
   setIsAligning: (isAligning) => set({ isAligning }),
   setAntiDupZoom: (antiDupZoom) => set({ antiDupZoom }),

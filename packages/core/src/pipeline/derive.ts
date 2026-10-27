@@ -7,7 +7,15 @@
  * - 输入是后端 PipelineStatus + 前端 stepDefs,输出是 UI 直接消费的视图
  */
 
-import type { PipelineState, PipelineStatus, StepStatus } from "@dramaxis/ipc";
+import type {
+  PipelineState,
+  PipelineStatus,
+  StepStatus,
+  Timeline,
+  Track,
+  Clip,
+  AlignmentPlan,
+} from "@dramaxis/ipc";
 
 export interface PipelineStepView {
   id: string;
@@ -80,4 +88,148 @@ const STEP_STATUS_LABEL: Record<StepStatus, string> = {
 
 export function stepStatusLabel(status: StepStatus): string {
   return STEP_STATUS_LABEL[status] ?? "未知";
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// 响应式标准 5 轨自动编译引擎 (Reactive Timeline Compilation)
+// ════════════════════════════════════════════════════════════════════════
+
+export interface StandardTimelineInput {
+  videoPath?: string | null;
+  videoDuration?: number;
+  sceneCuts?: number[];
+  voicePath?: string | null;
+  voiceDuration?: number;
+  subtitles?: { id: string; text: string; start: number; duration: number }[];
+  bgmPath?: string | null;
+  ambientPath?: string | null;
+  hookDuration?: number;
+  alignmentPlan?: AlignmentPlan | null;
+}
+
+/**
+ * 纯函数: 根据工坊/Agent产物生成规范的 5 轨 Timeline (V1/A1/A2/A3/SUB)
+ */
+export function deriveStandardTimeline(input: StandardTimelineInput): Timeline {
+  const {
+    videoPath = "",
+    videoDuration = 0,
+    sceneCuts = [],
+    voicePath = null,
+    voiceDuration = 0,
+    subtitles = [],
+    bgmPath = null,
+    ambientPath = null,
+    alignmentPlan = null,
+  } = input;
+
+  const totalDuration = Math.max(videoDuration, voiceDuration, 1.0);
+
+  // 1. V1 视频切片轨
+  const videoClips: Clip[] = [];
+  if (sceneCuts && sceneCuts.length > 0) {
+    const sortedCuts = [...sceneCuts].sort((a, b) => a - b);
+    let prev = 0;
+    let targetCursor = 0;
+
+    sortedCuts.forEach((cut, idx) => {
+      const cutClamped = Math.min(cut, videoDuration > 0 ? videoDuration : cut);
+      if (cutClamped > prev) {
+        const segDur = cutClamped - prev;
+        const speed = alignmentPlan?.matches?.[idx]?.speedAdjustment ?? 1.0;
+        const targetDur = segDur / speed;
+
+        videoClips.push({
+          id: `clip-v-${idx}`,
+          media_ref: videoPath || "",
+          start_seconds: targetCursor,
+          in_seconds: prev,
+          out_seconds: cutClamped,
+          volume: 1.0,
+        });
+
+        targetCursor += targetDur;
+        prev = cutClamped;
+      }
+    });
+
+    if (videoDuration > 0 && prev < videoDuration) {
+      videoClips.push({
+        id: `clip-v-${sortedCuts.length}`,
+        media_ref: videoPath || "",
+        start_seconds: targetCursor,
+        in_seconds: prev,
+        out_seconds: videoDuration,
+        volume: 1.0,
+      });
+    }
+  } else if (videoDuration > 0) {
+    videoClips.push({
+      id: "clip-v-0",
+      media_ref: videoPath || "",
+      start_seconds: 0,
+      in_seconds: 0,
+      out_seconds: videoDuration,
+      volume: 1.0,
+    });
+  }
+
+  // 2. A1 旁白轨
+  const voiceClips: Clip[] = [];
+  if (voicePath && voiceDuration > 0) {
+    voiceClips.push({
+      id: "clip-voice-0",
+      media_ref: voicePath,
+      start_seconds: 0,
+      in_seconds: 0,
+      out_seconds: voiceDuration,
+      volume: 1.0,
+    });
+  }
+
+  // 3. SUB 字幕轨
+  const subtitleClips: Clip[] = subtitles.map((sub, idx) => ({
+    id: `clip-sub-${sub.id || idx}`,
+    media_ref: sub.text,
+    start_seconds: sub.start,
+    in_seconds: 0,
+    out_seconds: sub.duration,
+    volume: null,
+  }));
+
+  // 4. A3 BGM 轨
+  const bgmClips: Clip[] = [];
+  if (bgmPath) {
+    bgmClips.push({
+      id: "clip-bgm-0",
+      media_ref: bgmPath,
+      start_seconds: 0,
+      in_seconds: 0,
+      out_seconds: totalDuration,
+      volume: 0.6,
+    });
+  }
+
+  // 5. A2 环境音效轨
+  const ambientClips: Clip[] = [];
+  if (ambientPath) {
+    ambientClips.push({
+      id: "clip-ambient-0",
+      media_ref: ambientPath,
+      start_seconds: 0,
+      in_seconds: 0,
+      out_seconds: totalDuration,
+      volume: 0.35,
+    });
+  }
+
+  const tracks: Track[] = [
+    { id: "track-v1", kind: "video", clips: videoClips },
+    { id: "track-a1", kind: "voice", clips: voiceClips },
+    { id: "track-a2", kind: "ambient", clips: ambientClips },
+    { id: "track-a3", kind: "bgm", clips: bgmClips },
+    { id: "track-sub", kind: "subtitle", clips: subtitleClips },
+  ];
+
+  return { tracks };
 }
