@@ -21,11 +21,13 @@ use dramaxis_detect::{parse_probe_json, Ffmpeg, FfmpegProbe};
 
 pub mod bundle;
 pub mod db;
+pub mod vault;
 
 pub use bundle::{
     create_bundle, open_bundle, redo_bundle, save_bundle, undo_bundle, DramaxisBundle,
 };
 pub use db::{init_database, load_project, redo, save_checkpoint, save_project, undo};
+pub use vault::CredentialVault;
 
 // ════════════════════════════════════════════════════════════════════════
 // 错误

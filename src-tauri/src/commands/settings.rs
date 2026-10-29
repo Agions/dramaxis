@@ -8,33 +8,44 @@ use std::path::PathBuf;
 use dramaxis_core::error::SplicrError;
 use dramaxis_core::services::{ConfigService, ConfigSnapshot};
 use dramaxis_core::AppContext;
+use dramaxis_storage::CredentialVault;
 use tauri::{Manager, State};
 
 const CONFIG_FILE: &str = "config.json";
 
-/// 读取配置 (优先磁盘,缺则返回默认)
+/// 读取配置 (优先磁盘并在安全金库中解密还原敏感凭证)
 #[tauri::command]
 pub async fn settings_get(
     app: tauri::AppHandle,
     state: State<'_, AppContext>,
 ) -> Result<ConfigSnapshot, SplicrError> {
     let path = config_path(&app).map_err(|e| SplicrError::Config(e.to_string()))?;
-    if let Ok(bytes) = tokio::fs::read(&path).await {
-        if let Ok(snap) = serde_json::from_slice::<ConfigSnapshot>(&bytes) {
-            // 同步到内存 service
-            let svc = state
-                .service::<ConfigService>()
-                .await
-                .map_err(|e| SplicrError::Config(e.to_string()))?;
-            svc.set_snapshot(snap.clone()).await;
-            return Ok(snap);
+    let mut snap = if let Ok(bytes) = tokio::fs::read(&path).await {
+        serde_json::from_slice::<ConfigSnapshot>(&bytes).unwrap_or_default()
+    } else {
+        ConfigSnapshot::default()
+    };
+
+    // 从安全凭证金库中还原敏感 API Key
+    if let Ok(vp) = vault_path(&app) {
+        let vault = CredentialVault::load(&vp).await;
+        if let Some(key) = vault.get("llm_api_key") {
+            snap.llm_api_key = Some(key.clone());
+        }
+        if let Some(key) = vault.get("tts_api_key") {
+            snap.tts_api_key = Some(key.clone());
         }
     }
-    // fallback: 默认 snapshot
-    Ok(ConfigSnapshot::default())
+
+    // 同步到内存 service
+    if let Ok(svc) = state.service::<ConfigService>().await {
+        svc.set_snapshot(snap.clone()).await;
+    }
+
+    Ok(snap)
 }
 
-/// 保存配置 (同时落盘 + 更新内存)
+/// 保存配置 (敏感凭证写入受限权限金库 + config.json 遮罩脱敏)
 #[tauri::command]
 pub async fn settings_set(
     app: tauri::AppHandle,
@@ -47,12 +58,35 @@ pub async fn settings_set(
             .await
             .map_err(|e| SplicrError::Io(e.to_string()))?;
     }
+
+    // 1. 凭证隔离持久化至受保护金库 (credentials.vault)
+    if let Ok(vp) = vault_path(&app) {
+        let mut vault = CredentialVault::load(&vp).await;
+        if let Some(ref key) = snapshot.llm_api_key {
+            vault.set("llm_api_key", key);
+        }
+        if let Some(ref key) = snapshot.tts_api_key {
+            vault.set("tts_api_key", key);
+        }
+        let _ = vault.save(&vp).await;
+    }
+
+    // 2. config.json 落盘时遮罩脱敏，杜绝明文密钥暴露
+    let mut sanitized = snapshot.clone();
+    if sanitized.llm_api_key.is_some() {
+        sanitized.llm_api_key = Some("********".into());
+    }
+    if sanitized.tts_api_key.is_some() {
+        sanitized.tts_api_key = Some("********".into());
+    }
+
     let bytes =
-        serde_json::to_vec_pretty(&snapshot).map_err(|e| SplicrError::Config(e.to_string()))?;
+        serde_json::to_vec_pretty(&sanitized).map_err(|e| SplicrError::Config(e.to_string()))?;
     tokio::fs::write(&path, bytes)
         .await
         .map_err(|e| SplicrError::Io(e.to_string()))?;
 
+    // 3. 内存中保留真实可用凭证
     let svc = state
         .service::<ConfigService>()
         .await
@@ -134,4 +168,12 @@ fn config_path(app: &tauri::AppHandle) -> Result<PathBuf, tauri::Error> {
         .app_data_dir()
         .map_err(|e| tauri::Error::Anyhow(anyhow::anyhow!("无法获取 app data 目录: {e}")))?;
     Ok(dir.join(CONFIG_FILE))
+}
+
+fn vault_path(app: &tauri::AppHandle) -> Result<PathBuf, tauri::Error> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| tauri::Error::Anyhow(anyhow::anyhow!("无法获取 app data 目录: {e}")))?;
+    Ok(CredentialVault::default_vault_path(&dir))
 }
