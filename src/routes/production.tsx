@@ -221,7 +221,8 @@ function ProductionCinemaStudio() {
       if (!currentProject?.project) return;
       setActiveWorkshop("script");
       setActiveTab("agent");
-      await startWorkflow(currentProject.project, auto);
+      const currentProfile = useWorkshopStore.getState().workflowProfile;
+      await startWorkflow(currentProject.project, auto, currentProfile);
     },
     [currentProject, startWorkflow, setActiveWorkshop, setActiveTab],
   );

@@ -21,6 +21,21 @@ interface SceneCutsListProps {
   sceneCuts: SceneCut[];
   onSetSceneCuts: (cuts: SceneCut[]) => void;
   mediaPath?: string | null;
+  onSeek?: (sec: number) => void;
+}
+
+function parseStartSeconds(cut: SceneCut): number {
+  if (cut.rawFeature?.startTime !== undefined) {
+    return cut.rawFeature.startTime;
+  }
+  if (typeof (cut as any).cutSec === "number") {
+    return (cut as any).cutSec;
+  }
+  const match = /^(\d+):(\d+)/.exec(cut.time);
+  if (match && match[1] && match[2]) {
+    return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+  }
+  return 0;
 }
 
 function formatSecondsToTimestamp(sec: number): string {
@@ -33,6 +48,7 @@ export const SceneCutsList = memo(function SceneCutsList({
   sceneCuts,
   onSetSceneCuts,
   mediaPath,
+  onSeek,
 }: SceneCutsListProps) {
   const [isDetecting, setIsDetecting] = useState(false);
 
@@ -147,7 +163,12 @@ export const SceneCutsList = memo(function SceneCutsList({
             return (
               <div
                 key={cut.id}
-                className="group flex flex-col gap-1 rounded-lg border border-border bg-bg p-2 transition-all hover:border-gold/60"
+                onClick={() => {
+                  const sec = parseStartSeconds(cut);
+                  onSeek?.(sec);
+                }}
+                className="group flex flex-col gap-1 rounded-lg border border-border bg-bg p-2 transition-all hover:border-gold/60 cursor-pointer active:scale-[0.99]"
+                title="点击跳转至此分镜监看"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
@@ -158,14 +179,19 @@ export const SceneCutsList = memo(function SceneCutsList({
                       {cut.emotion}
                     </span>
                   </div>
-                  {cut.conflictScore !== undefined && (
-                    <span
-                      className={`rounded px-1.5 py-0.2 text-[8px] font-mono font-bold border ${conflictColor}`}
-                      title="镜头冲突烈度指数"
-                    >
-                      🔥 冲突 {cut.conflictScore}%
+                  <div className="flex items-center gap-1">
+                    {cut.conflictScore !== undefined && (
+                      <span
+                        className={`rounded px-1.5 py-0.2 text-[8px] font-mono font-bold border ${conflictColor}`}
+                        title="镜头冲突烈度指数"
+                      >
+                        🔥 冲突 {cut.conflictScore}%
+                      </span>
+                    )}
+                    <span className="opacity-0 group-hover:opacity-100 text-[10px] text-gold transition-opacity">
+                      ▶
                     </span>
-                  )}
+                  </div>
                 </div>
                 <div className="text-[11px] font-medium text-text-primary leading-tight">
                   {cut.tag}

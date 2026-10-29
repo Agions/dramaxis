@@ -1,11 +1,66 @@
 /**
  * dramaxis v1.1.0 · VoiceStudioPanel · 48kHz 配音与零样本人声克隆工坊
+ *
+ * 核心功能:
+ * - 6 大主流 TTS 引擎切换 (Edge-TTS / Mossland / OpenAI / MiniMax / GPT-SoVITS / Custom)
+ * - 引擎专属合法音色字典 (VOICE_PRESETS)，彻底杜绝跨引擎音色错配崩溃
+ * - 解说语速微调 (-10% ~ +30%)
+ * - 聚合 CloneReferenceCard 零样本人声克隆
+ * - VoiceArtistAgent 48kHz 沉浸配音直通 A1 轨道
  */
 
 import { memo, useState } from "react";
-import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { toast } from "sonner";
 import { voiceIpc } from "@dramaxis/ipc";
+import { CloneReferenceCard } from "./voice/CloneReferenceCard";
+
+export interface VoiceOption {
+  id: string;
+  label: string;
+}
+
+export const VOICE_PRESETS: Record<string, VoiceOption[]> = {
+  edge: [
+    { id: "zh-CN-YunxiNeural", label: "云希 · 影视悬疑短剧解说 (经典沉浸)" },
+    { id: "zh-CN-YunjianNeural", label: "云健 · 影视解说吐槽 (幽默快节奏)" },
+    { id: "zh-CN-XiaoxiaoNeural", label: "晓晓 · 第一人称女主独白 (深情细腻)" },
+    { id: "zh-CN-YunyangNeural", label: "云扬 · 悬疑重案深度解析 (沉稳庄重)" },
+  ],
+  mossland: [
+    {
+      id: "moss-narrator-male",
+      label: "摩斯 · 电影沉浸解说男声 (moss-narrator-male)",
+    },
+    { id: "moss-suspense-01", label: "摩斯 · 悬疑反转声线 (moss-suspense-01)" },
+    {
+      id: "moss-narrator-female",
+      label: "摩斯 · 情感叙事女声 (moss-narrator-female)",
+    },
+  ],
+  "open-ai": [
+    { id: "alloy", label: "Alloy · 自然均衡影视男声" },
+    { id: "onyx", label: "Onyx · 浑厚低沉 (悬疑/纪录片推荐)" },
+    { id: "echo", label: "Echo · 沉稳内敛男声" },
+    { id: "fable", label: "Fable · 英式叙事故事感" },
+    { id: "nova", label: "Nova · 活力灵动女声" },
+    { id: "shimmer", label: "Shimmer · 温柔细腻女声" },
+  ],
+  mimo: [
+    { id: "female-shaonv", label: "少女解说 (female-shaonv)" },
+    { id: "male-qn-qingse", label: "青涩男声 (male-qn-qingse)" },
+  ],
+  "gpt-sovits": [
+    { id: "clone-reference", label: "零样本克隆声线 (基于参考音频)" },
+  ],
+  custom: [
+    { id: "custom_input", label: "⚙️ 自定义 Voice ID (手动输入)" },
+  ],
+};
+
+export function getDefaultVoiceForEngine(engine: string): string {
+  const presets = VOICE_PRESETS[engine];
+  return presets?.[0]?.id ?? "zh-CN-YunxiNeural";
+}
 
 interface VoiceStudioPanelProps {
   voiceEngine: string;
@@ -21,28 +76,23 @@ export const VoiceStudioPanel = memo(function VoiceStudioPanel({
   onAudioGenerated,
 }: VoiceStudioPanelProps) {
   const [refAudioPath, setRefAudioPath] = useState<string | null>(null);
-  const [selectedVoice, setSelectedVoice] = useState("zh-CN-YunxiNeural");
+  const [selectedVoice, setSelectedVoice] = useState(
+    getDefaultVoiceForEngine(voiceEngine),
+  );
   const [customVoiceId, setCustomVoiceId] = useState("");
+  const [ratePercent, setRatePercent] = useState(0);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
 
-  const handleSelectRefAudio = async () => {
-    try {
-      const selected = await openDialog({
-        multiple: false,
-        filters: [
-          {
-            name: "参考音频 (Audio)",
-            extensions: ["wav", "mp3", "flac", "m4a"],
-          },
-        ],
-      });
-      if (selected) {
-        const path = Array.isArray(selected) ? selected[0] : selected;
-        setRefAudioPath(path ?? null);
-        toast.success(`已载入参考音频: ${String(path).split(/[/\\]/).pop()}`);
-      }
-    } catch {
-      toast.error("选择音频失败");
+  // 跨引擎平滑切换，自动修正为当前引擎的合法音色
+  const handleEngineSelect = (newEngine: string) => {
+    onVoiceEngineChange(newEngine);
+    const validPresets = VOICE_PRESETS[newEngine] ?? [];
+    const isCurrentValid =
+      selectedVoice === "custom_input" ||
+      validPresets.some((p) => p.id === selectedVoice);
+
+    if (!isCurrentValid) {
+      setSelectedVoice(getDefaultVoiceForEngine(newEngine));
     }
   };
 
@@ -60,15 +110,14 @@ export const VoiceStudioPanel = memo(function VoiceStudioPanel({
 
     const voiceToUse =
       selectedVoice === "custom_input"
-        ? customVoiceId.trim() ||
-          (voiceEngine === "mossland" ? "moss-narrator-male" : "zh-CN-YunxiNeural")
+        ? customVoiceId.trim() || getDefaultVoiceForEngine(voiceEngine)
         : selectedVoice;
 
     try {
       const res = await voiceIpc.preview({
         provider: voiceEngine,
         voice: voiceToUse,
-        ratePercent: 0,
+        ratePercent,
         text,
         apiKey: null,
         baseUrl: null,
@@ -89,8 +138,12 @@ export const VoiceStudioPanel = memo(function VoiceStudioPanel({
     }
   };
 
+  const currentPresets: VoiceOption[] =
+    VOICE_PRESETS[voiceEngine] ?? VOICE_PRESETS.edge ?? [];
+
   return (
     <div className="flex flex-col gap-3">
+      {/* 1. TTS 引擎选型 */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-text-secondary">
           TTS 引擎
@@ -148,21 +201,14 @@ export const VoiceStudioPanel = memo(function VoiceStudioPanel({
                   name="voiceEngine"
                   value={e.id}
                   checked={voiceEngine === e.id}
-                  onChange={() => {
-                    onVoiceEngineChange(e.id);
-                    if (e.id === "mossland" && selectedVoice.startsWith("zh-CN")) {
-                      setSelectedVoice("moss-narrator-male");
-                    } else if (e.id === "edge" && !selectedVoice.startsWith("zh-CN")) {
-                      setSelectedVoice("zh-CN-YunxiNeural");
-                    } else if (e.id === "open-ai" && !["alloy", "onyx", "echo", "fable", "nova", "shimmer"].includes(selectedVoice)) {
-                      setSelectedVoice("alloy");
-                    }
-                  }}
+                  onChange={() => handleEngineSelect(e.id)}
                   className="accent-gold"
                 />
                 <div className="flex flex-col truncate">
                   <span className="text-xs font-bold truncate">{e.label}</span>
-                  <span className="text-[9px] opacity-70 truncate">{e.sub}</span>
+                  <span className="text-[9px] opacity-70 truncate">
+                    {e.sub}
+                  </span>
                 </div>
               </div>
               <span className="text-base shrink-0">{e.icon}</span>
@@ -171,35 +217,25 @@ export const VoiceStudioPanel = memo(function VoiceStudioPanel({
         </div>
       </div>
 
+      {/* 2. GPT-SoVITS 参考音频插槽 */}
       {voiceEngine === "gpt-sovits" && (
-        <div className="rounded-xl border border-gold/40 bg-gold-muted p-3 space-y-2">
-          <span className="text-xs font-bold text-gold">
-            🧬 5 秒参考音频零样本克隆
-          </span>
-          <p className="text-[10px] text-text-secondary">
-            {refAudioPath
-              ? `已选: ${refAudioPath.split(/[/\\]/).pop()}`
-              : "导入一段 5~10 秒的主角无杂音干声音频"}
-          </p>
-          <button
-            type="button"
-            onClick={handleSelectRefAudio}
-            className="w-full rounded-lg border border-gold bg-bg py-1.5 text-xs text-gold hover:bg-gold hover:text-zinc-950 transition-colors font-bold"
-          >
-            {refAudioPath
-              ? "更换参考音频文件"
-              : "选择参考音频文件 (.wav / .mp3)"}
-          </button>
-        </div>
+        <CloneReferenceCard
+          refAudioPath={refAudioPath}
+          onRefAudioPathChange={setRefAudioPath}
+        />
       )}
 
+      {/* 3. Mossland 说明 */}
       {voiceEngine === "mossland" && (
         <div className="rounded-xl border border-gold/30 bg-gold/5 p-2.5 text-[11px] text-text-secondary space-y-1">
           <div className="font-semibold text-gold">🎭 Mossland 摩斯电影配音</div>
-          <div>在「设置」中配置 mossland.studio API Key 即可全速调用。支持直接输入自定义音色 ID。</div>
+          <div>
+            在「设置」中配置 mossland.studio API Key 即可全速调用。支持直接输入自定义音色 ID。
+          </div>
         </div>
       )}
 
+      {/* 4. 说话人音色预设 */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-text-secondary">
           说话人音色预设
@@ -209,52 +245,12 @@ export const VoiceStudioPanel = memo(function VoiceStudioPanel({
           onChange={(e) => setSelectedVoice(e.target.value)}
           className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-xs font-semibold text-text-primary outline-none focus:border-gold"
         >
-          {voiceEngine === "mossland" ? (
-            <>
-              <option value="moss-narrator-male">
-                摩斯 · 电影沉浸解说男声 (moss-narrator-male)
-              </option>
-              <option value="moss-suspense-01">
-                摩斯 · 悬疑反转声线 (moss-suspense-01)
-              </option>
-              <option value="moss-narrator-female">
-                摩斯 · 情感叙事女声 (moss-narrator-female)
-              </option>
-              <option value="custom_input">⚙️ 自定义 Voice ID (手动输入)...</option>
-            </>
-          ) : voiceEngine === "open-ai" ? (
-            <>
-              <option value="alloy">Alloy · 自然均衡影视男声</option>
-              <option value="onyx">Onyx · 浑厚低沉 (悬疑/纪录片推荐)</option>
-              <option value="echo">Echo · 沉稳内敛男声</option>
-              <option value="fable">Fable · 英式叙事故事感</option>
-              <option value="nova">Nova · 活力灵动女声</option>
-              <option value="shimmer">Shimmer · 温柔细腻女声</option>
-              <option value="custom_input">⚙️ 自定义 Voice ID (手动输入)...</option>
-            </>
-          ) : voiceEngine === "mimo" ? (
-            <>
-              <option value="female-shaonv">少女解说 (female-shaonv)</option>
-              <option value="male-qn-qingse">青涩男声 (male-qn-qingse)</option>
-              <option value="custom_input">⚙️ 自定义 Voice ID (手动输入)...</option>
-            </>
-          ) : (
-            <>
-              <option value="zh-CN-YunxiNeural">
-                云希 · 影视悬疑短剧解说 (经典沉浸)
-              </option>
-              <option value="zh-CN-YunjianNeural">
-                云健 · 影视解说吐槽 (幽默快节奏)
-              </option>
-              <option value="zh-CN-XiaoxiaoNeural">
-                晓晓 · 第一人称女主独白 (深情细腻)
-              </option>
-              <option value="zh-CN-YunyangNeural">
-                云扬 · 悬疑重案深度解析 (沉稳庄重)
-              </option>
-              <option value="custom_input">⚙️ 自定义 Voice ID (手动输入)...</option>
-            </>
-          )}
+          {currentPresets.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label}
+            </option>
+          ))}
+          <option value="custom_input">⚙️ 自定义 Voice ID (手动输入)...</option>
         </select>
 
         {selectedVoice === "custom_input" && (
@@ -273,6 +269,45 @@ export const VoiceStudioPanel = memo(function VoiceStudioPanel({
         )}
       </div>
 
+      {/* 5. 解说语速微调 */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-xs">
+          <label className="font-semibold text-text-secondary">
+            解说语速微调
+          </label>
+          <span className="font-mono text-[11px] text-gold font-bold">
+            {ratePercent > 0 ? `+${ratePercent}%` : `${ratePercent}%`}
+            {ratePercent === 0
+              ? " (原速 1.0x)"
+              : ratePercent > 0
+                ? " (快节奏推荐)"
+                : ""}
+          </span>
+        </div>
+        <div className="grid grid-cols-4 gap-1.5">
+          {[
+            { rate: -10, label: "0.9x 沉缓" },
+            { rate: 0, label: "1.0x 标准" },
+            { rate: 15, label: "1.15x 紧凑" },
+            { rate: 25, label: "1.25x 快反" },
+          ].map((item) => (
+            <button
+              key={item.rate}
+              type="button"
+              onClick={() => setRatePercent(item.rate)}
+              className={`rounded-lg border px-2 py-1 text-[11px] font-semibold transition-all ${
+                ratePercent === item.rate
+                  ? "border-gold bg-gold-muted text-gold font-bold shadow-xs"
+                  : "border-border bg-bg text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 6. 生成配音按钮 */}
       <button
         type="button"
         disabled={isSynthesizing}

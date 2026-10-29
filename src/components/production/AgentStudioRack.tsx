@@ -3,7 +3,9 @@
  */
 
 import { memo, useState } from "react";
+import { useWorkshopStore } from "@dramaxis/core";
 import type { AgentMessage, BreakpointRequest, AgentRole, Blackboard } from "@dramaxis/ipc";
+import { WORKFLOW_PROFILES } from "./ProductionHeader";
 
 export interface AgentStepMeta {
   id: number;
@@ -89,6 +91,8 @@ export const AgentStudioRack = memo(function AgentStudioRack({
   onApproveBreakpoint,
 }: AgentStudioRackProps) {
   const [feedbackText, setFeedbackText] = useState("");
+  const workflowProfile = useWorkshopStore((s) => s.workflowProfile);
+  const setWorkflowProfile = useWorkshopStore((s) => s.setWorkflowProfile);
 
   const activeScript =
     blackboard?.scriptVersions?.[blackboard.activeScriptIndex] ||
@@ -96,6 +100,37 @@ export const AgentStudioRack = memo(function AgentStudioRack({
 
   return (
     <div className="flex flex-col gap-3 flex-1 min-h-0">
+      {/* 工作流模板选择 (Standard Drama / Fast Commentary / Pure Broll Montage) */}
+      <div className="flex flex-col gap-1.5 rounded-xl border border-border bg-bg p-2.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-text-secondary">
+            流水线工作流模板
+          </span>
+          <span className="text-[10px] text-gold font-mono">
+            {WORKFLOW_PROFILES.find((p) => p.id === workflowProfile)?.badge}
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-1 bg-surface-elevated p-1 rounded-lg border border-border">
+          {WORKFLOW_PROFILES.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              disabled={isAgentRunning}
+              onClick={() => setWorkflowProfile(p.id)}
+              className={`flex flex-col items-center py-1.5 px-1 rounded text-center transition-all disabled:opacity-50 ${
+                workflowProfile === p.id
+                  ? "bg-gold text-zinc-950 font-bold shadow-xs"
+                  : "text-text-secondary hover:text-text-primary hover:bg-surface"
+              }`}
+              title={p.desc}
+            >
+              <span className="text-xs">{p.icon}</span>
+              <span className="text-[10px] whitespace-nowrap">{p.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* 三档人机协同策略切换 */}
       <div className="flex items-center justify-between rounded-xl border border-border bg-bg p-2.5">
         <div className="flex flex-col">

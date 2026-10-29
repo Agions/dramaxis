@@ -9,7 +9,9 @@
 
 import { useEffect, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { basename } from "@dramaxis/utils";
+import { basename, LRUCache } from "@dramaxis/utils";
+
+export const thumbnailCache = new LRUCache<string, string>(250);
 
 export interface ThumbnailImageProps {
   /** 素材源路径 */
@@ -76,12 +78,21 @@ export function ThumbnailImage({
       return;
     }
 
+    const cacheKey = `${source}:${width}`;
+    const cached = thumbnailCache.get(cacheKey);
+    if (cached) {
+      setThumbPath(cached);
+      setState("ready");
+      return;
+    }
+
     let cancelled = false;
     setThumbPath(null);
     setState("loading");
     fetchThumbnail(source, width)
       .then((res) => {
         if (cancelled) return;
+        thumbnailCache.set(cacheKey, res.thumbnailPath);
         setThumbPath(res.thumbnailPath);
         setState("ready");
       })

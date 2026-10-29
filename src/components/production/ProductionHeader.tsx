@@ -9,6 +9,37 @@
 
 import { memo } from "react";
 import { useWorkshopStore, type WorkshopKind } from "@dramaxis/core";
+import type { WorkflowProfile } from "@dramaxis/ipc";
+
+export const WORKFLOW_PROFILES: {
+  id: WorkflowProfile;
+  name: string;
+  badge: string;
+  icon: string;
+  desc: string;
+}[] = [
+  {
+    id: "standard_drama",
+    name: "微短剧精剪",
+    badge: "9节点",
+    icon: "🎭",
+    desc: "全模态深度解析 + 编剧自反思 + 48kHz配音 + 5轨对齐吸附 + 终审质检",
+  },
+  {
+    id: "fast_commentary",
+    name: "极速解说",
+    badge: "7节点",
+    icon: "⚡",
+    desc: "关键帧 Hook 萃取 + 极速文案配音 + 动态字幕吸附",
+  },
+  {
+    id: "pure_broll_montage",
+    name: "高光混剪",
+    badge: "4节点",
+    icon: "✂️",
+    desc: "免剧本配音，专注镜头场景硬切 + 情绪张力卡点混剪",
+  },
+];
 
 export const WORKSHOP_STAGES: {
   id: WorkshopKind;
@@ -42,6 +73,8 @@ export const ProductionHeader = memo(function ProductionHeader({
   const activeWorkshop = useWorkshopStore((s) => s.activeWorkshop);
   const setActiveWorkshop = useWorkshopStore((s) => s.setActiveWorkshop);
   const setActiveTab = useWorkshopStore((s) => s.setActiveTab);
+  const workflowProfile = useWorkshopStore((s) => s.workflowProfile);
+  const setWorkflowProfile = useWorkshopStore((s) => s.setWorkflowProfile);
   const scriptText = useWorkshopStore((s) => s.scriptText);
   const voiceAudioPath = useWorkshopStore((s) => s.voiceAudioPath);
   const sceneCuts = useWorkshopStore((s) => s.sceneCuts);
@@ -142,8 +175,23 @@ export const ProductionHeader = memo(function ProductionHeader({
         })}
       </div>
 
-      {/* 右侧: 启动 Multi-Agent 协作流水线 */}
+      {/* 右侧: 工作流模式切换 + 启动 Multi-Agent 协作流水线 */}
       <div className="flex items-center gap-2">
+        <select
+          value={workflowProfile}
+          onChange={(e) => setWorkflowProfile(e.target.value as WorkflowProfile)}
+          disabled={isAgentRunning}
+          aria-label="选择工作流模式"
+          className="h-8 rounded-lg border border-border bg-surface px-2.5 text-xs font-bold text-text-primary outline-none hover:border-gold/60 focus:border-gold transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+          title={WORKFLOW_PROFILES.find((p) => p.id === workflowProfile)?.desc}
+        >
+          {WORKFLOW_PROFILES.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.icon} {p.name} · {p.badge}
+            </option>
+          ))}
+        </select>
+
         <button
           type="button"
           onClick={onStartAgent}

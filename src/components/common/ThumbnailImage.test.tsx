@@ -10,6 +10,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
+import { thumbnailCache } from "@dramaxis/ui";
 import { ThumbnailImage } from "./ThumbnailImage";
 
 // ─── mocks ─────────────────────────────────────────────────────────
@@ -26,6 +27,7 @@ vi.mock("@tauri-apps/api/core", () => ({
 // ─── tests ─────────────────────────────────────────────────────────
 afterEach(() => {
   vi.clearAllMocks();
+  thumbnailCache.clear();
   cleanup();
 });
 
@@ -103,5 +105,21 @@ describe("ThumbnailImage", () => {
     rerender(<ThumbnailImage source="/b.mp4" />);
     expect(screen.getByText("生成缩略图...")).toBeInTheDocument();
     expect(screen.getByText("b.mp4")).toBeInTheDocument();
+  });
+
+  it("相同 source 再次渲染直接命中 LRU 缓存，不重复调用 fetchThumbnail", async () => {
+    thumbnailMock.mockResolvedValue({ thumbnailPath: "/cached_thumb.jpg" });
+    const { unmount } = render(<ThumbnailImage source="/cached_video.mp4" />);
+    await screen.findByRole("img");
+    expect(thumbnailMock).toHaveBeenCalledTimes(1);
+
+    unmount();
+
+    // 重新挂载相同路径
+    render(<ThumbnailImage source="/cached_video.mp4" />);
+    const cachedImg = screen.getByRole("img");
+    expect(cachedImg).toHaveAttribute("src", "tauri://localhost//cached_thumb.jpg");
+    // 不应重复发起请求
+    expect(thumbnailMock).toHaveBeenCalledTimes(1);
   });
 });

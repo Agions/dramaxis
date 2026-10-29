@@ -9,7 +9,7 @@
 import { memo } from "react";
 import { AGENT_STEPS } from "@components/production/AgentStudioRack";
 import { SceneCutsList } from "@components/production/SceneCutsList";
-import { useWorkshopStore } from "@dramaxis/core";
+import { usePlaybackStore, useWorkshopStore } from "@dramaxis/core";
 
 interface ProductionLeftSidebarProps {
   currentStepIndex: number;
@@ -23,6 +23,7 @@ export const ProductionLeftSidebar = memo(function ProductionLeftSidebar({
   const sceneCuts = useWorkshopStore((s) => s.sceneCuts);
   const setSceneCuts = useWorkshopStore((s) => s.setSceneCuts);
   const markDirty = useWorkshopStore((s) => s.markDirty);
+  const seek = usePlaybackStore((s) => s.seek);
 
   return (
     <aside className="flex flex-col border-r border-border bg-surface p-3 gap-3 overflow-y-auto">
@@ -91,6 +92,7 @@ export const ProductionLeftSidebar = memo(function ProductionLeftSidebar({
           markDirty("exportDirty", true);
         }}
         mediaPath={mediaPath}
+        onSeek={seek}
       />
     </aside>
   );

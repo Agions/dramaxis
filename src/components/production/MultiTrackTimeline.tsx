@@ -75,8 +75,10 @@ export function MultiTrackTimeline({
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || !onSeek) return;
     const rect = containerRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+    const scrollLeft = containerRef.current.scrollLeft;
+    const clickX = e.clientX - rect.left + scrollLeft;
+    const totalWidth = containerRef.current.scrollWidth || rect.width;
+    const ratio = Math.max(0, Math.min(1, clickX / totalWidth));
     onSeek(ratio * durationSeconds);
   };
 
@@ -87,6 +89,7 @@ export function MultiTrackTimeline({
 
   const isEmpty =
     videoClips.length === 0 && voiceClips.length === 0 && !hookClip;
+  const contentWidthPercent = Math.max(100, Math.round(zoomLevel * 100));
 
   return (
     <div className="flex h-full w-full flex-col select-none font-sans">
@@ -180,27 +183,31 @@ export function MultiTrackTimeline({
         <div
           ref={containerRef}
           onClick={handleTimelineClick}
-          className="relative flex-1 flex flex-col gap-1.5 cursor-crosshair overflow-y-auto"
+          className="relative flex-1 flex flex-col cursor-crosshair overflow-x-auto overflow-y-auto"
         >
-          {/* Playhead 播放指针 */}
           <div
-            className="absolute top-0 bottom-0 z-20 w-[2px] bg-gradient-to-b from-gold via-amber-400 to-amber-600 shadow-[0_0_8px_var(--color-gold)] pointer-events-none transition-all duration-75"
-            style={{ left: `${playheadPercent}%` }}
+            className="relative flex-1 flex flex-col gap-1.5 min-h-full"
+            style={{ minWidth: `${contentWidthPercent}%` }}
           >
-            <div className="h-2 w-2 -translate-x-[3px] rotate-45 bg-gold shadow-[0_0_6px_var(--color-gold)]" />
-          </div>
-
-          {isEmpty ? (
-            <div className="flex h-full flex-col items-center justify-center text-center text-text-muted text-xs gap-1.5 my-auto">
-              <span className="text-2xl">⏱️</span>
-              <span className="font-bold text-text-secondary">
-                多轨时间轴待命
-              </span>
-              <span className="text-[10px]">
-                导入素材或启动 Multi-Agent 智能体将实时排布 5 轨视听流
-              </span>
+            {/* Playhead 播放指针 */}
+            <div
+              className="absolute top-0 bottom-0 z-20 w-[2px] bg-gradient-to-b from-gold via-amber-400 to-amber-600 shadow-[0_0_8px_var(--color-gold)] pointer-events-none transition-all duration-75"
+              style={{ left: `${playheadPercent}%` }}
+            >
+              <div className="h-2 w-2 -translate-x-[3px] rotate-45 bg-gold shadow-[0_0_6px_var(--color-gold)]" />
             </div>
-          ) : (
+
+            {isEmpty ? (
+              <div className="flex h-full flex-col items-center justify-center text-center text-text-muted text-xs gap-1.5 my-auto">
+                <span className="text-2xl">⏱️</span>
+                <span className="font-bold text-text-secondary">
+                  多轨时间轴待命
+                </span>
+                <span className="text-[10px]">
+                  导入素材或启动 Multi-Agent 智能体将实时排布 5 轨视听流
+                </span>
+              </div>
+            ) : (
             <>
               {/* Track 1: 视频分镜切片 (V1) */}
               <div className="flex items-center gap-2 h-8 rounded-lg bg-surface border border-border px-2">
@@ -319,6 +326,7 @@ export function MultiTrackTimeline({
               </div>
             </>
           )}
+          </div>
         </div>
       </div>
     </div>
