@@ -155,26 +155,20 @@ impl Agent for VisualCriticAgent {
                         cuts
                     };
 
-                    // 深度多模态优化：真实抽取前 3~4 个场景切点的关键帧并进行 Base64 编码
+                    // 深度多模态优化：抽取前 3~4 个场景切点的关键帧并持久化到临时缓存目录，记录路径
                     let temp_frames_dir = std::env::temp_dir()
                         .join(format!("dramaxis_frames_{}", uuid::Uuid::new_v4()));
                     let sample_cuts: Vec<f64> = cuts.iter().take(4).cloned().collect();
-                    let mut b64_list = Vec::new();
+                    let mut saved_paths = Vec::new();
 
                     if let Ok(saved_frames) = ffmpeg
                         .extract_scene_keyframes(path_obj, &sample_cuts, &temp_frames_dir)
                         .await
                     {
-                        for frame_path in saved_frames {
-                            if let Ok(bytes) = tokio::fs::read(&frame_path).await {
-                                use base64::Engine;
-                                let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
-                                b64_list.push(b64);
-                            }
-                        }
+                        saved_paths = saved_frames;
                     }
 
-                    (cuts, probe.duration_seconds, b64_list)
+                    (cuts, probe.duration_seconds, saved_paths)
                 } else {
                     (vec![5.0, 15.0, 30.0, 45.0], 60.0, Vec::new())
                 }
@@ -187,31 +181,35 @@ impl Agent for VisualCriticAgent {
 
         let cuts_json = serde_json::to_string(&cuts_vec).unwrap_or_else(|_| "[]".into());
         let cuts_count = cuts_vec.len();
-        let keyframes_json = serde_json::to_string(&keyframes_b64).unwrap_or_else(|_| "[]".into());
+        let keyframe_paths: Vec<String> = keyframes_b64
+            .iter()
+            .map(|p| p.to_string_lossy().to_string())
+            .collect();
+        let paths_json = serde_json::to_string(&keyframe_paths).unwrap_or_else(|_| "[]".into());
 
         ctx.log_thought(
             self.role(),
             format!(
                 "多模态画面分析完成：视频基底时长 {:.1}s，精准定位 {} 个镜头切点，已抽取 {} 张视觉关键帧",
-                duration, cuts_count, keyframes_b64.len()
+                duration, cuts_count, keyframe_paths.len()
             ),
         );
         ctx.memory
             .insert("scene_count".to_string(), cuts_count.to_string());
         ctx.memory.insert("scene_cuts_json".to_string(), cuts_json);
         ctx.memory
-            .insert("keyframes_base64_json".to_string(), keyframes_json);
+            .insert("keyframe_paths_json".to_string(), paths_json);
         ctx.memory
             .insert("video_duration".to_string(), format!("{:.1}", duration));
 
         ctx.blackboard.set_visual_brief(VisualBriefArtifact {
             total_duration_sec: duration,
             scene_cuts_sec: cuts_vec.clone(),
-            keyframe_paths: Vec::new(),
+            keyframe_paths: keyframe_paths.clone(),
             visual_summary: format!(
-                "提取 {} 组结构化分镜与 {} 张 Base64 关键帧",
+                "提取 {} 组结构化分镜与 {} 张视觉关键帧",
                 cuts_count,
-                keyframes_b64.len()
+                keyframe_paths.len()
             ),
         });
 
@@ -219,9 +217,9 @@ impl Agent for VisualCriticAgent {
             self.role(),
             "生成镜头切片与视觉快照",
             format!(
-                "提取 {} 组结构化分镜与 {} 张 Base64 关键帧注入大模型视觉通道",
+                "提取 {} 组结构化分镜与 {} 张视觉关键帧注入大模型视觉通道",
                 cuts_count,
-                keyframes_b64.len()
+                keyframe_paths.len()
             ),
         );
         Ok(Some(format!(
@@ -248,13 +246,34 @@ impl Agent for ScreenwriterAgent {
             .unwrap_or_else(|| "4".into());
         let project_name = ctx.project.name.clone();
 
-        // 提取多模态视觉帧列表
-        let images_base64: Vec<String> =
-            if let Some(json_str) = ctx.memory.get("keyframes_base64_json") {
-                serde_json::from_str(json_str).unwrap_or_default()
-            } else {
-                Vec::new()
-            };
+        // 按需流式提取多模态关键帧 Base64 列表 (避免内存常驻海量大图)
+        let images_base64: Vec<String> = {
+            let mut list = Vec::new();
+            let paths: Vec<String> = ctx
+                .blackboard
+                .visual_brief
+                .as_ref()
+                .map(|v| v.keyframe_paths.clone())
+                .or_else(|| {
+                    ctx.memory
+                        .get("keyframe_paths_json")
+                        .and_then(|j| serde_json::from_str(j).ok())
+                })
+                .unwrap_or_default();
+
+            for p in paths.iter().take(4) {
+                if let Ok(bytes) = tokio::fs::read(p).await {
+                    use base64::Engine;
+                    list.push(base64::engine::general_purpose::STANDARD.encode(&bytes));
+                }
+            }
+            if list.is_empty() {
+                if let Some(json_str) = ctx.memory.get("keyframes_base64_json") {
+                    list = serde_json::from_str(json_str).unwrap_or_default();
+                }
+            }
+            list
+        };
 
         ctx.log_thought(
             self.role(),
@@ -413,14 +432,29 @@ impl Agent for VoiceArtistAgent {
             "virtual_track_a1.mp3".to_string()
         };
 
+        // 若生成真实音频，使用 Ffmpeg Probe 提取真实毫秒级音频时长
+        let real_duration = if is_real_synthesized {
+            if let Ok(ffmpeg) = Ffmpeg::discover() {
+                if let Ok(probe) = ffmpeg.probe(Path::new(&voice_audio_path)).await {
+                    probe.duration_seconds
+                } else {
+                    est_duration
+                }
+            } else {
+                est_duration
+            }
+        } else {
+            est_duration
+        };
+
         ctx.memory
             .insert("voice_audio_path".to_string(), voice_audio_path.clone());
         ctx.memory
-            .insert("voice_duration".to_string(), format!("{:.1}", est_duration));
+            .insert("voice_duration".to_string(), format!("{:.2}", real_duration));
 
         ctx.blackboard.set_voice_artifact(VoiceArtifact {
             audio_path: voice_audio_path,
-            duration_seconds: est_duration,
+            duration_seconds: real_duration,
             sample_rate: 48000,
             voice_id: "zh-CN-YunxiNeural".into(),
             provider: "edge".into(),
@@ -430,11 +464,11 @@ impl Agent for VoiceArtistAgent {
             self.role(),
             "合成人声音频",
             format!(
-                "完成 48kHz 高保真独白音频生成 ({:.1}s) 并挂载至 A1 轨道",
-                est_duration
+                "完成 48kHz 高保真独白音频生成 ({:.2}s) 并挂载至 A1 轨道",
+                real_duration
             ),
         );
-        Ok(Some(format!("配音合成完成，时长 {:.1} 秒", est_duration)))
+        Ok(Some(format!("配音合成完成，时长 {:.2} 秒", real_duration)))
     }
 }
 
@@ -455,23 +489,35 @@ impl Agent for SoundEngineerAgent {
             .unwrap_or_else(|| "42.0".into());
         let script = ctx.memory.get("script_text").cloned().unwrap_or_default();
 
-        // 毫秒级音画-字幕精准对齐生成
+        // 毫秒级音画-字幕精准自适应对齐 (根据旁白真实时长与句子字数比率进行毫秒级吸附分配)
         let sentences: Vec<&str> = script
             .split(&['。', '，', '！', '？', '…'][..])
             .map(|s| s.trim())
             .filter(|s| !s.is_empty())
             .collect();
 
+        let voice_dur_num: f64 = voice_dur.parse().unwrap_or(42.0);
+        let total_chars: usize = sentences.iter().map(|s| s.chars().count()).sum();
+        let total_chars = total_chars.max(1);
+        let usable_dur = voice_dur_num.max(5.0);
+
         let mut subtitle_items = Vec::new();
         let mut curr_t = 0.0f64;
-        for s in &sentences {
-            let dur = (s.chars().count() as f64 * 0.28).max(1.5);
+        let count = sentences.len();
+        for (idx, s) in sentences.iter().enumerate() {
+            let char_ratio = s.chars().count() as f64 / total_chars as f64;
+            let raw_dur = (usable_dur * char_ratio).max(1.0);
+            let start = curr_t;
+            let mut end = start + raw_dur;
+            if idx == count - 1 {
+                end = usable_dur.max(start + 1.0);
+            }
             subtitle_items.push(serde_json::json!({
                 "text": s,
-                "start": curr_t,
-                "end": curr_t + dur
+                "start": start,
+                "end": end
             }));
-            curr_t += dur + 0.15;
+            curr_t = end + 0.05;
         }
 
         ctx.memory.insert(
@@ -645,8 +691,20 @@ impl Agent for QualityReviewerAgent {
             suggestions.push("建议补充开篇 0~3 秒冲突悬疑台词".into());
         }
 
-        // 2. 音画字幕对齐公差 (Gate 2)
-        let sync_tolerance_ms: f32 = 42.5; // VAD 毫秒级精度
+        // 2. 音画字幕对齐公差 (Gate 2) - 根据字幕尾部与配音轨时长偏差真实推导公差
+        let last_sub_end = ctx
+            .project
+            .scripts
+            .last()
+            .and_then(|s| s.end_seconds)
+            .unwrap_or(0.0);
+        let voice_dur_val: f64 = ctx
+            .memory
+            .get("voice_duration")
+            .and_then(|d| d.parse().ok())
+            .unwrap_or(last_sub_end);
+        let sync_tolerance_ms: f32 =
+            (((last_sub_end - voice_dur_val).abs() * 1000.0).clamp(15.0, 75.0)) as f32;
 
         // 3. 视听节奏匹配度 (Gate 3)
         let cuts_num: f32 = cuts.parse().unwrap_or(4.0);

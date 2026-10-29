@@ -2,7 +2,7 @@
 
 use dramaxis_agent::{
     AgentContext, AgentEventPayload, AgentOrchestrator, Blackboard, BreakpointRequest,
-    DagOrchestrator, DagSnapshot,
+    DagOrchestrator, DagSnapshot, WorkflowProfile,
 };
 use dramaxis_core::domain::Project;
 use dramaxis_core::error::SplicrError;
@@ -39,6 +39,7 @@ pub async fn agent_start(
     app_handle: tauri::AppHandle,
     project: Project,
     auto_mode: bool,
+    workflow_profile: Option<WorkflowProfile>,
     app_ctx: State<'_, AppContext>,
     state: State<'_, AgentServiceState>,
 ) -> Result<AgentContext, SplicrError> {
@@ -72,7 +73,8 @@ pub async fn agent_start(
     });
 
     let orch = AgentOrchestrator::new(ctx.clone()).with_emitter(emitter.clone());
-    let dag = DagOrchestrator::new(ctx.clone()).with_emitter(emitter);
+    let dag = DagOrchestrator::with_profile(ctx.clone(), workflow_profile.unwrap_or_default())
+        .with_emitter(emitter);
 
     {
         let mut orch_lock = state.orchestrator.write().await;

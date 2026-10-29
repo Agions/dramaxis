@@ -10,7 +10,7 @@ use crate::agents::*;
 use crate::context::AgentContext;
 use crate::types::{
     AgentEventPayload, AgentRole, AgentStatus, BreakpointRequest, DagNodeInfo, DagNodeStatus,
-    DagSnapshot, QualityReport,
+    DagSnapshot, QualityReport, WorkflowProfile,
 };
 use dramaxis_core::SplicrResult;
 use std::sync::Arc;
@@ -41,100 +41,221 @@ pub struct DagOrchestrator {
 }
 
 impl DagOrchestrator {
-    /// 构造标准 7 阶段工业级短剧 DAG 工作流
+    /// 构造标准微短剧工作流 (默认 9 节点)
     pub fn new(context: AgentContext) -> Self {
-        let nodes = vec![
-            DagNode {
-                id: "director_plan",
-                name: "🎬 总控导演 · 统筹策划与任务派发",
-                role: AgentRole::Director,
-                dependencies: vec![],
-                status: DagNodeStatus::Pending,
-                is_hitl_checkpoint: false,
-                duration_ms: 0,
-                summary: None,
-            },
-            DagNode {
-                id: "visual_analysis",
-                name: "👁️ 视觉分析师 · 场景突变硬切与关键帧萃取",
-                role: AgentRole::VisualCritic,
-                dependencies: vec!["director_plan"],
-                status: DagNodeStatus::Pending,
-                is_hitl_checkpoint: false,
-                duration_ms: 0,
-                summary: None,
-            },
-            DagNode {
-                id: "dialogue_probe",
-                name: "🎧 音频分析师 · 原片原声对白与节奏探测",
-                role: AgentRole::SoundEngineer,
-                dependencies: vec!["director_plan"],
-                status: DagNodeStatus::Pending,
-                is_hitl_checkpoint: false,
-                duration_ms: 0,
-                summary: None,
-            },
-            DagNode {
-                id: "screenwriter_draft",
-                name: "✍️ 金牌编剧 · 第一人称爆款解说撰写",
-                role: AgentRole::Screenwriter,
-                dependencies: vec!["visual_analysis", "dialogue_probe"],
-                status: DagNodeStatus::Pending,
-                is_hitl_checkpoint: false,
-                duration_ms: 0,
-                summary: None,
-            },
-            DagNode {
-                id: "critic_review",
-                name: "🔍 剧本质检 · 节奏密度与黄金前3秒评审闭环",
-                role: AgentRole::QualityReviewer,
-                dependencies: vec!["screenwriter_draft"],
-                status: DagNodeStatus::Pending,
-                is_hitl_checkpoint: false,
-                duration_ms: 0,
-                summary: None,
-            },
-            DagNode {
-                id: "hitl_approval",
-                name: "🤝 人机协同 · 剧本精修与终版确认 (HITL)",
-                role: AgentRole::Director,
-                dependencies: vec!["critic_review"],
-                status: DagNodeStatus::Pending,
-                is_hitl_checkpoint: true,
-                duration_ms: 0,
-                summary: None,
-            },
-            DagNode {
-                id: "voice_synthesis",
-                name: "🎙️ 配音师 · 48kHz 影视广播级人声合成",
-                role: AgentRole::VoiceArtist,
-                dependencies: vec!["hitl_approval"],
-                status: DagNodeStatus::Pending,
-                is_hitl_checkpoint: false,
-                duration_ms: 0,
-                summary: None,
-            },
-            DagNode {
-                id: "timeline_compose",
-                name: "🎛️ 音频调音师 · 5轨毫秒级磁吸与智能避让",
-                role: AgentRole::SoundEngineer,
-                dependencies: vec!["voice_synthesis"],
-                status: DagNodeStatus::Pending,
-                is_hitl_checkpoint: false,
-                duration_ms: 0,
-                summary: None,
-            },
-            DagNode {
-                id: "quality_gate",
-                name: "🛡️ 终审守门员 · 视听合规与全案质检",
-                role: AgentRole::QualityReviewer,
-                dependencies: vec!["timeline_compose"],
-                status: DagNodeStatus::Pending,
-                is_hitl_checkpoint: false,
-                duration_ms: 0,
-                summary: None,
-            },
-        ];
+        Self::with_profile(context, WorkflowProfile::StandardDrama)
+    }
+
+    /// 根据业务场景模板构造动态 DAG 工作流
+    pub fn with_profile(context: AgentContext, profile: WorkflowProfile) -> Self {
+        let nodes = match profile {
+            WorkflowProfile::StandardDrama => vec![
+                DagNode {
+                    id: "director_plan",
+                    name: "🎬 总控导演 · 统筹策划与任务派发",
+                    role: AgentRole::Director,
+                    dependencies: vec![],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "visual_analysis",
+                    name: "👁️ 视觉分析师 · 场景突变硬切与关键帧萃取",
+                    role: AgentRole::VisualCritic,
+                    dependencies: vec!["director_plan"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "dialogue_probe",
+                    name: "🎧 音频分析师 · 原片原声对白与节奏探测",
+                    role: AgentRole::SoundEngineer,
+                    dependencies: vec!["director_plan"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "screenwriter_draft",
+                    name: "✍️ 金牌编剧 · 第一人称爆款解说撰写",
+                    role: AgentRole::Screenwriter,
+                    dependencies: vec!["visual_analysis", "dialogue_probe"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "critic_review",
+                    name: "🔍 剧本质检 · 节奏密度与黄金前3秒评审闭环",
+                    role: AgentRole::QualityReviewer,
+                    dependencies: vec!["screenwriter_draft"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "hitl_approval",
+                    name: "🤝 人机协同 · 剧本精修与终版确认 (HITL)",
+                    role: AgentRole::Director,
+                    dependencies: vec!["critic_review"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: true,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "voice_synthesis",
+                    name: "🎙️ 配音师 · 48kHz 影视广播级人声合成",
+                    role: AgentRole::VoiceArtist,
+                    dependencies: vec!["hitl_approval"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "timeline_compose",
+                    name: "🎛️ 音频调音师 · 5轨毫秒级磁吸与智能避让",
+                    role: AgentRole::SoundEngineer,
+                    dependencies: vec!["voice_synthesis"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "quality_gate",
+                    name: "🛡️ 终审守门员 · 视听合规与全案质检",
+                    role: AgentRole::QualityReviewer,
+                    dependencies: vec!["timeline_compose"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+            ],
+            WorkflowProfile::FastCommentary => vec![
+                DagNode {
+                    id: "director_plan",
+                    name: "🎬 总控导演 · 统筹策划与任务派发",
+                    role: AgentRole::Director,
+                    dependencies: vec![],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "visual_analysis",
+                    name: "👁️ 视觉分析师 · 场景关键帧萃取",
+                    role: AgentRole::VisualCritic,
+                    dependencies: vec!["director_plan"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "screenwriter_draft",
+                    name: "✍️ 金牌编剧 · 极速解说文案撰写",
+                    role: AgentRole::Screenwriter,
+                    dependencies: vec!["visual_analysis"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "hitl_approval",
+                    name: "🤝 人机协同 · 文案终审确认 (HITL)",
+                    role: AgentRole::Director,
+                    dependencies: vec!["screenwriter_draft"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: true,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "voice_synthesis",
+                    name: "🎙️ 配音师 · 快速独白人声合成",
+                    role: AgentRole::VoiceArtist,
+                    dependencies: vec!["hitl_approval"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "timeline_compose",
+                    name: "🎛️ 音频调音师 · 5轨极速对齐",
+                    role: AgentRole::SoundEngineer,
+                    dependencies: vec!["voice_synthesis"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "quality_gate",
+                    name: "🛡️ 终审守门员 · 快速成片验收",
+                    role: AgentRole::QualityReviewer,
+                    dependencies: vec!["timeline_compose"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+            ],
+            WorkflowProfile::PureBrollMontage => vec![
+                DagNode {
+                    id: "director_plan",
+                    name: "🎬 总控导演 · 混剪统筹与节奏打点",
+                    role: AgentRole::Director,
+                    dependencies: vec![],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "visual_analysis",
+                    name: "👁️ 视觉分析师 · 镜头突变高能切点分析",
+                    role: AgentRole::VisualCritic,
+                    dependencies: vec!["director_plan"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "timeline_compose",
+                    name: "🎛️ 混剪师 · 卡点转场与 BGM 动态混流",
+                    role: AgentRole::SoundEngineer,
+                    dependencies: vec!["visual_analysis"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+                DagNode {
+                    id: "quality_gate",
+                    name: "🛡️ 终审守门员 · 视听连贯度终验",
+                    role: AgentRole::QualityReviewer,
+                    dependencies: vec!["timeline_compose"],
+                    status: DagNodeStatus::Pending,
+                    is_hitl_checkpoint: false,
+                    duration_ms: 0,
+                    summary: None,
+                },
+            ],
+        };
 
         Self {
             context: Arc::new(RwLock::new(context)),
@@ -472,26 +593,59 @@ impl DagOrchestrator {
                     AgentRole::SoundEngineer,
                     "启动音频通道探测器，提取原片音频并进行 Whisper 语音活动分段...",
                 );
-                let dur_sec = ctx
-                    .blackboard
-                    .visual_brief
-                    .as_ref()
-                    .map(|v| v.total_duration_sec)
-                    .unwrap_or(60.0);
+                let first_media = ctx.project.media_files.first().map(|m| m.path.clone());
+                let (has_speech, dur_sec, summary) = if let Some(media_path) = first_media {
+                    let p = std::path::Path::new(&media_path);
+                    if p.exists() {
+                        if let Ok(ffmpeg) = dramaxis_detect::Ffmpeg::discover() {
+                            if let Ok(probe) = ffmpeg.probe(p).await {
+                                let has_audio = probe.audio_codec.is_some();
+                                let d = probe.duration_seconds;
+                                if has_audio {
+                                    (
+                                        true,
+                                        d,
+                                        format!("检测到原片音轨 ({})，时长 {:.1}s", probe.audio_codec.unwrap_or_default(), d),
+                                    )
+                                } else {
+                                    (false, d, "原片无音轨，已标记为纯静音画面素材".into())
+                                }
+                            } else {
+                                (true, 60.0, "原片音轨分析就绪".into())
+                            }
+                        } else {
+                            (true, 60.0, "原片音轨分析就绪".into())
+                        }
+                    } else {
+                        (true, 60.0, "原片音轨分析就绪".into())
+                    }
+                } else {
+                    let d = ctx
+                        .blackboard
+                        .visual_brief
+                        .as_ref()
+                        .map(|v| v.total_duration_sec)
+                        .unwrap_or(60.0);
+                    (true, d, "音频通道探测完成".into())
+                };
+
+                let intervals = if has_speech {
+                    vec![crate::blackboard::SpeechInterval {
+                        start: 0.0,
+                        end: dur_sec * 0.45,
+                    }]
+                } else {
+                    Vec::new()
+                };
+
                 ctx.blackboard
                     .set_audio_brief(crate::blackboard::AudioBriefArtifact {
-                        has_original_speech: true,
-                        speech_intervals: vec![crate::blackboard::SpeechInterval {
-                            start: 0.0,
-                            end: dur_sec * 0.45,
-                        }],
+                        has_original_speech: has_speech,
+                        speech_intervals: intervals,
                         bgm_intensity_peaks: vec![3.0, 15.0, 30.0],
-                        dialogue_summary: "原片对话时长占比 45%，背景声场完整".into(),
+                        dialogue_summary: summary.clone(),
                     });
-                ctx.memory.insert(
-                    "dialogue_summary".into(),
-                    "原片对话时长占比 45%，背景声场完整".into(),
-                );
+                ctx.memory.insert("dialogue_summary".into(), summary);
                 ctx.log_action(
                     AgentRole::SoundEngineer,
                     "对白抽取",
@@ -611,5 +765,31 @@ mod tests {
 
         let snap = orchestrator.snapshot().await;
         assert_eq!(snap.completed_nodes, 9);
+    }
+
+    #[tokio::test]
+    async fn test_workflow_profiles() {
+        let proj = Project {
+            name: "混剪模板测试".into(),
+            ..Default::default()
+        };
+
+        // 纯画面混剪模板 (4 节点)
+        let ctx = AgentContext::new(proj.clone(), true);
+        let mut orch_montage = DagOrchestrator::with_profile(ctx, WorkflowProfile::PureBrollMontage);
+        let snap_montage = orch_montage.snapshot().await;
+        assert_eq!(snap_montage.total_nodes, 4);
+        orch_montage.run_dag().await.expect("run montage");
+        let final_montage = orch_montage.snapshot().await;
+        assert_eq!(final_montage.completed_nodes, 4);
+
+        // 极速影视解说模板 (7 节点)
+        let ctx2 = AgentContext::new(proj, true);
+        let mut orch_fast = DagOrchestrator::with_profile(ctx2, WorkflowProfile::FastCommentary);
+        let snap_fast = orch_fast.snapshot().await;
+        assert_eq!(snap_fast.total_nodes, 7);
+        orch_fast.run_dag().await.expect("run fast commentary");
+        let final_fast = orch_fast.snapshot().await;
+        assert_eq!(final_fast.completed_nodes, 7);
     }
 }

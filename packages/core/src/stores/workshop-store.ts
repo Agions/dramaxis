@@ -10,7 +10,7 @@
  */
 
 import { create } from "zustand";
-import type { AlignmentPlan, SceneVisualFeature } from "@dramaxis/ipc";
+import type { AlignmentPlan, SceneVisualFeature, WorkflowProfile } from "@dramaxis/ipc";
 
 export type WorkshopKind = "assets" | "script" | "timeline" | "export";
 export type WorkshopTab = "agent" | "script" | "voice" | "export";
@@ -46,6 +46,7 @@ export interface WorkshopState {
   // 工坊导航
   activeWorkshop: WorkshopKind;
   activeTab: WorkshopTab;
+  workflowProfile: WorkflowProfile;
 
   // W1 素材与切片
   sceneCuts: WorkshopSceneCut[];
@@ -79,6 +80,7 @@ export interface WorkshopState {
   // Actions
   setActiveWorkshop: (w: WorkshopKind) => void;
   setActiveTab: (t: WorkshopTab) => void;
+  setWorkflowProfile: (profile: WorkflowProfile) => void;
   setSceneCuts: (cuts: WorkshopSceneCut[]) => void;
   setSubtitleSegments: (subs: SubtitleSegment[]) => void;
   setLlmProvider: (provider: string) => void;
@@ -115,6 +117,7 @@ const initialDirtyState: DirtyState = {
 export const useWorkshopStore = create<WorkshopState>((set) => ({
   activeWorkshop: "assets",
   activeTab: "agent",
+  workflowProfile: "standard_drama",
 
   sceneCuts: [],
   subtitleSegments: [],
@@ -142,6 +145,7 @@ export const useWorkshopStore = create<WorkshopState>((set) => ({
 
   setActiveWorkshop: (activeWorkshop) => set({ activeWorkshop }),
   setActiveTab: (activeTab) => set({ activeTab }),
+  setWorkflowProfile: (workflowProfile) => set({ workflowProfile }),
   setSceneCuts: (sceneCuts) => set({ sceneCuts }),
   setSubtitleSegments: (subtitleSegments) => set({ subtitleSegments }),
   setLlmProvider: (llmProvider) => set({ llmProvider }),

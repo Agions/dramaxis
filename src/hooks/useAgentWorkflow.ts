@@ -17,6 +17,7 @@ import {
   type DagSnapshot,
   type Blackboard,
   type Project,
+  type WorkflowProfile,
 } from "@dramaxis/ipc";
 import { useTauriEvent } from "./useTauriEvent";
 import { toast } from "sonner";
@@ -201,7 +202,11 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
   });
 
   const startWorkflow = useCallback(
-    async (project: Project, auto: boolean = true) => {
+    async (
+      project: Project,
+      auto: boolean = true,
+      workflowProfile?: WorkflowProfile,
+    ) => {
       setIsAgentRunning(true);
       setBreakpoint(null);
       setCurrentStepIndex(0);
@@ -211,7 +216,11 @@ export function useAgentWorkflow(options?: UseAgentWorkflowOptions) {
       toast.info("DirectorAgent: 全局自适应多智能体协作流水线已启动！");
 
       try {
-        await agentIpc.start(project, auto);
+        if (workflowProfile !== undefined) {
+          await agentIpc.start(project, auto, workflowProfile);
+        } else {
+          await agentIpc.start(project, auto);
+        }
         const req = await agentIpc.runDag();
         if (req) {
           setBreakpoint(req);

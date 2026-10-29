@@ -1,5 +1,17 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum WorkflowProfile {
+    /// 完整电影级微短剧 (7阶段9节点：全模态分析 + 编剧 + 自反思闭环 + 配音 + 5轨吸附 + 终审质检)
+    #[default]
+    StandardDrama,
+    /// 极速影视解说 (跳过原片深度音频分段，专注于关键帧 Hook + 极速配音与字幕吸附)
+    FastCommentary,
+    /// 纯画面高光混剪 (跳过剧本撰写与配音，专注于场景硬切检测 + BGM 节奏点吸附)
+    PureBrollMontage,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AgentRole {

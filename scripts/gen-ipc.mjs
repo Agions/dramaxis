@@ -83,6 +83,8 @@ const TS_ALIASES = {
 
 // 跳过生成的 internal / edge-case 类型 (与 IPC 无关或 wire 格式有手动 override)
 const SKIP_TYPES = new Set([
+  "SplicrError", // 手工定义统一 wire 格式 { kind, message }
+  "DramaxisError",
   "LlmProviderKind", // kebab-case 把 DeepSeek 序列化为 "deep-seek",但手工约定是 "deepseek"
   "AppContext",
   "AppContextBuilder",
@@ -488,8 +490,8 @@ function parseEnumBody(body) {
 
   const variants = [];
   for (const seg of segments) {
-    if (/^#\[/.test(seg)) continue;
-    const m = /^(\w+)/.exec(seg);
+    const stripped = seg.replace(/#\[[^\]]*\]/g, "").trim();
+    const m = /^(\w+)/.exec(stripped);
     if (!m) continue;
     variants.push(m[1]);
   }

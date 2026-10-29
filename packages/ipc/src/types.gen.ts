@@ -414,6 +414,7 @@ export interface IpcContracts {
     args: {
       project: Project;
       autoMode: boolean;
+      workflowProfile: WorkflowProfile | null;
     };
     result: AgentContext;
   };
@@ -447,75 +448,6 @@ export interface DetectScenesResult {
   cuts: number[];
   totalCuts: number;
   probe?: FfmpegProbe | null;
-}
-
-// Rust 端 RenderVideoParams (pub struct, rename_all = "camelCase")
-export interface RenderVideoParams {
-  videoPath: string;
-  voicePath?: string | null;
-  subtitles: CapcutSubtitleItem[];
-  platformPreset?: string | null;
-  antiDupZoom?: number | null;
-  enableAmbientBlur?: boolean | null;
-  dedup?: DedupOptions | null;
-  outputPath?: string | null;
-  sceneCuts?: number[] | null;
-  bgmPath?: string | null;
-  bgmVolume?: number | null;
-  enableAudioDucking?: boolean | null;
-  subtitleStyle?: string | null;
-}
-
-// Rust 端 RenderVideoResult (pub struct, rename_all = "camelCase")
-export interface RenderVideoResult {
-  outputPath: string;
-  durationSeconds: number;
-  sizeBytes: number;
-}
-
-// Rust 端 RenderProgressPayload (pub struct, rename_all = "camelCase")
-export interface RenderProgressPayload {
-  percent: number;
-  timeSeconds: number;
-  phase: string;
-}
-
-// Rust 端 BatchFissionParams (pub struct, rename_all = "camelCase")
-export interface BatchFissionParams {
-  videoPath: string;
-  voicePath?: string | null;
-  subtitles: CapcutSubtitleItem[];
-  platformPreset?: string | null;
-  baseDedup?: DedupOptions | null;
-  count: number;
-  outputDir?: string | null;
-  sceneCuts?: number[] | null;
-  bgmPath?: string | null;
-  bgmVolume?: number | null;
-  enableAudioDucking?: boolean | null;
-  subtitleStyle?: string | null;
-}
-
-// Rust 端 FissionVariantResult (pub struct, rename_all = "camelCase")
-export interface FissionVariantResult {
-  index: number;
-  outputPath: string;
-  sizeBytes: number;
-  dedupOptions: DedupOptions;
-}
-
-// Rust 端 BatchFissionResult (pub struct, rename_all = "camelCase")
-export interface BatchFissionResult {
-  variants: FissionVariantResult[];
-  totalDurationSeconds: number;
-}
-
-// Rust 端 FissionProgressPayload (pub struct, rename_all = "camelCase")
-export interface FissionProgressPayload {
-  currentIndex: number;
-  totalCount: number;
-  percent: number;
-  message: string;
 }
 
 // Rust 端 ProjectRecord (pub struct, rename_all = "camelCase")
@@ -734,6 +666,12 @@ export interface DagSnapshot {
   critiqueCount: number;
 }
 
+// Rust 端 WorkflowProfile (pub enum, rename_all = "snake_case")
+export type WorkflowProfile =
+  | "standard_drama"
+  | "fast_commentary"
+  | "pure_broll_montage";
+
 // Rust 端 AgentRole (pub enum, rename_all = "snake_case")
 export type AgentRole =
   | "director"
@@ -913,7 +851,8 @@ export type PlatformId =
   | "wechat"
   | "tiktok"
   | "bilibili"
-  | "youtube";
+  | "youtube"
+  | "youtube-shorts";
 
 // Rust 端 TrackKind (pub enum, rename_all = "kebab-case")
 export type TrackKind =
@@ -921,7 +860,8 @@ export type TrackKind =
   | "voice"
   | "ambient"
   | "bgm"
-  | "subtitle";
+  | "subtitle"
+  | "audio";
 
 // Rust 端 ExportStrategy (pub enum, rename_all = "kebab-case")
 export type ExportStrategy =
@@ -1127,6 +1067,15 @@ export interface SubtitleItem {
   text: string;
 }
 
+// Rust 端 ExportError (pub enum)
+export type ExportError =
+  | "MissingCustomSettings"
+  | "BadResolution"
+  | "BadFps"
+  | "BadBitrate"
+  | "UnsupportedCombination"
+  | "BadSubtitleRange";
+
 // Rust 端 ExportMode (pub enum, rename_all = "kebab-case")
 export type ExportMode =
   | "quick"
@@ -1138,6 +1087,81 @@ export type SubtitleFormat =
   | "srt"
   | "ass"
   | "vtt";
+
+// Rust 端 RenderVideoParams (pub struct, rename_all = "camelCase")
+export interface RenderVideoParams {
+  videoPath: string;
+  voicePath?: string | null;
+  subtitles: CapcutSubtitleItem[];
+  platformPreset?: string | null;
+  antiDupZoom?: number | null;
+  enableAmbientBlur?: boolean | null;
+  dedup?: DedupOptions | null;
+  outputPath?: string | null;
+  sceneCuts?: number[] | null;
+  bgmPath?: string | null;
+  bgmVolume?: number | null;
+  enableAudioDucking?: boolean | null;
+  subtitleStyle?: string | null;
+}
+
+// Rust 端 RenderVideoResult (pub struct, rename_all = "camelCase")
+export interface RenderVideoResult {
+  outputPath: string;
+  durationSeconds: number;
+  sizeBytes: number;
+}
+
+// Rust 端 RenderProgressPayload (pub struct, rename_all = "camelCase")
+export interface RenderProgressPayload {
+  percent: number;
+  timeSeconds: number;
+  phase: string;
+}
+
+// Rust 端 BatchFissionParams (pub struct, rename_all = "camelCase")
+export interface BatchFissionParams {
+  videoPath: string;
+  voicePath?: string | null;
+  subtitles: CapcutSubtitleItem[];
+  platformPreset?: string | null;
+  baseDedup?: DedupOptions | null;
+  count: number;
+  outputDir?: string | null;
+  sceneCuts?: number[] | null;
+  bgmPath?: string | null;
+  bgmVolume?: number | null;
+  enableAudioDucking?: boolean | null;
+  subtitleStyle?: string | null;
+}
+
+// Rust 端 FissionVariantResult (pub struct, rename_all = "camelCase")
+export interface FissionVariantResult {
+  index: number;
+  outputPath: string;
+  sizeBytes: number;
+  dedupOptions: DedupOptions;
+}
+
+// Rust 端 BatchFissionResult (pub struct, rename_all = "camelCase")
+export interface BatchFissionResult {
+  variants: FissionVariantResult[];
+  totalDurationSeconds: number;
+}
+
+// Rust 端 FissionProgressPayload (pub struct, rename_all = "camelCase")
+export interface FissionProgressPayload {
+  currentIndex: number;
+  totalCount: number;
+  percent: number;
+  message: string;
+}
+
+// Rust 端 HardwareEncoderConfig (pub struct)
+export interface HardwareEncoderConfig {
+  codec: string;
+  args: string[];
+}
 
 // Rust 端 PlanOptions (pub struct)
 export interface PlanOptions {
@@ -1154,6 +1178,13 @@ export interface OutputPlan {
   episode_label?: string | null;
   series_context?: string | null;
 }
+
+// Rust 端 VideoPlanError (pub enum)
+export type VideoPlanError =
+  | "SourceCountMismatch"
+  | "MissingSeriesContext"
+  | "BadEpisodeTemplate"
+  | "BadSourcePath";
 
 // Rust 端 TensionPoint (pub struct, rename_all = "camelCase")
 export interface TensionPoint {
@@ -1252,6 +1283,12 @@ export interface SubtitleTrack {
   format: SubtitleFormat;
   language: string;
 }
+
+// Rust 端 SubtitleError (pub enum)
+export type SubtitleError =
+  | "VadError"
+  | "FormatError"
+  | "AlignError";
 
 // Rust 端 VadConfig (pub struct)
 export interface VadConfig {

@@ -62,6 +62,7 @@ import type {
   AlignmentPlan,
   AlignmentMatch,
   Blackboard,
+  WorkflowProfile,
 } from "./types.gen";
 
 export type {
@@ -83,6 +84,7 @@ export type {
   RetentionTensionArc,
   AlignmentPlan,
   AlignmentMatch,
+  WorkflowProfile,
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -317,8 +319,16 @@ export const scriptIpc = {
 // ─────────────────────────────────────────────────────────────────────────
 
 export const agentIpc = {
-  start: (project: Project, autoMode: boolean): Promise<AgentContext> =>
-    callIpc("agent_start", { project, autoMode }),
+  start: (
+    project: Project,
+    autoMode: boolean,
+    workflowProfile?: WorkflowProfile,
+  ): Promise<AgentContext> =>
+    callIpc("agent_start", {
+      project,
+      autoMode,
+      workflowProfile: workflowProfile ?? null,
+    }),
   step: (stepIdx: number): Promise<BreakpointRequest | null> =>
     callIpc("agent_step", { stepIdx }),
   runDag: (): Promise<BreakpointRequest | null> => callIpc("agent_run_dag"),
