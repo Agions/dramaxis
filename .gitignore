@@ -75,28 +75,25 @@ build/
 
 # ── Tauri 工具链 ─────────────────────────────────────────────────────
 # Tauri 生成的 schema/permission 文件
-apps/desktop/src-tauri/gen/
-apps/desktop/src-tauri/target/
+src-tauri/gen/
+src-tauri/target/
 # Tauri 运行时临时
-apps/desktop/src-tauri/WixTools/
+src-tauri/WixTools/
 # macOS Info.plist 临时
 *.plist
-# 由 Cargo workspace 根 lock 管理
-apps/desktop/src-tauri/Cargo.lock
 
 # ── TypeScript 增量编译缓存（不入库）───────────────────────────────
 *.tsbuildinfo
-apps/desktop/tsconfig.node.tsbuildinfo
 
 # ── Playwright 测试运行产物（不入库）───────────────────────────────
-apps/desktop/test-results/
-apps/desktop/playwright-report/
+test-results/
+playwright-report/
 
 # ── 包管理产物 ──────────────────────────────────────────────────────
 node_modules/
 *.tar.gz
 # 注意：pnpm-lock.yaml 应该入库 (以保证 CI 安装版本一致)
-!apps/desktop/pnpm-lock.yaml
+!pnpm-lock.yaml
 
 # ── 运行数据 ────────────────────────────────────────────────────────
 *.pid

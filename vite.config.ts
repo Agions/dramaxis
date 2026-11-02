@@ -10,7 +10,7 @@ import process from "node:process";
 const host = process.env.TAURI_DEV_HOST;
 const root = import.meta.dirname;
 
-// apps/desktop 平铺结构: 前端代码位于 src/, 与 src-tauri/ 同级共置
+// 平铺结构: 前端代码位于 src/, 与 src-tauri/ 同级共置
 export default defineConfig({
   test: {
     globals: true,

@@ -2,7 +2,7 @@
 
 本目录是 splicr 桌面端的**视觉资源层**,存放图标、应用资产和品牌素材。资源层
 不承担运行时逻辑——Rust 后端 (splicr-core / splicr-assets) 与 React 前端
-(apps/desktop) 负责行为,本目录只提供可加载的资产。
+(前端 `src/` 与 `src-tauri/`) 负责行为,本目录只提供可加载的资产。
 
 ## 设计方向
 
@@ -31,7 +31,7 @@ resources/
 ```
 
 > Note: v2.4 PySide6 时代的 `light_theme.qss` / `dark_theme.qss` 已在 v1.0.0
-> 收官清理中删除。当前主题系统使用 `apps/desktop/src/styles/globals.css` 的
+> 收官清理中删除。当前主题系统使用 `src/styles/globals.css` 的
 > Tailwind 4 设计令牌 (`@theme` blocks + CSS 变量),运行时通过
 > `useThemeStore` 切换。
 
