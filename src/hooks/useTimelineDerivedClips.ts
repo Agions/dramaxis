@@ -6,6 +6,7 @@
  */
 
 import { useMemo } from "react";
+import { parseClock, parseTimeRange } from "@dramaxis/utils";
 import type { AlignmentPlan, SceneVisualFeature } from "@dramaxis/ipc";
 import type { SubtitleSegment, WorkshopSceneCut } from "@dramaxis/core";
 
@@ -51,10 +52,8 @@ export function useTimelineDerivedClips({
       .map((sc) => {
         if (typeof sc.cutSec === "number") return sc.cutSec;
         if (sc.time.includes("-")) {
-          const parts = sc.time.split("-");
-          const endStr = parts[1]?.trim() ?? "";
-          const [m, s] = endStr.split(":").map(Number);
-          return (m || 0) * 60 + (s || 0);
+          const endStr = sc.time.split("-")[1]?.trim() ?? "";
+          return parseClock(endStr);
         }
         return null;
       })
@@ -65,12 +64,8 @@ export function useTimelineDerivedClips({
   const videoClips = useMemo<TimelineVideoClip[]>(() => {
     if (sceneCuts.length > 0) {
       return sceneCuts.map((c, idx) => {
-        const parts = c.time.split(" - ").map((t) => {
-          const [m, s] = t.split(":").map(Number);
-          return (m || 0) * 60 + (s || 0);
-        });
-        const start = parts[0] ?? 0;
-        const end = parts[1] ?? start + 15;
+        const { start, end: rawEnd } = parseTimeRange(c.time);
+        const end = rawEnd ?? start + 15;
         const matched = alignmentPlan?.matches.find(
           (m) => m.matchedSceneId === c.id || m.scriptIndex === idx + 1,
         );

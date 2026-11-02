@@ -24,6 +24,7 @@ import { useTauriEvent } from "@hooks/useTauriEvent";
 import { CapcutDraftCard } from "./export/CapcutDraftCard";
 import { DedupMatrixCard } from "./export/DedupMatrixCard";
 import { PlatformRenderCard } from "./export/PlatformRenderCard";
+import { parseCutPoint } from "@dramaxis/utils";
 
 interface ExportStudioPanelProps {
   currentProject: ProjectRecord | null;
@@ -242,13 +243,7 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
 
     setIsExportingDraft(true);
     try {
-      const cutPoints = sceneCuts.map((c) => {
-        const parts = c.time.split(" - ").map((t) => {
-          const [m, s] = t.split(":").map(Number);
-          return (m || 0) * 60 + (s || 0);
-        });
-        return parts[1] ?? parts[0] ?? 0;
-      });
+      const cutPoints = sceneCuts.map((c) => parseCutPoint(c.time));
 
       const res = await exportIpc.capcutDraft({
         projectName: currentProject.project.name || "Dramaxis 电影工程",
@@ -318,13 +313,7 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
     };
 
     try {
-      const cutPoints = sceneCuts.map((c) => {
-        const parts = c.time.split(" - ").map((t) => {
-          const [m, s] = t.split(":").map(Number);
-          return (m || 0) * 60 + (s || 0);
-        });
-        return parts[1] ?? parts[0] ?? 0;
-      });
+      const cutPoints = sceneCuts.map((c) => parseCutPoint(c.time));
 
       const res = await exportIpc.renderVideo({
         videoPath: mediaFile,
@@ -391,13 +380,7 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
     };
 
     try {
-      const cutPoints = sceneCuts.map((c) => {
-        const parts = c.time.split(" - ").map((t) => {
-          const [m, s] = t.split(":").map(Number);
-          return (m || 0) * 60 + (s || 0);
-        });
-        return parts[1] ?? parts[0] ?? 0;
-      });
+      const cutPoints = sceneCuts.map((c) => parseCutPoint(c.time));
 
       const res = await exportIpc.batchFission({
         videoPath: mediaFile,

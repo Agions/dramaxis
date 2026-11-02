@@ -22,7 +22,7 @@ export default defineConfig({
       "packages/**/*.test.{ts,tsx}",
       "packages/**/*.spec.{ts,tsx}",
     ],
-    exclude: ["node_modules", "dist", "src-tauri", ".tanstack"],
+    exclude: ["**/node_modules/**", "dist", "src-tauri", ".tanstack"],
     css: false,
     // 覆盖率配置（`pnpm test:coverage`）
     // 供应商：v8（基于 V8 引擎内置 counters，无需 babel/swc 插装）

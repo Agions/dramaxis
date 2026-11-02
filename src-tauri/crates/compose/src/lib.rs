@@ -32,7 +32,7 @@ pub use dramaxis_core::domain::{Clip, MediaFile, Project, ScriptSegment, Timelin
 pub use dramaxis_core::error::{SplicrError, SplicrResult};
 
 // ════════════════════════════════════════════════════════════════════════
-// 5 步定义
+// 7 步定义
 // ════════════════════════════════════════════════════════════════════════
 
 /// 单步定义 (id, label, description)。
@@ -150,7 +150,7 @@ pub enum PipelineEvent {
 /// 每个 step 的执行逻辑。
 #[async_trait]
 pub trait StepExecutor: Send + Sync {
-    /// 步骤索引 (0..=4)
+    /// 步骤索引 (0..=6, 与 `STEPS` 下标一致)
     fn step_index(&self) -> u8;
     /// 执行一步 (副作用在内部完成)
     async fn execute(&self, project: &mut Project) -> SplicrResult<()>;
@@ -241,12 +241,30 @@ impl Pipeline {
 
     /// 启动流水线 (idempotent: 运行中重复调用是 no-op)
     ///
-    /// executors 为异构 trait object 列表,按 0..=4 顺序执行。
+    /// executors 为异构 trait object 列表,按 0..=6 顺序执行;
+    /// 槽位与 `step_index()` 必须一致, 否则在状态变更前返回 `Pipeline` 错误。
     pub async fn start(
         &self,
         project: &mut Project,
         executors: &[Box<dyn StepExecutor>],
     ) -> SplicrResult<()> {
+        // 前置校验 (fail-fast): 先于任何状态变更, 避免错配导致状态永久卡在 Running
+        if executors.len() > STEPS.len() {
+            return Err(SplicrError::Pipeline(format!(
+                "too many executors: {} > {}",
+                executors.len(),
+                STEPS.len()
+            )));
+        }
+        for (idx, exec) in executors.iter().enumerate() {
+            if exec.step_index() as usize != idx {
+                return Err(SplicrError::Pipeline(format!(
+                    "executor index mismatch at slot {idx}: got {}",
+                    exec.step_index()
+                )));
+            }
+        }
+
         {
             let mut st = self.state.lock();
             if st.pipeline_state == PipelineState::Running {
@@ -270,13 +288,6 @@ impl Pipeline {
                     message: msg.clone(),
                 });
                 return Err(SplicrError::Pipeline(msg));
-            }
-
-            if exec.step_index() as usize != idx {
-                return Err(SplicrError::Pipeline(format!(
-                    "executor index mismatch at slot {idx}: got {}",
-                    exec.step_index()
-                )));
             }
 
             // 标记当前步 active + emit
@@ -349,13 +360,6 @@ impl Default for Pipeline {
     }
 }
 
-// ════════════════════════════════════════════════════════════════════════
-// MonologueMaker — 顶层业务编排入口 (M3 充实)
-// ════════════════════════════════════════════════════════════════════════
-
-// MonologueConfig 已在 M2 提交后清理:零外部引用,作为冗余占位删除。
-// M3 起 MonologueMaker 真实实现时按需重新引入并扩展字段。
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -412,6 +416,29 @@ mod tests {
         let r = p.start(&mut proj, &fails).await;
         assert!(r.is_err());
         assert_eq!(p.pipeline_state(), PipelineState::Failed);
+    }
+
+    #[tokio::test]
+    async fn executor_index_mismatch_fails_fast_without_stuck_running() {
+        let p = Pipeline::new();
+        let mut proj = Project::default();
+        // 槽位 1 放入 idx=3 的 executor
+        let execs: Vec<Box<dyn StepExecutor>> = vec![
+            Box::new(AlwaysOkExecutor { idx: 0 }),
+            Box::new(AlwaysOkExecutor { idx: 3 }),
+        ];
+        let r = p.start(&mut proj, &execs).await;
+        assert!(r.is_err());
+        // 前置校验失败: 状态保持 Idle, 且第 0 步未被执行
+        assert_eq!(p.pipeline_state(), PipelineState::Idle);
+        assert_eq!(p.step_statuses()[0], StepStatus::Pending);
+
+        // 随后正确调用仍可正常启动 (未被卡死)
+        let ok: Vec<Box<dyn StepExecutor>> = (0..2)
+            .map(|i| Box::new(AlwaysOkExecutor { idx: i }) as Box<dyn StepExecutor>)
+            .collect();
+        p.start(&mut proj, &ok).await.unwrap();
+        assert_eq!(p.pipeline_state(), PipelineState::Done);
     }
 
     #[tokio::test]
