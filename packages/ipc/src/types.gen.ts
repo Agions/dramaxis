@@ -6,7 +6,7 @@
  *   - "gen-ipc-types start" 标记: pub struct/enum 类型定义
  *
  * 设计原则:
- * - 与 apps/desktop/src-tauri/src/commands/*.rs 1:1 对应
+ * - 与 src-tauri/src/commands/*.rs 1:1 对应
  * - 字段命名严格 camelCase (Rust 命令参数序列化策略)
  * - 错误统一从 SplicrError JSON 反序列化
  */
@@ -1357,9 +1357,9 @@ export type IpcCommand = keyof IpcContracts;
 /**
  * 编译期契约校验: Rust 端实现必须与 IpcContracts 1:1 对应。
  * 任何增删 command 必须同时修改:
- *   - apps/desktop/src-tauri/src/commands/*.rs
- *   - apps/desktop/src/ipc/types.gen.ts (本文件)
- *   - apps/desktop/src/ipc/client.ts (callIpc 实现)
+ *   - src-tauri/src/commands/*.rs
+ *   - packages/ipc/src/types.gen.ts (本文件, 通过 pnpm gen:ipc 更新)
+ *   - packages/ipc/src/client.ts (callIpc 实现)
  */
 export type CommandArgs<C extends IpcCommand> = IpcContracts[C]["args"];
 export type CommandResultOf<C extends IpcCommand> = IpcContracts[C]["result"];

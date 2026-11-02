@@ -1,4 +1,4 @@
-//! src-tauri 命令 · assets (M3 后续完整实装)
+//! src-tauri 命令 · assets (素材资产管理)
 //!
 //! - assets_scan       : 扫描目录,返回可导入素材列表
 //! - assets_metadata   : ffprobe 抽取单个素材元数据

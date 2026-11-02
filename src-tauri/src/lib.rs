@@ -10,11 +10,12 @@
 //! - update: update_get_state / update_check / update_download /
 //!   update_install / update_reset
 //! - assets: assets_scan / assets_metadata / assets_thumbnail /
-//!   assets_search (M3 后续完整实装)
+//!   assets_search
 //! - export: export_plan / export_validate_params / export_render_subtitles /
-//!   video_build_plans
-//! - help: help_topics / help_topic_get / help_search (M5.7 接 dramaxis-help)
-//! - theme: i18n_get_locale / i18n_set_locale / i18n_translate (M5.6 接 dramaxis-i18n)
+//!   video_build_plans / export_capcut_draft / export_render_video /
+//!   export_preview_dedup / export_batch_fission
+//! - help: help_topics / help_topic_get / help_search
+//! - theme: i18n_get_locale / i18n_set_locale / i18n_translate
 //
 // PipelineService + UpdateService + AssetService 在 AppContext::new() 后注册进 ServiceContainer。
 // Translator + HelpRegistry 通过 .manage() 直注,提供轻量全局状态。
@@ -62,7 +63,7 @@ pub fn run() {
                     "Agions/dramaxis",
                 )))
                 .await;
-            // 注入 AssetService (M3 后续完整实装)
+            // 注入 AssetService
             ctx.services.register(Arc::new(AssetService::new())).await;
             // 在 async 上下文里拿到注册计数 (留给 sync 入口打 log 用)
             let count = ctx.services.len().await;

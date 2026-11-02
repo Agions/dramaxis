@@ -120,7 +120,7 @@ pub struct ThumbnailResult {
 // 工具
 // ════════════════════════════════════════════════════════════════════════
 
-/// MIME 白名单 (M3 后续:视频/音频/图片)
+/// 媒体文件扩展名白名单 (视频 / 音频 / 图片)
 fn is_media_extension(ext: &str) -> bool {
     matches!(
         ext.to_lowercase().as_str(),

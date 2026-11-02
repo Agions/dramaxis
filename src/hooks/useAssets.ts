@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.1.0 · 素材 hook (M3 后续完整实装)
+ * dramaxis v1.2.0 · 素材资产管理 Hook
  *
  * 数据源:
  * - 单一真相源 = project.media_files (从 useProjectStore.current 派生)
@@ -16,7 +16,7 @@
  *
  * 注意:
  * - 必须先有 current project + currentPath (无 project → 抛错)
- * - M3 后续接入 ffmpeg probe 后,import 真实写入 duration/resolution/codec/size
+ * - 通过 ffprobe 真实填充 duration / resolution / codec / size
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -100,10 +100,10 @@ export interface UseAssetsReturn {
 }
 
 /**
- * 素材 hook — M3 后续完整接通 assets 4 个 Tauri command
+ * 素材资产管理 Hook — 接通 assets 4 个 Tauri command
  *
  * 注意:
- * - pathToMediaFileEmpty / applyProbe 已迁到 ../lib/assets/probe.ts (纯函数,可单测)
+ * - pathToMediaFileEmpty / applyProbe 位于 @dramaxis/utils (纯函数,可单测)
  */
 export function useAssets(): UseAssetsReturn {
   const qc = useQueryClient();

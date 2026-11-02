@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.1.0 · 批量导入对话框 (M3 后续完整实装)
+ * dramaxis v1.2.0 · 批量导入对话框
  *
  * 流程:
  * 1. "选择目录" → open({ directory: true }) 选一个目录

@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.1.0 · 当前项目 hook (M3 真实接通 Tauri 命令)
+ * dramaxis v1.2.0 · 当前项目生命周期 Hook
  *
  * 后端命令:
  * - open(path)    → projectIpc.load(path)      → ProjectRecord
@@ -52,7 +52,7 @@ export interface UseProjectReturn {
 }
 
 /**
- * 当前项目 hook — M3 完整接通 Rust 端的 6 个 project 命令
+ * 当前项目 Hook — 完整接通 Rust 端的 8 个 project 命令 (含 Undo / Redo)
  */
 export function useProject(): UseProjectReturn {
   const qc = useQueryClient();

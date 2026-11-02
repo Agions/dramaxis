@@ -2,9 +2,9 @@
  * dramaxis v1.1.0 · project store (Zustand)
  *
  * 设计:
- * - current: 当前打开的项目(M3 接入 invoke project_load)
+ * - current: 当前打开的项目 (通过 project_load / project_create_blank 同步)
  * - currentPath: 项目文件磁盘路径 (save / saveAs 需要)
- * - recent: 最近项目列表(M3.2 已 invoke project_list_recent)
+ * - recent: 最近项目列表 (通过 project_list_recent 同步)
  *
  * 与 IPC 的关系:
  * - open(path) → projectIpc.load(path) → ProjectRecord { path, project }

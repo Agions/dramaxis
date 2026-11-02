@@ -16,7 +16,7 @@
 //   - src-tauri/src/commands/*.rs   (pub struct/enum,带 serde derive)
 //   - crates/*/src/**/*.rs          (pub struct/enum,带 serde derive)
 //
-// 输出: src/ipc/types.gen.ts
+// 输出: packages/ipc/src/types.gen.ts
 //   - 替换 /* >>> gen-ipc start */ 至 /* <<< gen-ipc end */ (IpcContracts)
 //   - 替换 /* >>> gen-ipc-types start */ 至 /* <<< gen-ipc-types end */ (types)
 //
