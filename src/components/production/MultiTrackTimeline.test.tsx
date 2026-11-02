@@ -156,4 +156,79 @@ describe("MultiTrackTimeline", () => {
     fireEvent.click(checkbox);
     expect(handleDucking).toHaveBeenCalledWith(false);
   });
+
+  it("支持 NLE 工业级轨道头 Mute / Solo / Lock 切换控制并派发 onTrackControlChange", () => {
+    const handleControlChange = vi.fn();
+    render(
+      <MultiTrackTimeline
+        durationSeconds={60}
+        onTrackControlChange={handleControlChange}
+        videoClips={[{ id: "v-1", title: "切片一", start: 0, duration: 30 }]}
+      />,
+    );
+
+    const v1MuteBtn = screen.getByLabelText("V1-mute");
+    const v1SoloBtn = screen.getByLabelText("V1-solo");
+    const v1LockBtn = screen.getByLabelText("V1-lock");
+
+    expect(v1MuteBtn).toBeInTheDocument();
+    expect(v1SoloBtn).toBeInTheDocument();
+    expect(v1LockBtn).toBeInTheDocument();
+
+    fireEvent.click(v1MuteBtn);
+    expect(handleControlChange).toHaveBeenCalledWith("V1", "muted", true);
+
+    fireEvent.click(v1SoloBtn);
+    expect(handleControlChange).toHaveBeenCalledWith("V1", "solo", true);
+
+    fireEvent.click(v1LockBtn);
+    expect(handleControlChange).toHaveBeenCalledWith("V1", "locked", true);
+  });
+
+  it("点击时间轴片段能够触发选中高亮并寻道至片段起点", () => {
+    const handleSelectClip = vi.fn();
+    const handleSeek = vi.fn();
+
+    render(
+      <MultiTrackTimeline
+        durationSeconds={60}
+        onSelectClip={handleSelectClip}
+        onSeek={handleSeek}
+        videoClips={[{ id: "v-alpha", title: "高光片段", start: 12, duration: 15 }]}
+      />,
+    );
+
+    const clipElement = screen.getByText("高光片段");
+    fireEvent.click(clipElement);
+
+    expect(handleSelectClip).toHaveBeenCalledWith("v-alpha");
+    expect(handleSeek).toHaveBeenCalledWith(12);
+  });
+
+  it("支持键盘左右箭头对时间轴进行精细单帧/步进寻道", () => {
+    const handleSeek = vi.fn();
+    const { container } = render(
+      <MultiTrackTimeline
+        durationSeconds={60}
+        currentTime={10}
+        onSeek={handleSeek}
+        videoClips={[{ id: "v-1", title: "测试", start: 0, duration: 60 }]}
+      />,
+    );
+
+    const rootElement = container.firstChild as HTMLElement;
+    expect(rootElement).not.toBeNull();
+
+    // 单步后退 (10s - 0.2s = 9.8s)
+    fireEvent.keyDown(rootElement, { key: "ArrowLeft" });
+    expect(handleSeek).toHaveBeenCalledWith(9.8);
+
+    // 单步前进 (10s + 0.2s = 10.2s)
+    fireEvent.keyDown(rootElement, { key: "ArrowRight" });
+    expect(handleSeek).toHaveBeenCalledWith(10.2);
+
+    // 按住 Shift 粗调后退 (10s - 1.0s = 9.0s)
+    fireEvent.keyDown(rootElement, { key: "ArrowLeft", shiftKey: true });
+    expect(handleSeek).toHaveBeenCalledWith(9);
+  });
 });

@@ -1,19 +1,21 @@
 /**
- * dramaxis v1.1.0 · 生产工作台中央监视器与时间轴工作区 (ProductionWorkspace)
+ * dramaxis v1.2.0 · 生产工作台中央监视器与时间轴工作区 (ProductionWorkspace)
  *
- * 核心功能:
- * - 居中专业视听监看台 (CinemaMonitor)
- * - 5 轨毫秒级磁性时间轴 (MultiTrackTimeline)
+ * 核心升级:
+ * - 采用 useTimelineDerivedClips 专属纯计算 Hook，消除重复繁重的分镜切片转换
+ * - 居中专业视听监看台 (CinemaMonitor) 与 5 轨磁性时间轴 (MultiTrackTimeline)
+ * - 响应式垂直 Splitter: 支持拖拽或预设档位调节监看台与时间轴纵向视口比例，自适应 1080P/2K/4K 屏幕
  * - 结合 usePlaybackStore 隔离 60fps 播放事件对全局侧边栏与表单的重渲染
  * - 结合 useWorkshopStore 提供声画对齐微调、B-roll、音轨和场景特征
  */
 
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { CinemaMonitor } from "@components/production/CinemaMonitor";
 import { MultiTrackTimeline } from "@components/production/MultiTrackTimeline";
 import { usePlaybackStore, useWorkshopStore } from "@dramaxis/core";
 import { pipelineIpc, type SceneVisualFeature } from "@dramaxis/ipc";
+import { useTimelineDerivedClips } from "../../hooks/useTimelineDerivedClips";
 
 interface ProductionWorkspaceProps {
   hasUploadedVideo: boolean;
@@ -51,21 +53,56 @@ export const ProductionWorkspace = memo(function ProductionWorkspace({
   const setAlignmentPlan = useWorkshopStore((s) => s.setAlignmentPlan);
   const setIsAligning = useWorkshopStore((s) => s.setIsAligning);
 
-  // 解析分镜数字时间戳
-  const parsedSceneCuts = useMemo(() => {
-    return sceneCuts
-      .map((sc) => {
-        if (typeof sc.cutSec === "number") return sc.cutSec;
-        if (sc.time.includes("-")) {
-          const parts = sc.time.split("-");
-          const endStr = parts[1]?.trim() ?? "";
-          const [m, s] = endStr.split(":").map(Number);
-          return (m || 0) * 60 + (s || 0);
-        }
-        return null;
-      })
-      .filter((n): n is number => typeof n === "number" && !isNaN(n));
-  }, [sceneCuts]);
+  // 3. 时间轴派生数据下沉 (useTimelineDerivedClips)
+  const { parsedSceneCuts, videoClips, voiceClips } = useTimelineDerivedClips({
+    sceneCuts,
+    alignmentPlan,
+    voiceAudioPath,
+    voiceDuration,
+    subtitleSegments,
+    duration,
+    hasUploadedVideo,
+  });
+
+  // 4. 监看台与时间轴纵向视口 Splitter 比例控制 (默认 42% 时间轴高度)
+  const [timelinePercent, setTimelinePercent] = useState<number>(42);
+  const [isDraggingSplitter, setIsDraggingSplitter] = useState<boolean>(false);
+  const workspaceRef = useRef<HTMLElement | null>(null);
+
+  const handleSplitterMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingSplitter(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isDraggingSplitter) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!workspaceRef.current) return;
+      const rect = workspaceRef.current.getBoundingClientRect();
+      const relativeY = e.clientY - rect.top;
+      const totalHeight = rect.height;
+      if (totalHeight <= 0) return;
+
+      const monitorRatio = relativeY / totalHeight;
+      const nextTimelinePercent = Math.max(
+        22,
+        Math.min(68, Math.round((1 - monitorRatio) * 100)),
+      );
+      setTimelinePercent(nextTimelinePercent);
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingSplitter(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingSplitter]);
 
   // 语义与情绪双驱动声画对齐
   const handleAutoAlign = useCallback(async () => {
@@ -108,33 +145,110 @@ export const ProductionWorkspace = memo(function ProductionWorkspace({
   ]);
 
   return (
-    <main className="flex flex-col border-r border-border bg-bg p-3 gap-3 overflow-y-auto">
+    <main
+      ref={workspaceRef}
+      className={`relative flex flex-col h-full border-r border-border bg-bg p-3 gap-2 overflow-hidden ${
+        isDraggingSplitter ? "select-none cursor-row-resize" : ""
+      }`}
+    >
       {/* 上半部分: 居中专业视听监看台 */}
-      <CinemaMonitor
-        hasUploadedVideo={hasUploadedVideo}
-        mediaPath={mediaPath ?? null}
-        voiceAudioPath={voiceAudioPath}
-        voiceDuration={voiceDuration}
-        bgmAudioPath={bgmPath}
-        bgmVolume={bgmVolume}
-        bgmDuckingLevel={0.18}
-        enableAudioDucking={enableAudioDucking}
-        subtitles={subtitleSegments}
-        subtitleStyle={subtitleStyle}
-        sceneCuts={parsedSceneCuts}
-        isPlaying={isPlaying}
-        currentTime={currentTime}
-        duration={duration}
-        onTogglePlay={togglePlay}
-        onImportVideo={onImportVideo}
-        onTimeUpdate={setCurrentTime}
-        onDurationChange={setDuration}
-        onEnded={() => setIsPlaying(false)}
-      />
+      <div
+        className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+        style={{ flexBasis: `${100 - timelinePercent}%` }}
+      >
+        <CinemaMonitor
+          hasUploadedVideo={hasUploadedVideo}
+          mediaPath={mediaPath ?? null}
+          voiceAudioPath={voiceAudioPath}
+          voiceDuration={voiceDuration}
+          bgmAudioPath={bgmPath}
+          bgmVolume={bgmVolume}
+          bgmDuckingLevel={0.18}
+          enableAudioDucking={enableAudioDucking}
+          subtitles={subtitleSegments}
+          subtitleStyle={subtitleStyle}
+          sceneCuts={parsedSceneCuts}
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          duration={duration}
+          onTogglePlay={togglePlay}
+          onImportVideo={onImportVideo}
+          onTimeUpdate={setCurrentTime}
+          onDurationChange={setDuration}
+          onEnded={() => setIsPlaying(false)}
+        />
+      </div>
+
+      {/* 中间: 响应式视口 Splitter 拖拽条与预设档位 */}
+      <div
+        onMouseDown={handleSplitterMouseDown}
+        className={`group relative flex items-center justify-between px-3 py-1 -my-0.5 rounded cursor-row-resize transition-all ${
+          isDraggingSplitter
+            ? "bg-gold/30 shadow-[0_0_12px_rgba(234,179,8,0.5)]"
+            : "hover:bg-surface-elevated border-y border-transparent hover:border-border/60"
+        }`}
+      >
+        <div className="flex items-center gap-1.5 text-[9px] font-mono text-text-muted">
+          <span className="w-1.5 h-1.5 rounded-full bg-gold/70" />
+          <span>布局调节 (时间轴 {timelinePercent}%)</span>
+        </div>
+
+        {/* 居中把手横线 */}
+        <div className="w-16 h-1 rounded-full bg-border group-hover:bg-gold/80 transition-colors" />
+
+        {/* 预设档位快捷键 */}
+        <div
+          className="flex items-center gap-1"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            title="聚焦监视器 (30%)"
+            onClick={() => setTimelinePercent(30)}
+            className={`px-1.5 py-0.2 rounded text-[8px] font-mono border transition-all ${
+              timelinePercent <= 32
+                ? "bg-gold/20 border-gold text-gold"
+                : "border-border/60 text-text-muted hover:text-text-primary"
+            }`}
+          >
+            监视器优先
+          </button>
+          <button
+            type="button"
+            title="均衡模式 (42%)"
+            onClick={() => setTimelinePercent(42)}
+            className={`px-1.5 py-0.2 rounded text-[8px] font-mono border transition-all ${
+              timelinePercent > 32 && timelinePercent < 55
+                ? "bg-gold/20 border-gold text-gold"
+                : "border-border/60 text-text-muted hover:text-text-primary"
+            }`}
+          >
+            均衡
+          </button>
+          <button
+            type="button"
+            title="聚焦多轨时间轴 (58%)"
+            onClick={() => setTimelinePercent(58)}
+            className={`px-1.5 py-0.2 rounded text-[8px] font-mono border transition-all ${
+              timelinePercent >= 55
+                ? "bg-gold/20 border-gold text-gold"
+                : "border-border/60 text-text-muted hover:text-text-primary"
+            }`}
+          >
+            多轨精剪
+          </button>
+        </div>
+      </div>
 
       {/* 下半部分: 5 轨专业磁性时间轴 */}
-      <div className="flex-1 flex flex-col min-h-0 rounded-2xl border border-border bg-surface overflow-hidden shadow-md">
-        <div className="flex items-center justify-between border-b border-border px-4 py-2 bg-surface-elevated/50">
+      <div
+        className="flex flex-col min-h-0 rounded-2xl border border-border bg-surface overflow-hidden shadow-md"
+        style={{
+          flexBasis: `${timelinePercent}%`,
+          height: `${timelinePercent}%`,
+        }}
+      >
+        <div className="flex items-center justify-between border-b border-border px-4 py-2 bg-surface-elevated/50 shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-text-primary">
               5 轨毫秒级磁性时间轴 (MultiTrack Timeline)
@@ -148,7 +262,7 @@ export const ProductionWorkspace = memo(function ProductionWorkspace({
           </span>
         </div>
 
-        <div className="flex-1 overflow-hidden p-2">
+        <div className="flex-1 overflow-hidden p-2 min-h-0">
           <MultiTrackTimeline
             currentTime={currentTime}
             durationSeconds={duration}
@@ -158,53 +272,8 @@ export const ProductionWorkspace = memo(function ProductionWorkspace({
             alignmentPlan={alignmentPlan}
             onAutoAlign={handleAutoAlign}
             isAligning={isAligning}
-            voiceClips={
-              voiceAudioPath
-                ? [
-                    {
-                      id: "v-narration-1",
-                      text: `独白配音 (${voiceDuration.toFixed(1)}s)`,
-                      start: 0,
-                      duration: voiceDuration,
-                    },
-                  ]
-                : []
-            }
-            videoClips={
-              sceneCuts.length > 0
-                ? sceneCuts.map((c, idx) => {
-                    const parts = c.time.split(" - ").map((t) => {
-                      const [m, s] = t.split(":").map(Number);
-                      return (m || 0) * 60 + (s || 0);
-                    });
-                    const start = parts[0] ?? 0;
-                    const end = parts[1] ?? start + 15;
-                    const matched = alignmentPlan?.matches.find(
-                      (m) =>
-                        m.matchedSceneId === c.id || m.scriptIndex === idx + 1,
-                    );
-                    return {
-                      id: `v-clip-${c.id}`,
-                      title: c.tag,
-                      start,
-                      duration: Math.max(1, end - start),
-                      emotion: c.emotion,
-                      matchScore: matched?.matchScore,
-                      speedAdjustment: matched?.speedAdjustment,
-                      isBroll: matched?.isBrollInserted,
-                    };
-                  })
-                : hasUploadedVideo
-                  ? [
-                      {
-                        id: "v-1",
-                        title: "主摄短剧视频切片",
-                        start: 0,
-                        duration: duration || 100,
-                      },
-                    ]
-                  : []
-            }
+            voiceClips={voiceClips}
+            videoClips={videoClips}
           />
         </div>
       </div>
