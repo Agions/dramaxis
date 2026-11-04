@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { invoke } from "@tauri-apps/api/core";
-import type { ConfigSnapshot } from "@dramaxis/ipc";
+import { detectIpc, type ConfigSnapshot, type HardwareAccelerationKind } from "@dramaxis/ipc";
 import { Badge, Card, Switch } from "@dramaxis/ui";
 import { useSettingsStore, useThemeStore, type Theme } from "@dramaxis/core";
 
@@ -15,12 +14,12 @@ export function EnvironmentSection({ form, setForm }: EnvironmentSectionProps) {
   const currentTheme = useThemeStore((s) => s.theme);
   const setTheme = useThemeStore((s) => s.setTheme);
 
-  // 探测系统支持的硬件加速编解码器
-  const { data: hwAccelerators } = useQuery<string[]>({
+  // 探测系统支持的硬件加速编解码器 (统一通过 detectIpc 强类型调用)
+  const { data: hwAccelerators } = useQuery<HardwareAccelerationKind[]>({
     queryKey: ["hardware-acceleration-probe"],
     queryFn: async () => {
       try {
-        return await invoke<string[]>("detect_hardware_acceleration");
+        return await detectIpc.hardwareAcceleration();
       } catch {
         return ["none"];
       }

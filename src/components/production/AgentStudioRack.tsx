@@ -4,68 +4,8 @@
 
 import { memo, useState } from "react";
 import { useWorkshopStore } from "@dramaxis/core";
-import type { AgentMessage, BreakpointRequest, AgentRole, Blackboard } from "@dramaxis/ipc";
+import type { AgentMessage, BreakpointRequest, Blackboard } from "@dramaxis/ipc";
 import { WORKFLOW_PROFILES } from "./ProductionHeader";
-
-export interface AgentStepMeta {
-  id: number;
-  role: AgentRole;
-  name: string;
-  en: string;
-  icon: string;
-  desc: string;
-}
-
-export const AGENT_STEPS: AgentStepMeta[] = [
-  {
-    id: 1,
-    role: "director",
-    name: "总控导演",
-    en: "Director",
-    icon: "🎬",
-    desc: "任务拆解与全流程分发",
-  },
-  {
-    id: 2,
-    role: "visual_critic",
-    name: "视觉分析",
-    en: "VisualCritic",
-    icon: "👁️",
-    desc: "关键帧提取与情绪打点",
-  },
-  {
-    id: 3,
-    role: "screenwriter",
-    name: "金牌编剧",
-    en: "Screenwriter",
-    icon: "✍️",
-    desc: "0~3s Hook 与高能独白",
-  },
-  {
-    id: 4,
-    role: "voice_artist",
-    name: "声乐调音",
-    en: "VoiceArtist",
-    icon: "🎙️",
-    desc: "音色选型与 48kHz 配音",
-  },
-  {
-    id: 5,
-    role: "sound_engineer",
-    name: "混音剪辑",
-    en: "SoundEngineer",
-    icon: "🎛️",
-    desc: "5 轨吸附与 BGM 避让",
-  },
-  {
-    id: 6,
-    role: "quality_reviewer",
-    name: "质量验收",
-    en: "QualityReviewer",
-    icon: "🔍",
-    desc: "违禁词与草稿质检",
-  },
-];
 
 interface AgentStudioRackProps {
   currentStepIndex: number;

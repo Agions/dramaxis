@@ -43,6 +43,7 @@ import type {
   DetectScenesResult,
   SubtitleGenerateParams,
   SubtitleGenerateResult,
+  HardwareAccelerationKind,
   UpdateInfo,
   UpdateInstallResult,
   UpdateState,
@@ -218,6 +219,8 @@ export const exportIpc = {
 } as const;
 
 export const detectIpc = {
+  hardwareAcceleration: (): Promise<HardwareAccelerationKind[]> =>
+    callIpc("detect_hardware_acceleration"),
   scenes: (
     filePath: string,
     threshold?: number | null,
