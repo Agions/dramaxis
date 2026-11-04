@@ -3,10 +3,11 @@
  */
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { BatchImportDialog } from "@components/dialogs/BatchImportDialog";
-import { useProjectStore, useSettingsStore } from "@dramaxis/core";
+import { useSettingsStore } from "@dramaxis/core";
+import { useProject } from "@hooks/useProject";
 import { toast } from "sonner";
 import { projectIpc } from "@dramaxis/ipc";
 
@@ -16,9 +17,9 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const navigate = useNavigate();
-  const qc = useQueryClient();
   const locale = useSettingsStore((s) => s.locale);
-  const setCurrentRecord = useProjectStore((s) => s.setCurrentRecord);
+  const { createBlank, open } = useProject();
+  const [isCreating, setIsCreating] = useState(false);
   const [showImport, setShowImport] = useState(false);
 
   // 真实加载历史工程
@@ -27,31 +28,28 @@ function HomePage() {
     queryFn: () => projectIpc.listRecent(),
   });
 
-  const createProject = useMutation({
-    mutationFn: projectIpc.createBlank,
-    onSuccess: (rec) => {
-      qc.setQueryData(["current-project"], rec);
-      setCurrentRecord(rec.path, rec.project);
+  const handleCreateBlank = async () => {
+    setIsCreating(true);
+    try {
+      await createBlank();
       void navigate({ to: "/production" });
       toast.success(
         locale === "en-US"
           ? "New Studio Project Created"
           : "三栏解说工作台已就绪",
       );
-    },
-    onError: (e) => {
+    } catch (e) {
       toast.error("创建工程失败", {
         description: e instanceof Error ? e.message : String(e),
       });
-    },
-  });
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   const handleOpenProject = async (p: string) => {
     try {
-      const rec = await projectIpc.load(p);
-      qc.setQueryData(["current-project"], rec);
-      qc.setQueryData(["assets-current-project"], rec.project);
-      setCurrentRecord(rec.path, rec.project);
+      await open(p);
       void navigate({ to: "/production" });
     } catch (e) {
       toast.error("加载项目失败", {
@@ -96,10 +94,11 @@ function HomePage() {
               </button>
               <button
                 type="button"
-                onClick={() => createProject.mutate()}
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-gold to-amber px-5 py-2.5 text-xs font-black text-zinc-950 shadow-[0_0_20px_var(--color-gold-glow)] transition-all hover:scale-105 hover:brightness-110 active:scale-95"
+                onClick={handleCreateBlank}
+                disabled={isCreating}
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-gold to-amber px-5 py-2.5 text-xs font-black text-zinc-950 shadow-[0_0_20px_var(--color-gold-glow)] transition-all hover:scale-105 hover:brightness-110 active:scale-95 disabled:opacity-50"
               >
-                <span>⚡</span> 新建创作工程
+                <span>⚡</span> {isCreating ? "正在创建..." : "新建创作工程"}
               </button>
             </div>
           </div>
@@ -290,8 +289,9 @@ function HomePage() {
               </div>
               <button
                 type="button"
-                onClick={() => createProject.mutate()}
-                className="rounded-xl bg-gold-muted border border-gold/40 px-4 py-1.5 text-xs font-bold text-gold hover:bg-gold hover:text-zinc-950 transition-all"
+                onClick={handleCreateBlank}
+                disabled={isCreating}
+                className="rounded-xl bg-gold-muted border border-gold/40 px-4 py-1.5 text-xs font-bold text-gold hover:bg-gold hover:text-zinc-950 transition-all disabled:opacity-50"
               >
                 ＋ 创建空白工程
               </button>

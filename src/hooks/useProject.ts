@@ -15,7 +15,7 @@
 
 import { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { pipelineIpc, projectIpc, type Project } from "@dramaxis/ipc";
+import { pipelineIpc, projectIpc, type Project, type ProjectRecord } from "@dramaxis/ipc";
 import { useProjectStore } from "@dramaxis/core";
 
 /** 与 TanStack Query cache 中"当前项目"相关的 key(供其它页面同步读) */
@@ -32,6 +32,8 @@ export interface UseProjectReturn {
   /** 是否已加载项目 */
   hasProject: boolean;
 
+  /** 创建空白工程并自动设为当前工程 */
+  createBlank: () => Promise<ProjectRecord>;
   /** 加载指定路径的项目 (解析 .dramaxis 工程包或兼容旧版 .splicr.json → setCurrentRecord) */
   open: (path: string) => Promise<void>;
   /** 保存到当前路径 (currentPath 必须存在) */
@@ -77,6 +79,22 @@ export function useProject(): UseProjectReturn {
     },
     [qc, currentPath],
   );
+
+  const createBlank = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const rec = await projectIpc.createBlank();
+      setCurrentRecord(rec.path, rec.project);
+      syncCurrentToCache(rec.project, rec.path);
+      return rec;
+    } catch (e) {
+      setError(e);
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  }, [setCurrentRecord, syncCurrentToCache]);
 
   const open = useCallback(
     async (path: string) => {
@@ -202,6 +220,7 @@ export function useProject(): UseProjectReturn {
     project: current,
     currentPath,
     hasProject: current !== null,
+    createBlank,
     open,
     save,
     saveAs,

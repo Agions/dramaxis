@@ -1,19 +1,13 @@
 /**
- * dramaxis v1.1.0 · 项目与资产管理中心 (深度模块化与组件化架构)
+ * dramaxis v1.2.0 · 项目与资产管理中心 (领域驱动与声明式装配架构)
  */
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
-import { open } from "@tauri-apps/plugin-dialog";
-import {
-  projectIpc,
-  type MediaFile,
-  type Project,
-  type ProjectRecord,
-} from "@dramaxis/ipc";
-import { useAssets } from "@hooks/useAssets";
-import { useProjectStore, useSettingsStore, t } from "@dramaxis/core";
+import { useQuery } from "@tanstack/react-query";
+import { projectIpc } from "@dramaxis/ipc";
+import { useProject } from "@hooks/useProject";
+import { useAssetExplorer } from "@hooks/useAssetExplorer";
+import { useSettingsStore, t } from "@dramaxis/core";
 import { BatchImportDialog } from "@components/dialogs/BatchImportDialog";
 import { AssetExplorerToolbar } from "@components/assets/AssetExplorerToolbar";
 import { AssetMediaGrid } from "@components/assets/AssetMediaGrid";
@@ -24,104 +18,48 @@ export const Route = createFileRoute("/assets")({
 });
 
 function AssetsPage() {
-  const qc = useQueryClient();
   const navigate = useNavigate();
   const locale = useSettingsStore((s) => s.locale);
-  const setCurrentRecord = useProjectStore((s) => s.setCurrentRecord);
-  const storeProject = useProjectStore((s) => s.current);
+  const { open, createBlank } = useProject();
+
+  const {
+    displayedMedia,
+    totalCount,
+    searchQuery,
+    showBatchDialog,
+    setShowBatchDialog,
+    handleSearch,
+    handleImportMedia,
+    handleRemoveMedia,
+  } = useAssetExplorer();
 
   const { data: recents } = useQuery({
     queryKey: ["assets-recent"],
     queryFn: projectIpc.listRecent,
   });
 
-  const cachedRaw = qc.getQueryData<ProjectRecord | null>(["current-project"]);
-  const current: Project | null = useMemo(() => {
-    return storeProject ?? cachedRaw?.project ?? null;
-  }, [storeProject, cachedRaw]);
-
-  useEffect(() => {
-    if (!current && recents && recents.length > 0 && recents[0]) {
-      void projectIpc.load(recents[0]).then((rec) => {
-        setCurrentRecord(rec.path, rec.project);
-        qc.setQueryData(["current-project"], rec);
-        qc.setQueryData(["assets-current-project"], rec.project);
-      });
-    }
-  }, [current, recents, setCurrentRecord, qc]);
-
-  const { importFromPaths, remove: removeAssets, search } = useAssets();
-  const [showBatchDialog, setShowBatchDialog] = useState(false);
-  const [matchingPaths, setMatchingPaths] = useState<string[] | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const handleImportMedia = async () => {
-    try {
-      const selected = await open({
-        multiple: true,
-        filters: [
-          {
-            name: "视频素材 (Video)",
-            extensions: ["mp4", "mov", "avi", "mkv", "webm"],
-          },
-        ],
-      });
-      if (!selected) return;
-      const paths = Array.isArray(selected) ? selected : [selected];
-      await importFromPaths(paths);
-      toast.success(`成功导入 ${paths.length} 个视频文件`);
-    } catch (e) {
-      toast.error("导入素材失败", {
-        description: e instanceof Error ? e.message : String(e),
-      });
-    }
-  };
-
-  const handleRemoveMedia = async (idOrPath: string) => {
-    try {
-      await removeAssets([idOrPath]);
-      toast.success("已移除素材");
-    } catch (e) {
-      toast.error("移除素材失败", {
-        description: e instanceof Error ? e.message : String(e),
-      });
-    }
-  };
-
-  const handleSearch = async (pattern: string) => {
-    setSearchQuery(pattern);
-    if (!pattern.trim() || !current) {
-      setMatchingPaths(null);
-      return;
-    }
-    try {
-      const all = current.media_files.map((m) => m.path);
-      const filtered = await search(all, pattern.trim());
-      setMatchingPaths(filtered);
-    } catch {
-      setMatchingPaths(null);
-    }
-  };
-
   const handleCreateBlank = async () => {
     try {
-      const rec = await projectIpc.createBlank();
-      setCurrentRecord(rec.path, rec.project);
-      qc.setQueryData(["assets-current-project"], rec.project);
-      qc.setQueryData(["current-project"], rec);
-      void qc.invalidateQueries({ queryKey: ["assets-recent"] });
+      const rec = await createBlank();
       toast.success(`已创建空白解说工程: ${rec.project.name}`);
       void navigate({ to: "/production" });
     } catch (e) {
-      toast.error("创建空白项目失败", { description: String(e) });
+      toast.error("创建空白项目失败", {
+        description: e instanceof Error ? e.message : String(e),
+      });
     }
   };
 
-  const filteredMedia = useMemo<MediaFile[]>(() => {
-    if (!matchingPaths) return current?.media_files ?? [];
-    const set = new Set(matchingPaths);
-    return (current?.media_files ?? []).filter((m) => set.has(m.path));
-  }, [current?.media_files, matchingPaths]);
+  const handleOpenRecent = async (path: string) => {
+    try {
+      await open(path);
+      void navigate({ to: "/production" });
+    } catch (e) {
+      toast.error("加载项目失败", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    }
+  };
 
   return (
     <div className="h-full w-full overflow-y-auto bg-bg p-6 md:p-8 select-none font-sans">
@@ -152,12 +90,12 @@ function AssetsPage() {
           onSearchChange={handleSearch}
           onImportMedia={handleImportMedia}
           onOpenBatchDialog={() => setShowBatchDialog(true)}
-          mediaCount={current?.media_files?.length ?? 0}
+          mediaCount={totalCount}
         />
 
         {/* 媒体素材网格 */}
         <AssetMediaGrid
-          mediaList={filteredMedia}
+          mediaList={displayedMedia}
           onRemoveMedia={handleRemoveMedia}
         />
 
@@ -180,17 +118,7 @@ function AssetsPage() {
                   <button
                     key={path}
                     type="button"
-                    onClick={() => {
-                      void projectIpc.load(path).then((rec) => {
-                        setCurrentRecord(rec.path, rec.project);
-                        qc.setQueryData(
-                          ["assets-current-project"],
-                          rec.project,
-                        );
-                        qc.setQueryData(["current-project"], rec);
-                        void navigate({ to: "/production" });
-                      });
-                    }}
+                    onClick={() => void handleOpenRecent(path)}
                     className="flex flex-col justify-between rounded-xl border border-border bg-surface p-3.5 text-left transition hover:border-gold/60 active:scale-[0.99]"
                   >
                     <div className="text-xs font-bold text-text-primary truncate">

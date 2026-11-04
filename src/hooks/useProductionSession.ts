@@ -60,6 +60,7 @@ export function useProductionSession() {
   const userPrompt = useWorkshopStore((s) => s.userPrompt);
   const scriptStyle = useWorkshopStore((s) => s.scriptStyle);
   const llmProvider = useWorkshopStore((s) => s.llmProvider);
+  const workflowProfile = useWorkshopStore((s) => s.workflowProfile);
 
   // 3. 真实工程数据同步
   const cachedRecord = qc.getQueryData<ProjectRecord>(["current-project"]);
@@ -119,6 +120,7 @@ export function useProductionSession() {
     agentAutoMode,
     setAgentAutoMode,
     currentStepIndex,
+    dagSnapshot,
     agentMessages,
     breakpoint,
     blackboard,
@@ -347,6 +349,8 @@ export function useProductionSession() {
     agentAutoMode,
     setAgentAutoMode,
     currentStepIndex,
+    dagSnapshot,
+    workflowProfile,
     agentMessages,
     breakpoint,
     blackboard,

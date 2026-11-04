@@ -33,6 +33,8 @@ function ProductionCinemaStudio() {
     agentAutoMode,
     setAgentAutoMode,
     currentStepIndex,
+    dagSnapshot,
+    workflowProfile,
     agentMessages,
     breakpoint,
     blackboard,
@@ -62,10 +64,13 @@ function ProductionCinemaStudio() {
 
       {/* ── 2. 中间三栏主体架构 ── */}
       <div className="grid flex-1 grid-cols-[230px_1fr_310px] overflow-hidden">
-        {/* ── 左栏: 6-Agent 状态机机架 & 场景切片 (W1 / W2 焦点) ── */}
+        {/* ── 左栏: Multi-Agent 动态 DAG 机架 & 场景切片 (W1 / W2 焦点) ── */}
         <ProductionLeftSidebar
           currentStepIndex={currentStepIndex}
           mediaPath={mediaPath}
+          workflowProfile={workflowProfile}
+          dagSnapshot={dagSnapshot}
+          isAgentRunning={isAgentRunning}
         />
 
         {/* ── 中栏: 影视视听监看台与 5 轨磁性时间轴 (W3 焦点) ── */}
