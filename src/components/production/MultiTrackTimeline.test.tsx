@@ -231,4 +231,55 @@ describe("MultiTrackTimeline", () => {
     fireEvent.keyDown(rootElement, { key: "ArrowLeft", shiftKey: true });
     expect(handleSeek).toHaveBeenCalledWith(9);
   });
+
+  it("支持 Space 键触发播放/暂停，支持 Home/End 跳至首尾", () => {
+    const handleTogglePlay = vi.fn();
+    const handleSeek = vi.fn();
+    const { container } = render(
+      <MultiTrackTimeline
+        durationSeconds={120}
+        currentTime={50}
+        onSeek={handleSeek}
+        onTogglePlay={handleTogglePlay}
+        videoClips={[{ id: "v-1", title: "测试", start: 0, duration: 120 }]}
+      />,
+    );
+
+    const rootElement = container.firstChild as HTMLElement;
+
+    // 空格切换播放
+    fireEvent.keyDown(rootElement, { code: "Space" });
+    expect(handleTogglePlay).toHaveBeenCalledTimes(1);
+
+    // Home 跳至片头 0s
+    fireEvent.keyDown(rootElement, { key: "Home" });
+    expect(handleSeek).toHaveBeenCalledWith(0);
+
+    // End 跳至片尾 120s
+    fireEvent.keyDown(rootElement, { key: "End" });
+    expect(handleSeek).toHaveBeenCalledWith(120);
+  });
+
+  it("支持 I/O 键设定入出点并渲染高光选区遮罩", () => {
+    const handleMarkChange = vi.fn();
+    const { container } = render(
+      <MultiTrackTimeline
+        durationSeconds={100}
+        currentTime={20}
+        onMarkChange={handleMarkChange}
+        markIn={10}
+        markOut={40}
+        videoClips={[{ id: "v-1", title: "测试", start: 0, duration: 100 }]}
+      />,
+    );
+
+    expect(screen.getByText(/选区: 00:10.0 - 00:40.0/)).toBeInTheDocument();
+    expect(screen.getByText("IN 00:10.0")).toBeInTheDocument();
+    expect(screen.getByText("OUT 00:40.0")).toBeInTheDocument();
+
+    const rootElement = container.firstChild as HTMLElement;
+    // 按 I 设定入点
+    fireEvent.keyDown(rootElement, { key: "i" });
+    expect(handleMarkChange).toHaveBeenCalledWith(20, 40);
+  });
 });

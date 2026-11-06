@@ -9,7 +9,7 @@
  * - 优雅空状态骨架
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import type { AlignmentPlan } from "@dramaxis/ipc";
 
 export type TrackId = "V1" | "HK" | "A1" | "SUB" | "BGM";
@@ -36,6 +36,10 @@ export interface MultiTrackTimelineProps {
   currentTime?: number;
   isPlaying?: boolean;
   onSeek?: (time: number) => void;
+  onTogglePlay?: () => void;
+  markIn?: number | null;
+  markOut?: number | null;
+  onMarkChange?: (markIn: number | null, markOut: number | null) => void;
   videoClips?: TimelineClipItem[];
   hookClip?: {
     id?: string;
@@ -75,11 +79,50 @@ const DEFAULT_TRACK_CONTROLS: Record<TrackId, TrackControlState> = {
   BGM: { muted: false, solo: false, locked: false },
 };
 
+/**
+ * 细致逼真的音频波形条组件 (AudioWaveformVisual)
+ */
+export function AudioWaveformVisual({
+  seed,
+  colorClass = "bg-emerald-400/60",
+  barsCount = 28,
+}: {
+  seed: string;
+  colorClass?: string;
+  barsCount?: number;
+}) {
+  const bars = Array.from({ length: barsCount }).map((_, idx) => {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash << 5) - hash + seed.charCodeAt(i) + idx * 17;
+      hash |= 0;
+    }
+    const val = Math.abs(hash % 100);
+    return Math.max(16, Math.min(96, (val % 72) + (idx % 3 === 0 ? 8 : 22)));
+  });
+
+  return (
+    <div className="flex items-center gap-[1.5px] h-full w-full overflow-hidden opacity-55 pointer-events-none select-none">
+      {bars.map((h, i) => (
+        <div
+          key={i}
+          className={`flex-1 rounded-xs transition-all ${colorClass}`}
+          style={{ height: `${h}%` }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function MultiTrackTimeline({
   durationSeconds = 60,
   currentTime = 0,
   isPlaying: _isPlaying = false,
   onSeek,
+  onTogglePlay,
+  markIn: controlledMarkIn,
+  markOut: controlledMarkOut,
+  onMarkChange,
   videoClips = [],
   hookClip = null,
   voiceClips = [],
@@ -102,6 +145,8 @@ export function MultiTrackTimeline({
   const [internalTrackControls, setInternalTrackControls] = useState<
     Record<TrackId, TrackControlState>
   >(DEFAULT_TRACK_CONTROLS);
+  const [internalMarkIn, setInternalMarkIn] = useState<number | null>(null);
+  const [internalMarkOut, setInternalMarkOut] = useState<number | null>(null);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -111,6 +156,32 @@ export function MultiTrackTimeline({
       ? controlledSelectedClipId
       : internalSelectedClipId;
 
+  // 入出点受控与非受控兼容
+  const markIn = controlledMarkIn !== undefined ? controlledMarkIn : internalMarkIn;
+  const markOut = controlledMarkOut !== undefined ? controlledMarkOut : internalMarkOut;
+
+  const handleSetMarkIn = useCallback(
+    (time: number) => {
+      setInternalMarkIn(time);
+      onMarkChange?.(time, markOut);
+    },
+    [markOut, onMarkChange],
+  );
+
+  const handleSetMarkOut = useCallback(
+    (time: number) => {
+      setInternalMarkOut(time);
+      onMarkChange?.(markIn, time);
+    },
+    [markIn, onMarkChange],
+  );
+
+  const handleClearMarks = useCallback(() => {
+    setInternalMarkIn(null);
+    setInternalMarkOut(null);
+    onMarkChange?.(null, null);
+  }, [onMarkChange]);
+
   const handleSelectClip = useCallback(
     (id: string | null) => {
       setInternalSelectedClipId(id);
@@ -118,6 +189,67 @@ export function MultiTrackTimeline({
     },
     [onSelectClip],
   );
+
+  const processKeyAction = useCallback(
+    (e: { key: string; code?: string; shiftKey: boolean; preventDefault: () => void }) => {
+      const activeEl = document.activeElement;
+      if (
+        activeEl instanceof HTMLInputElement ||
+        activeEl instanceof HTMLTextAreaElement ||
+        activeEl?.getAttribute("contenteditable") === "true"
+      ) {
+        return;
+      }
+
+      if (e.code === "Space" || e.key === " ") {
+        e.preventDefault();
+        onTogglePlay?.();
+      } else if (e.code === "ArrowLeft" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        const step = e.shiftKey ? 1.0 : 0.2;
+        onSeek?.(Math.max(0, Number((currentTime - step).toFixed(2))));
+      } else if (e.code === "ArrowRight" || e.key === "ArrowRight") {
+        e.preventDefault();
+        const step = e.shiftKey ? 1.0 : 0.2;
+        onSeek?.(Math.min(durationSeconds, Number((currentTime + step).toFixed(2))));
+      } else if (e.code === "Home" || e.key === "Home") {
+        e.preventDefault();
+        onSeek?.(0);
+      } else if (e.code === "End" || e.key === "End") {
+        e.preventDefault();
+        onSeek?.(durationSeconds);
+      } else if (e.code === "KeyI" || e.key === "i" || e.key === "I") {
+        e.preventDefault();
+        handleSetMarkIn(currentTime);
+      } else if (e.code === "KeyO" || e.key === "o" || e.key === "O") {
+        e.preventDefault();
+        handleSetMarkOut(currentTime);
+      } else if (e.code === "Escape" || e.key === "Escape") {
+        handleSelectClip(null);
+        handleClearMarks();
+      }
+    },
+    [
+      currentTime,
+      durationSeconds,
+      onSeek,
+      onTogglePlay,
+      handleSelectClip,
+      handleSetMarkIn,
+      handleSetMarkOut,
+      handleClearMarks,
+    ],
+  );
+
+  // 全局键盘监听
+  useEffect(() => {
+    const onDomKeyDown = (e: KeyboardEvent) => {
+      processKeyAction(e);
+    };
+
+    window.addEventListener("keydown", onDomKeyDown);
+    return () => window.removeEventListener("keydown", onDomKeyDown);
+  }, [processKeyAction]);
 
   // 轨道控制受控与非受控合并
   const trackControls: Record<TrackId, TrackControlState> = {
@@ -190,24 +322,6 @@ export function MultiTrackTimeline({
     const ratio = Math.max(0, Math.min(1, clickX / totalWidth));
     onSeek(ratio * durationSeconds);
   };
-
-  // 键盘快捷微调 (ArrowLeft / ArrowRight / Escape)
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Escape") {
-        handleSelectClip(null);
-        return;
-      }
-      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-        e.preventDefault();
-        const step = e.shiftKey ? 1.0 : 0.2;
-        const delta = e.key === "ArrowLeft" ? -step : step;
-        const targetTime = Math.max(0, Math.min(durationSeconds, currentTime + delta));
-        onSeek?.(targetTime);
-      }
-    },
-    [currentTime, durationSeconds, handleSelectClip, onSeek],
-  );
 
   const playheadPercent = Math.min(
     100,
@@ -292,11 +406,7 @@ export function MultiTrackTimeline({
   };
 
   return (
-    <div
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
-      className="flex h-full w-full flex-col select-none font-sans outline-none focus:ring-1 focus:ring-gold/30 rounded-lg"
-    >
+    <div className="flex h-full w-full flex-col select-none font-sans outline-none focus:ring-1 focus:ring-gold/30 rounded-lg">
       {/* 1. 顶部控制栏: 缩放、BGM 闪避控制、时间码、声画对齐状态 */}
       <div className="flex items-center justify-between border-b border-border bg-surface px-3 py-1.5 text-xs shrink-0">
         <div className="flex items-center gap-3 font-mono">
@@ -319,6 +429,19 @@ export function MultiTrackTimeline({
             <span className="px-2 py-0.2 rounded bg-gold/15 border border-gold/40 text-[9px] font-bold text-gold">
               选中片段: {selectedClipId}
             </span>
+          )}
+          {markIn !== null && markOut !== null && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-gold/15 border border-gold/40 text-[9px] font-mono font-bold text-gold">
+              <span>选区: {formatTime(markIn)} - {formatTime(markOut)}</span>
+              <button
+                type="button"
+                onClick={handleClearMarks}
+                className="hover:text-rose-400 font-bold ml-1"
+                title="清除选区 (Esc)"
+              >
+                ✕
+              </button>
+            </div>
           )}
         </div>
 
@@ -407,6 +530,24 @@ export function MultiTrackTimeline({
             >
               <div className="h-2 w-2 -translate-x-[3px] rotate-45 bg-gold shadow-[0_0_6px_var(--color-gold)]" />
             </div>
+
+            {/* In/Out 选区高光遮罩 (Mark In / Mark Out) */}
+            {markIn !== null && markOut !== null && markOut > markIn && (
+              <div
+                className="absolute top-0 bottom-0 bg-gold/15 border-x-2 border-gold/80 pointer-events-none z-20 shadow-[0_0_12px_rgba(245,200,66,0.2)]"
+                style={{
+                  left: `calc(112px + (100% - 112px) * ${markIn / (durationSeconds || 1)})`,
+                  width: `calc((100% - 112px) * ${(markOut - markIn) / (durationSeconds || 1)})`,
+                }}
+              >
+                <div className="absolute top-0 left-0 text-[8px] bg-gold text-zinc-950 font-bold px-1 rounded-br font-mono">
+                  IN {formatTime(markIn)}
+                </div>
+                <div className="absolute top-0 right-0 text-[8px] bg-gold text-zinc-950 font-bold px-1 rounded-bl font-mono">
+                  OUT {formatTime(markOut)}
+                </div>
+              </div>
+            )}
 
             {isEmpty ? (
               <div className="flex h-full flex-col items-center justify-center text-center text-text-muted text-xs gap-1.5 my-auto">
@@ -541,7 +682,7 @@ export function MultiTrackTimeline({
                             handleSelectClip(c.id);
                             onSeek?.(c.start);
                           }}
-                          className={`h-full rounded bg-emerald-950/70 border px-2 flex items-center text-[10px] text-emerald-300 truncate cursor-pointer transition-all ${
+                          className={`relative h-full rounded bg-emerald-950/70 border px-2 flex items-center text-[10px] text-emerald-300 truncate cursor-pointer transition-all overflow-hidden ${
                             isSelected
                               ? "border-gold ring-2 ring-gold/70 shadow-[0_0_10px_rgba(234,179,8,0.4)] z-10"
                               : "border-emerald-500/40 hover:border-emerald-400"
@@ -550,7 +691,14 @@ export function MultiTrackTimeline({
                             width: `${(c.duration / (durationSeconds || 1)) * 100}%`,
                           }}
                         >
-                          <span className="truncate">🎙️ {c.text}</span>
+                          <div className="absolute inset-0 flex items-center px-1">
+                            <AudioWaveformVisual
+                              seed={c.id + c.text}
+                              colorClass="bg-emerald-400/40"
+                              barsCount={Math.max(16, Math.min(80, Math.round(c.duration * 5)))}
+                            />
+                          </div>
+                          <span className="relative z-10 truncate font-mono drop-shadow-xs">🎙️ {c.text}</span>
                         </div>
                       );
                     })}
@@ -604,12 +752,19 @@ export function MultiTrackTimeline({
                 >
                   {renderTrackHeader("BGM", "BGM 伴奏", "text-pink-400")}
                   <div
-                    className={`relative flex-1 h-4 rounded bg-pink-950/40 border border-pink-500/30 px-2 flex items-center justify-between text-[9px] text-pink-300 ${
+                    className={`relative flex-1 h-4 rounded bg-pink-950/40 border border-pink-500/30 px-2 flex items-center justify-between text-[9px] text-pink-300 overflow-hidden ${
                       trackControls.BGM.locked ? "pointer-events-none" : ""
                     }`}
                   >
-                    <span>🎵 悬疑激昂电影原声 (Movie Suspense Arc)</span>
-                    <span className="font-mono text-[8px] text-pink-400">
+                    <div className="absolute inset-0 flex items-center px-1">
+                      <AudioWaveformVisual
+                        seed="bgm-suspense-movie"
+                        colorClass="bg-pink-400/25"
+                        barsCount={72}
+                      />
+                    </div>
+                    <span className="relative z-10 truncate font-mono">🎵 悬疑激昂电影原声 (Movie Suspense Arc)</span>
+                    <span className="relative z-10 font-mono text-[8px] text-pink-400 shrink-0 ml-1">
                       {autoDucking ? "Ducking Active" : "Normal"}
                     </span>
                   </div>

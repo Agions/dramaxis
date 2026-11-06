@@ -268,6 +268,7 @@ export const ProductionWorkspace = memo(function ProductionWorkspace({
             durationSeconds={duration}
             isPlaying={isPlaying}
             onSeek={seek}
+            onTogglePlay={togglePlay}
             subtitleClips={subtitleSegments}
             alignmentPlan={alignmentPlan}
             onAutoAlign={handleAutoAlign}
