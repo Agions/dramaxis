@@ -187,11 +187,78 @@ impl Agent for VisualCriticAgent {
             .collect();
         let paths_json = serde_json::to_string(&keyframe_paths).unwrap_or_else(|_| "[]".into());
 
+        // 构造镜头级视听时序切片标注 (Shot-by-Shot Annotations)
+        let mut segments: Vec<(f64, f64)> = Vec::new();
+        let mut prev = 0.0;
+        for &cut in &cuts_vec {
+            if cut > prev + 0.2 {
+                segments.push((prev, cut));
+                prev = cut;
+            }
+        }
+        if duration > prev + 0.2 {
+            segments.push((prev, duration));
+        }
+        if segments.is_empty() {
+            segments.push((0.0, duration.max(1.0)));
+        }
+
+        let total_segments = segments.len() as f64;
+        let shots: Vec<ShotAnnotation> = segments
+            .into_iter()
+            .enumerate()
+            .map(|(idx, (start, end))| {
+                let seg_dur = (end - start).max(0.1);
+                let pos_ratio = (idx as f64) / total_segments.max(1.0);
+                let word_budget = ((seg_dur * 4.3).round() as usize).clamp(6, 120);
+
+                let pace_factor = (3.0 / seg_dur.clamp(0.5, 8.0)) as f32;
+                let arc_factor = if (0.65..=0.85).contains(&pos_ratio) {
+                    1.4
+                } else if pos_ratio < 0.15 {
+                    1.25
+                } else {
+                    0.9
+                };
+                let motion_intensity = ((pace_factor * 20.0 + 35.0) * arc_factor).clamp(15.0, 98.0);
+                let conflict_score = ((motion_intensity * 0.7) + (arc_factor * 25.0)).clamp(20.0, 99.0);
+
+                let (emotion_tag, visual_summary) = if conflict_score > 82.0 {
+                    ("激烈对抗", "高强度肢体冲突与紧绷动作镜头")
+                } else if conflict_score > 70.0 {
+                    ("悬疑对峙", "角色眼神博弈与线索疑云特写")
+                } else if conflict_score > 55.0 {
+                    ("情绪爆发", "关键转折点主角痛点爆发画面")
+                } else if pos_ratio < 0.2 {
+                    ("危机开场", "黄金开篇悬念抓人事件引入")
+                } else {
+                    ("暗流叙事", "情节铺垫与环境线索推进")
+                };
+
+                let kf = keyframe_paths.get(idx).cloned();
+
+                ShotAnnotation {
+                    shot_index: idx + 1,
+                    start_time: start,
+                    end_time: end,
+                    duration: seg_dur,
+                    keyframe_path: kf,
+                    motion_intensity,
+                    emotion_tag: emotion_tag.into(),
+                    conflict_score,
+                    visual_summary: visual_summary.into(),
+                    target_word_budget: word_budget,
+                }
+            })
+            .collect();
+
+        let shots_json = serde_json::to_string(&shots).unwrap_or_else(|_| "[]".into());
+
         ctx.log_thought(
             self.role(),
             format!(
-                "多模态画面分析完成：视频基底时长 {:.1}s，精准定位 {} 个镜头切点，已抽取 {} 张视觉关键帧",
-                duration, cuts_count, keyframe_paths.len()
+                "多模态画面分析完成：视频基底时长 {:.1}s，精准定位 {} 个镜头切点，已抽取 {} 张视觉关键帧，构建 {} 组时序分镜标注",
+                duration, cuts_count, keyframe_paths.len(), shots.len()
             ),
         );
         ctx.memory
@@ -200,6 +267,8 @@ impl Agent for VisualCriticAgent {
         ctx.memory
             .insert("keyframe_paths_json".to_string(), paths_json);
         ctx.memory
+            .insert("shot_annotations_json".to_string(), shots_json);
+        ctx.memory
             .insert("video_duration".to_string(), format!("{:.1}", duration));
 
         ctx.blackboard.set_visual_brief(VisualBriefArtifact {
@@ -207,10 +276,12 @@ impl Agent for VisualCriticAgent {
             scene_cuts_sec: cuts_vec.clone(),
             keyframe_paths: keyframe_paths.clone(),
             visual_summary: format!(
-                "提取 {} 组结构化分镜与 {} 张视觉关键帧",
+                "提取 {} 组结构化分镜与 {} 张视觉关键帧 (包含 {} 组时序切片标注)",
                 cuts_count,
-                keyframe_paths.len()
+                keyframe_paths.len(),
+                shots.len(),
             ),
+            shots,
         });
 
         ctx.log_action(
@@ -304,20 +375,56 @@ impl Agent for ScreenwriterAgent {
             // 短剧解说黄金语速：4.2 ~ 4.5 字/秒，严控字数预算避免音画脱节
             let target_word_count = ((video_duration * 4.3).round() as usize).clamp(40, 1200);
 
+            let shots = ctx
+                .blackboard
+                .visual_brief
+                .as_ref()
+                .map(|v| v.shots.clone())
+                .unwrap_or_default();
+
+            let shots_instruction = if !shots.is_empty() {
+                let mut buf = String::from("\n【镜头级时序分镜指引 (按镜头节奏与画面内容紧密咬合撰写)】:\n");
+                for shot in shots.iter().take(8) {
+                    buf.push_str(&format!(
+                        "- 镜头 {}: {:.1}s~{:.1}s (约{}字, 情绪: {}): {}\n",
+                        shot.shot_index,
+                        shot.start_time,
+                        shot.end_time,
+                        shot.target_word_budget,
+                        shot.emotion_tag,
+                        shot.visual_summary
+                    ));
+                }
+                buf
+            } else {
+                String::new()
+            };
+
+            let critique_feedback = ctx.memory.get("critique_feedback").cloned();
+            let critique_instruction = if let Some(fb) = &critique_feedback {
+                format!(
+                    "\n【⚠️ 剧本质检上一轮打回批注 (本轮必须重点解决以下问题)】:\n{}\n",
+                    fb
+                )
+            } else {
+                String::new()
+            };
+
             let system_prompt = format!(
                 "你是一名拥有千万播放量的爆款短剧解说与电影编剧。\n\
                 【绝对字数与时长红线】\n\
                 本段视频有效播放总时长为 {:.1} 秒。按照短剧解说黄金语速（约 4.3 汉字/秒），你的解说词总字数必须严格控制在约 {} 字以内（允许 ±10% 误差），切忌废话与过长台词导致音画失配！\n\
                 【多模态视听要求】\n\
-                已传入本视频关键帧画面（共 {} 张）。请仔细观察画面中人物的动作、表情、所处环境及发生的冲突事件，以主角第一人称【我】输出 0~3s 抓人眼球的黄金 Hook 以及扣人心弦的高能解说，必须做到每一句话都与镜头画面真实事件严密对应。",
-                video_duration, target_word_count, images_base64.len()
+                已传入本视频关键帧画面（共 {} 张）。请仔细观察画面中人物的动作、表情、所处环境及发生的冲突事件，以主角第一人称【我】输出 0~3s 抓人眼球的黄金 Hook 以及扣人心弦的高能解说，必须做到每一句话都与镜头画面真实事件严密对应。{}{}",
+                video_duration, target_word_count, images_base64.len(), shots_instruction, critique_instruction
             );
 
             let req = LlmRequest {
                 system: system_prompt,
                 user: format!(
-                    "剧名/工程: {}，场景切片数量: {}，有效总时长: {:.1}s。请结合关键帧视觉画面撰写第一人称解说台词，严格控制在约 {} 字以内。",
-                    project_name, cuts, video_duration, target_word_count
+                    "剧名/工程: {}，场景切片数量: {}，有效总时长: {:.1}s。请结合关键帧视觉画面与镜头时序切片撰写第一人称解说台词，严格控制在约 {} 字以内。{}",
+                    project_name, cuts, video_duration, target_word_count,
+                    if critique_feedback.is_some() { "【请严格按照质检批注进行悬念反转与节奏修正】" } else { "" }
                 ),
                 model: model_override,
                 max_tokens: Some(1024),

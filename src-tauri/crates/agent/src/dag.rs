@@ -13,6 +13,8 @@ use crate::types::{
     DagSnapshot, QualityReport, WorkflowProfile,
 };
 use dramaxis_core::SplicrResult;
+use dramaxis_script::flywheel::ScriptFlywheelEngine;
+use dramaxis_script::LlmRequest;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::RwLock;
@@ -661,32 +663,151 @@ impl DagOrchestrator {
             }
             "critic_review" => {
                 let mut ctx = context.write().await;
-                let hook_ok = ctx
-                    .project
-                    .scripts
-                    .iter()
-                    .any(|s| s.is_hook.unwrap_or(false))
-                    || ctx
-                        .blackboard
-                        .active_script()
-                        .map(|s| s.hook_text.len() > 5)
-                        .unwrap_or(false);
-                let score: f32 = if hook_ok { 91.5 } else { 72.0 };
-                ctx.memory.insert("critic_score".into(), score.to_string());
+                let script_text = ctx
+                    .blackboard
+                    .active_script()
+                    .map(|s| s.text.clone())
+                    .or_else(|| ctx.memory.get("script_text").cloned())
+                    .unwrap_or_default();
+
+                let video_dur_str = ctx
+                    .memory
+                    .get("video_duration")
+                    .cloned()
+                    .unwrap_or_else(|| "60.0".into());
+                let video_duration: f64 = video_dur_str.parse().unwrap_or(60.0);
+
+                // 1. 客观层：基于 Flywheel 留存张力波形算法计算
+                let flywheel = ScriptFlywheelEngine::new();
+                let arc = flywheel.calculate_retention_arc(&script_text, video_duration);
+                let target_words = ((video_duration * 4.3).round() as usize).clamp(30, 2000);
+                let actual_words = script_text.chars().count();
+                let word_ratio = actual_words as f32 / target_words.max(1) as f32;
+                let mut pacing_score = (100.0 - (word_ratio - 1.0).abs() * 50.0).clamp(55.0, 96.0);
+                let mut hook_score = arc.hook_score;
+                let mut conflict_score = arc.climax_intensity.clamp(50.0, 95.0);
+                let mut overall_score =
+                    (hook_score * 0.4 + pacing_score * 0.35 + conflict_score * 0.25).clamp(60.0, 98.0);
+                let mut critique_feedback = if overall_score < 85.0 {
+                    Some("黄金前3秒缺乏戏剧性张力与危机感，开篇反转不足，且字数节奏需微调。".to_string())
+                } else {
+                    Some("文案整体张力良好，前3秒抓人，高潮反转起伏合规。".to_string())
+                };
+                let mut suggestions: Vec<String> = Vec::new();
+                if hook_score < 85.0 {
+                    suggestions.push("前3秒应直接抛出冲突核心或生死/背叛反常识反转，避免平铺直叙".into());
+                }
+                if pacing_score < 80.0 {
+                    suggestions.push(format!(
+                        "字数配比（当前{}字/预期{}字）稍有偏差，请微调台词节奏",
+                        actual_words, target_words
+                    ));
+                }
+
+                // 2. 主观层：调用 LLM-as-a-Judge 深度文学裁判 (若已配置模型)
+                let (kind, api_key, model_override, base_url, _temp) =
+                    resolve_agent_llm(&ctx, AgentRole::QualityReviewer);
+
+                if !api_key.trim().is_empty() {
+                    let provider = dramaxis_script::factory_custom(kind, api_key, base_url);
+                    let judge_req = LlmRequest {
+                        system: "你是一名拥有千万粉丝短视频操盘经验的短剧金牌审稿人与文学裁判。\n\
+                        请对送审的第一人称短剧解说文案进行严格评分，返回合法 JSON 格式，严禁包含 markdown 围栏或额外解释：\n\
+                        {\n\
+                          \"hookScore\": 88.0,\n\
+                          \"conflictScore\": 90.0,\n\
+                          \"pacingScore\": 86.0,\n\
+                          \"overallScore\": 88.0,\n\
+                          \"critiqueFeedback\": \"评语意见...\",\n\
+                          \"suggestions\": [\"修改建议1\", \"修改建议2\"]\n\
+                        }".into(),
+                        user: format!(
+                            "视频时长: {:.1}s，目标字数: ~{}字。送审文案如下：\n\"\"\"\n{}\n\"\"\"",
+                            video_duration, target_words, script_text
+                        ),
+                        model: model_override,
+                        max_tokens: Some(512),
+                        temperature: Some(0.2),
+                        stream: false,
+                        images_base64: Vec::new(),
+                    };
+
+                    if let Ok(resp) = provider.chat(&judge_req).await {
+                        #[derive(serde::Deserialize)]
+                        #[serde(rename_all = "camelCase")]
+                        struct JudgeResult {
+                            hook_score: Option<f32>,
+                            conflict_score: Option<f32>,
+                            pacing_score: Option<f32>,
+                            overall_score: Option<f32>,
+                            critique_feedback: Option<String>,
+                            suggestions: Option<Vec<String>>,
+                        }
+
+                        let clean_json = resp.content.trim()
+                            .trim_start_matches("```json")
+                            .trim_start_matches("```")
+                            .trim_end_matches("```")
+                            .trim();
+
+                        if let Ok(jr) = serde_json::from_str::<JudgeResult>(clean_json) {
+                            if let Some(s) = jr.overall_score {
+                                overall_score = (s * 0.7 + overall_score * 0.3).clamp(50.0, 99.0);
+                            }
+                            if let Some(h) = jr.hook_score {
+                                hook_score = h;
+                            }
+                            if let Some(p) = jr.pacing_score {
+                                pacing_score = p;
+                            }
+                            if let Some(c) = jr.conflict_score {
+                                conflict_score = c;
+                            }
+                            if let Some(fb) = jr.critique_feedback {
+                                critique_feedback = Some(fb);
+                            }
+                            if let Some(sugg) = jr.suggestions {
+                                suggestions = sugg;
+                            }
+                        }
+                    }
+                }
+
+                ctx.memory.insert("critic_score".into(), format!("{:.1}", overall_score));
+                if let Some(ref fb) = critique_feedback {
+                    ctx.memory.insert("critique_feedback".into(), fb.clone());
+                }
+
+                // 回填到最新版本黑板产物
+                let versions_len = ctx.blackboard.script_versions.len();
+                if versions_len > 0 {
+                    let latest_idx = versions_len - 1;
+                    if let Some(latest) = ctx.blackboard.script_versions.get_mut(latest_idx) {
+                        latest.estimated_retention = overall_score;
+                        latest.hook_score = Some(hook_score);
+                        latest.pacing_score = Some(pacing_score);
+                        latest.conflict_score = Some(conflict_score);
+                        latest.critique_feedback = critique_feedback.clone();
+                        latest.critique_suggestions = suggestions.clone();
+                    }
+                }
 
                 ctx.log_thought(
                     AgentRole::QualityReviewer,
-                    format!("文学与画面双重视角评审完成，综合评分: {:.1} 分", score),
+                    format!(
+                        "文学与留存张力 Hybrid 评审完成：综合得分 {:.1}（前3s Hook: {:.1}，语速节奏: {:.1}，冲突高潮: {:.1}）",
+                        overall_score, hook_score, pacing_score, conflict_score
+                    ),
                 );
 
-                if score < 80.0 {
-                    ctx.memory.insert(
-                        "critique_feedback".into(),
-                        "黄金前3秒缺乏戏剧性张力，建议加强身份反差与悬念重写。".into(),
+                if overall_score < 85.0 {
+                    ctx.log_thought(
+                        AgentRole::QualityReviewer,
+                        format!("⚠️ 评分未达达标线 (85.0 分)，批注: {}", critique_feedback.as_deref().unwrap_or("需重写优化")),
                     );
                 }
 
-                Ok(format!("剧本评审通过，综合得分 {:.1} 分", score))
+                Ok(format!("剧本评审完成，综合得分 {:.1} 分", overall_score))
             }
             "hitl_approval" => Ok("人机协同审核通过".into()),
             "voice_synthesis" => {

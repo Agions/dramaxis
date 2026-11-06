@@ -529,6 +529,20 @@ export interface VoicePreviewResult {
   bytesWritten: number;
 }
 
+// Rust 端 ShotAnnotation (pub struct, rename_all = "camelCase")
+export interface ShotAnnotation {
+  shotIndex: number;
+  startTime: number;
+  endTime: number;
+  duration: number;
+  keyframePath?: string | null;
+  motionIntensity: number;
+  emotionTag: string;
+  conflictScore: number;
+  visualSummary: string;
+  targetWordBudget: number;
+}
+
 // Rust 端 ScriptArtifact (pub struct, rename_all = "camelCase")
 export interface ScriptArtifact {
   version: number;
@@ -538,7 +552,11 @@ export interface ScriptArtifact {
   hookType: string;
   hookText: string;
   estimatedRetention: number;
+  hookScore?: number | null;
+  pacingScore?: number | null;
+  conflictScore?: number | null;
   critiqueFeedback?: string | null;
+  critiqueSuggestions?: string[];
   createdAt: number;
 }
 
@@ -548,6 +566,7 @@ export interface VisualBriefArtifact {
   sceneCutsSec: number[];
   keyframePaths: string[];
   visualSummary: string;
+  shots?: ShotAnnotation[];
 }
 
 // Rust 端 SpeechInterval (pub struct, rename_all = "camelCase")

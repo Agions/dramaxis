@@ -5,6 +5,22 @@
 use crate::types::AgentRole;
 use serde::{Deserialize, Serialize};
 
+/// 镜头级视听剧情时序切片标注 (Shot-by-Shot Annotation)
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ShotAnnotation {
+    pub shot_index: usize,
+    pub start_time: f64,
+    pub end_time: f64,
+    pub duration: f64,
+    pub keyframe_path: Option<String>,
+    pub motion_intensity: f32,
+    pub emotion_tag: String,
+    pub conflict_score: f32,
+    pub visual_summary: String,
+    pub target_word_budget: usize,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScriptArtifact {
@@ -15,17 +31,24 @@ pub struct ScriptArtifact {
     pub hook_type: String,
     pub hook_text: String,
     pub estimated_retention: f32,
+    pub hook_score: Option<f32>,
+    pub pacing_score: Option<f32>,
+    pub conflict_score: Option<f32>,
     pub critique_feedback: Option<String>,
+    #[serde(default)]
+    pub critique_suggestions: Vec<String>,
     pub created_at: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct VisualBriefArtifact {
     pub total_duration_sec: f64,
     pub scene_cuts_sec: Vec<f64>,
     pub keyframe_paths: Vec<String>,
     pub visual_summary: String,
+    #[serde(default)]
+    pub shots: Vec<ShotAnnotation>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -123,6 +146,37 @@ impl Blackboard {
         estimated_retention: f32,
         critique_feedback: Option<String>,
     ) -> u32 {
+        self.push_script_version_with_metrics(
+            author_agent,
+            prompt_used,
+            text,
+            hook_type,
+            hook_text,
+            estimated_retention,
+            None,
+            None,
+            None,
+            critique_feedback,
+            Vec::new(),
+        )
+    }
+
+    /// 追加带有完备多维质量评分的新版本剧本并激活
+    #[allow(clippy::too_many_arguments)]
+    pub fn push_script_version_with_metrics(
+        &mut self,
+        author_agent: AgentRole,
+        prompt_used: impl Into<String>,
+        text: impl Into<String>,
+        hook_type: impl Into<String>,
+        hook_text: impl Into<String>,
+        estimated_retention: f32,
+        hook_score: Option<f32>,
+        pacing_score: Option<f32>,
+        conflict_score: Option<f32>,
+        critique_feedback: Option<String>,
+        critique_suggestions: Vec<String>,
+    ) -> u32 {
         let next_version = (self.script_versions.len() + 1) as u32;
         let artifact = ScriptArtifact {
             version: next_version,
@@ -132,7 +186,11 @@ impl Blackboard {
             hook_type: hook_type.into(),
             hook_text: hook_text.into(),
             estimated_retention,
+            hook_score,
+            pacing_score,
+            conflict_score,
             critique_feedback,
+            critique_suggestions,
             created_at: chrono::Utc::now().timestamp_millis() as u64,
         };
         self.script_versions.push(artifact);

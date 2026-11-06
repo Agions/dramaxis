@@ -6,6 +6,7 @@ import { memo, useState } from "react";
 import { useWorkshopStore } from "@dramaxis/core";
 import type { AgentMessage, BreakpointRequest, Blackboard } from "@dramaxis/ipc";
 import { WORKFLOW_PROFILES } from "./ProductionHeader";
+import { ReflectionEvolutionCard } from "./script/ReflectionEvolutionCard";
 
 interface AgentStudioRackProps {
   currentStepIndex: number;
@@ -107,24 +108,27 @@ export const AgentStudioRack = memo(function AgentStudioRack({
         </div>
       </div>
 
-      {/* 剧本版本链徽章 */}
+      {/* 剧本版本链徽章与自反思演化轨迹卡片 */}
       {blackboard && blackboard.scriptVersions.length > 0 && (
-        <div className="flex items-center justify-between px-2 text-[11px] text-text-secondary">
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>黑板总线: 当前草稿版本</span>
-            <span className="font-mono font-bold text-gold">
-              v{activeScript?.version || 1}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between px-2 text-[11px] text-text-secondary">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>黑板总线: 当前草稿版本</span>
+              <span className="font-mono font-bold text-gold">
+                v{activeScript?.version || 1}
+              </span>
+              <span className="text-text-muted">
+                (共 {blackboard.scriptVersions.length} 轮自反思)
+              </span>
             </span>
-            <span className="text-text-muted">
-              (共 {blackboard.scriptVersions.length} 版)
-            </span>
-          </span>
-          {activeScript?.critiqueFeedback && (
-            <span className="text-[10px] text-amber-400 truncate max-w-[140px]" title={activeScript.critiqueFeedback}>
-              已融合反思建议
-            </span>
-          )}
+            {activeScript?.critiqueFeedback && (
+              <span className="text-[10px] text-amber-400 truncate max-w-[140px]" title={activeScript.critiqueFeedback}>
+                已融合反思建议
+              </span>
+            )}
+          </div>
+          <ReflectionEvolutionCard blackboard={blackboard} />
         </div>
       )}
 

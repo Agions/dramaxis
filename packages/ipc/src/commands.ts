@@ -64,6 +64,8 @@ import type {
   AlignmentMatch,
   Blackboard,
   WorkflowProfile,
+  ShotAnnotation,
+  ScriptArtifact,
 } from "./types.gen";
 
 export type {
@@ -86,6 +88,8 @@ export type {
   AlignmentPlan,
   AlignmentMatch,
   WorkflowProfile,
+  ShotAnnotation,
+  ScriptArtifact,
 };
 
 // ─────────────────────────────────────────────────────────────────────────

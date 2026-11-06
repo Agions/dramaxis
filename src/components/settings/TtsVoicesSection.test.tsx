@@ -11,16 +11,14 @@ vi.mock("sonner", () => ({
 
 describe("TtsVoicesSection", () => {
   const defaultMockConfig: ConfigSnapshot = {
+    theme: "dark",
+    language: "zh-CN",
     llm_provider: "deepseek",
+    auto_update: false,
+    first_run: false,
     llm_api_key: "sk-test",
     llm_base_url: "https://api.deepseek.com/v1",
     llm_model: "deepseek-chat",
-    agent_director_model: null,
-    agent_screenwriter_model: null,
-    agent_visual_critic_model: null,
-    agent_voice_artist_model: null,
-    agent_sound_engineer_model: null,
-    agent_quality_reviewer_model: null,
     tts_provider: "edge",
     tts_voice: "zh-CN-YunxiNeural",
     tts_model: null,
@@ -28,11 +26,7 @@ describe("TtsVoicesSection", () => {
     tts_api_key: null,
     tts_ref_audio_path: null,
     tts_prompt_text: null,
-    export_preset: "1080p_douyin",
-    hardware_acceleration: "none",
-    auto_detect_scenes: true,
-    language: "zh-CN",
-    dark_mode: true,
+    agent_model_matrix: null,
   };
 
   it("正确渲染 TTS 厂商列表及当前选中参数", () => {

@@ -140,6 +140,7 @@ export const ProductionInspector = memo(function ProductionInspector({
           }}
           isGeneratingScript={isGeneratingScript}
           onGenerateScript={onGenerateScript}
+          blackboard={blackboard}
         />
       )}
 

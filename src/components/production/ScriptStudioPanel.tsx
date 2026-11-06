@@ -10,10 +10,11 @@
 
 import { memo, useState } from "react";
 import { toast } from "sonner";
-import { settingsIpc } from "@dramaxis/ipc";
+import { settingsIpc, type Blackboard } from "@dramaxis/ipc";
 import { HookEngineCard } from "./script/HookEngineCard";
 import { ReferenceDeconstructCard } from "./script/ReferenceDeconstructCard";
 import { RetentionArcCard } from "./script/RetentionArcCard";
+import { ReflectionEvolutionCard } from "./script/ReflectionEvolutionCard";
 
 interface ScriptStudioPanelProps {
   llmProvider: string;
@@ -28,6 +29,7 @@ interface ScriptStudioPanelProps {
   onScriptTextChange: (val: string) => void;
   isGeneratingScript: boolean;
   onGenerateScript: () => void;
+  blackboard?: Blackboard | null;
 }
 
 export const ScriptStudioPanel = memo(function ScriptStudioPanel({
@@ -41,6 +43,7 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
   onScriptTextChange,
   isGeneratingScript,
   onGenerateScript,
+  blackboard,
 }: ScriptStudioPanelProps) {
   // 模型连通性快速测速
   const [testingModel, setTestingModel] = useState(false);
@@ -188,6 +191,12 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
 
         {/* 6. 留存曲线张力分析卡片 */}
         <RetentionArcCard scriptText={scriptText} />
+
+        {/* 6.5. 智能体自反思演化轨迹卡片 (多轮 Critic 反思与版本回滚) */}
+        <ReflectionEvolutionCard
+          blackboard={blackboard}
+          onApplyScript={onScriptTextChange}
+        />
       </div>
 
       {/* 7. 重建 AI 剧本按钮 */}
