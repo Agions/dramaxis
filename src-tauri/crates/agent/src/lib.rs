@@ -9,6 +9,7 @@ pub mod blackboard;
 pub mod context;
 pub mod dag;
 pub mod engine;
+pub mod graph;
 pub mod types;
 
 pub use agents::*;
@@ -16,4 +17,5 @@ pub use blackboard::*;
 pub use context::AgentContext;
 pub use dag::*;
 pub use engine::AgentOrchestrator;
+pub use graph::*;
 pub use types::*;

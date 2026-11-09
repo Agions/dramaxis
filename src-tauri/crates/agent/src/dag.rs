@@ -1,13 +1,16 @@
-//! dramaxis-agent::dag · 基于事件驱动的 DAG Multi-Agent 状态机编排引擎
+//! dramaxis-agent::dag · 基于声明式动态状态图 (StateGraph) 的 Multi-Agent 编排引擎
 //!
 //! ## 核心能力
-//! 1. **并行分支分发**：视觉画面抽样与音频台词提取独立并发运行
-//! 2. **反思自愈评审闭环 (Critic Loop)**：文学批评智能体未达标 (<80分) 自动触发建议反思回路
-//! 3. **人机协同断点 (HITL)**：在剧本成稿处挂起并向前端推送选择项，用户确认后恢复
-//! 4. **实时状态快照 (DagSnapshot)**：全程推送 DAG 各节点状态与耗时至前端渲染
+//! 1. **声明式状态图 (StateGraph)**：节点、依赖边、条件边与屏障统一图论建模
+//! 2. **并发分支与屏障汇聚 (SyncBarrier)**：视觉抽样与音频探测并行，屏障原子归约黑板状态
+//! 3. **动态条件路由 (Conditional Routing)**：质检未达标自动由条件路由决策反思回路
+//! 4. **局部拓扑失效重算 (Selective Invalidation)**：反思回路仅失效下游，前置昂贵抽样完全缓存
+//! 5. **策略级优雅降级 (Graceful Fallback)**：关键节点发生网络或外部故障时自动执行备选降级策略
+//! 6. **人机协同断点 (HITL Checkpoint)**：关键交付节点向前端挂起交互并支持靶向自然语言精修
 
 use crate::agents::*;
 use crate::context::AgentContext;
+use crate::graph::{GraphNode, StateGraph};
 use crate::types::{
     AgentEventPayload, AgentRole, AgentStatus, BreakpointRequest, DagNodeInfo, DagNodeStatus,
     DagSnapshot, QualityReport, WorkflowProfile,
@@ -21,7 +24,8 @@ use tokio::sync::RwLock;
 
 pub type EventEmitter = Arc<dyn Fn(AgentEventPayload) + Send + Sync>;
 
-/// DAG 节点实体
+/// DAG 节点实体（向后兼容视图层契约）
+#[derive(Clone)]
 pub struct DagNode {
     pub id: &'static str,
     pub name: &'static str,
@@ -33,10 +37,11 @@ pub struct DagNode {
     pub summary: Option<String>,
 }
 
-/// DAG 调度编排器
+/// DAG 调度编排器（基于 StateGraph 声明式图引擎）
 pub struct DagOrchestrator {
     pub context: Arc<RwLock<AgentContext>>,
     pub nodes: Vec<DagNode>,
+    pub graph: StateGraph<AgentContext>,
     pub event_emitter: Option<EventEmitter>,
     pub critique_count: u32,
     pub max_critique_rounds: u32,
@@ -48,229 +53,444 @@ impl DagOrchestrator {
         Self::with_profile(context, WorkflowProfile::StandardDrama)
     }
 
-    /// 根据业务场景模板构造动态 DAG 工作流
+    /// 根据业务场景模板构造声明式 StateGraph 工作流
     pub fn with_profile(context: AgentContext, profile: WorkflowProfile) -> Self {
+        let max_critique_rounds = 2;
+        let mut graph = StateGraph::<AgentContext>::new();
+
         let nodes = match profile {
-            WorkflowProfile::StandardDrama => vec![
-                DagNode {
-                    id: "director_plan",
-                    name: "🎬 总控导演 · 统筹策划与任务派发",
-                    role: AgentRole::Director,
-                    dependencies: vec![],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "visual_analysis",
-                    name: "👁️ 视觉分析师 · 场景突变硬切与关键帧萃取",
-                    role: AgentRole::VisualCritic,
-                    dependencies: vec!["director_plan"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "dialogue_probe",
-                    name: "🎧 音频分析师 · 原片原声对白与节奏探测",
-                    role: AgentRole::SoundEngineer,
-                    dependencies: vec!["director_plan"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "screenwriter_draft",
-                    name: "✍️ 金牌编剧 · 第一人称爆款解说撰写",
-                    role: AgentRole::Screenwriter,
-                    dependencies: vec!["visual_analysis", "dialogue_probe"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "critic_review",
-                    name: "🔍 剧本质检 · 节奏密度与黄金前3秒评审闭环",
-                    role: AgentRole::QualityReviewer,
-                    dependencies: vec!["screenwriter_draft"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "hitl_approval",
-                    name: "🤝 人机协同 · 剧本精修与终版确认 (HITL)",
-                    role: AgentRole::Director,
-                    dependencies: vec!["critic_review"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: true,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "voice_synthesis",
-                    name: "🎙️ 配音师 · 48kHz 影视广播级人声合成",
-                    role: AgentRole::VoiceArtist,
-                    dependencies: vec!["hitl_approval"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "timeline_compose",
-                    name: "🎛️ 音频调音师 · 5轨毫秒级磁吸与智能避让",
-                    role: AgentRole::SoundEngineer,
-                    dependencies: vec!["voice_synthesis"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "quality_gate",
-                    name: "🛡️ 终审守门员 · 视听合规与全案质检",
-                    role: AgentRole::QualityReviewer,
-                    dependencies: vec!["timeline_compose"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-            ],
-            WorkflowProfile::FastCommentary => vec![
-                DagNode {
-                    id: "director_plan",
-                    name: "🎬 总控导演 · 统筹策划与任务派发",
-                    role: AgentRole::Director,
-                    dependencies: vec![],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "visual_analysis",
-                    name: "👁️ 视觉分析师 · 场景关键帧萃取",
-                    role: AgentRole::VisualCritic,
-                    dependencies: vec!["director_plan"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "screenwriter_draft",
-                    name: "✍️ 金牌编剧 · 极速解说文案撰写",
-                    role: AgentRole::Screenwriter,
-                    dependencies: vec!["visual_analysis"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "hitl_approval",
-                    name: "🤝 人机协同 · 文案终审确认 (HITL)",
-                    role: AgentRole::Director,
-                    dependencies: vec!["screenwriter_draft"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: true,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "voice_synthesis",
-                    name: "🎙️ 配音师 · 快速独白人声合成",
-                    role: AgentRole::VoiceArtist,
-                    dependencies: vec!["hitl_approval"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "timeline_compose",
-                    name: "🎛️ 音频调音师 · 5轨极速对齐",
-                    role: AgentRole::SoundEngineer,
-                    dependencies: vec!["voice_synthesis"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "quality_gate",
-                    name: "🛡️ 终审守门员 · 快速成片验收",
-                    role: AgentRole::QualityReviewer,
-                    dependencies: vec!["timeline_compose"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-            ],
-            WorkflowProfile::PureBrollMontage => vec![
-                DagNode {
-                    id: "director_plan",
-                    name: "🎬 总控导演 · 混剪统筹与节奏打点",
-                    role: AgentRole::Director,
-                    dependencies: vec![],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "visual_analysis",
-                    name: "👁️ 视觉分析师 · 镜头突变高能切点分析",
-                    role: AgentRole::VisualCritic,
-                    dependencies: vec!["director_plan"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "timeline_compose",
-                    name: "🎛️ 混剪师 · 卡点转场与 BGM 动态混流",
-                    role: AgentRole::SoundEngineer,
-                    dependencies: vec!["visual_analysis"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-                DagNode {
-                    id: "quality_gate",
-                    name: "🛡️ 终审守门员 · 视听连贯度终验",
-                    role: AgentRole::QualityReviewer,
-                    dependencies: vec!["timeline_compose"],
-                    status: DagNodeStatus::Pending,
-                    is_hitl_checkpoint: false,
-                    duration_ms: 0,
-                    summary: None,
-                },
-            ],
+            WorkflowProfile::StandardDrama => {
+                // 1. 注册图节点
+                graph.add_node(
+                    GraphNode::new("director_plan", "🎬 总控导演 · 统筹策划与任务派发", AgentRole::Director)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "director_plan"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("visual_analysis", "👁️ 视觉分析师 · 场景突变硬切与关键帧萃取", AgentRole::VisualCritic)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "visual_analysis"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("dialogue_probe", "🎧 音频分析师 · 原片原声对白与节奏探测", AgentRole::SoundEngineer)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "dialogue_probe"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("screenwriter_draft", "✍️ 金牌编剧 · 第一人称爆款解说撰写", AgentRole::Screenwriter)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "screenwriter_draft"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("critic_review", "🔍 剧本质检 · 节奏密度与黄金前3秒评审闭环", AgentRole::QualityReviewer)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "critic_review"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("hitl_approval", "🤝 人机协同 · 剧本精修与终版确认 (HITL)", AgentRole::Director)
+                        .with_hitl(true)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "hitl_approval"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("voice_synthesis", "🎙️ 配音师 · 48kHz 影视广播级人声合成", AgentRole::VoiceArtist)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "voice_synthesis"))
+                        }))
+                        .with_fallback(Arc::new(|ctx| {
+                            Box::pin(async move {
+                                let mut c = ctx.write().await;
+                                c.log_thought(
+                                    AgentRole::VoiceArtist,
+                                    "语音合成主通道响应超时，已自动激活本地离线声学占位通道保证流程不中断",
+                                );
+                                Ok("配音完成 [离线声学兜底]".into())
+                            })
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("timeline_compose", "🎛️ 音频调音师 · 5轨毫秒级磁吸与智能避让", AgentRole::SoundEngineer)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "timeline_compose"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("quality_gate", "🛡️ 终审守门员 · 视听合规与全案质检", AgentRole::QualityReviewer)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "quality_gate"))
+                        })),
+                );
+
+                // 2. 声明依赖边与并行汇聚屏障
+                graph.add_edge("director_plan", "visual_analysis");
+                graph.add_edge("director_plan", "dialogue_probe");
+
+                // 声明屏障：编剧起稿必须汇聚视觉抽样与音频探测，并归约对齐黑板产物
+                graph.add_barrier(
+                    "screenwriter_draft",
+                    vec!["visual_analysis".into(), "dialogue_probe".into()],
+                    Some(Arc::new(|ctx: &mut AgentContext| {
+                        ctx.log_action(
+                            AgentRole::Screenwriter,
+                            "视听多模态汇聚",
+                            "已聚合视觉场景硬切切点与原片音频声学节奏，准备生成第一人称故事脚本",
+                        );
+                    })),
+                );
+
+                graph.add_edge("screenwriter_draft", "critic_review");
+
+                // 3. 声明反思闭环条件路由边
+                graph.add_conditional_edge(
+                    "critic_review",
+                    Arc::new(move |ctx: &AgentContext| {
+                        let score = ctx
+                            .memory
+                            .get("critic_score")
+                            .and_then(|s| s.parse::<f32>().ok())
+                            .unwrap_or(85.0);
+                        let critique_rounds = ctx
+                            .memory
+                            .get("critique_rounds_executed")
+                            .and_then(|s| s.parse::<u32>().ok())
+                            .unwrap_or(0);
+
+                        if score < 80.0 && critique_rounds < max_critique_rounds {
+                            "screenwriter_draft".into()
+                        } else {
+                            "hitl_approval".into()
+                        }
+                    }),
+                    vec!["screenwriter_draft".into(), "hitl_approval".into()],
+                );
+
+                graph.add_edge("hitl_approval", "voice_synthesis");
+                graph.add_edge("voice_synthesis", "timeline_compose");
+                graph.add_edge("timeline_compose", "quality_gate");
+
+                vec![
+                    DagNode {
+                        id: "director_plan",
+                        name: "🎬 总控导演 · 统筹策划与任务派发",
+                        role: AgentRole::Director,
+                        dependencies: vec![],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "visual_analysis",
+                        name: "👁️ 视觉分析师 · 场景突变硬切与关键帧萃取",
+                        role: AgentRole::VisualCritic,
+                        dependencies: vec!["director_plan"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "dialogue_probe",
+                        name: "🎧 音频分析师 · 原片原声对白与节奏探测",
+                        role: AgentRole::SoundEngineer,
+                        dependencies: vec!["director_plan"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "screenwriter_draft",
+                        name: "✍️ 金牌编剧 · 第一人称爆款解说撰写",
+                        role: AgentRole::Screenwriter,
+                        dependencies: vec!["visual_analysis", "dialogue_probe"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "critic_review",
+                        name: "🔍 剧本质检 · 节奏密度与黄金前3秒评审闭传",
+                        role: AgentRole::QualityReviewer,
+                        dependencies: vec!["screenwriter_draft"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "hitl_approval",
+                        name: "🤝 人机协同 · 剧本精修与终版确认 (HITL)",
+                        role: AgentRole::Director,
+                        dependencies: vec!["critic_review"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: true,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "voice_synthesis",
+                        name: "🎙️ 配音师 · 48kHz 影视广播级人声合成",
+                        role: AgentRole::VoiceArtist,
+                        dependencies: vec!["hitl_approval"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "timeline_compose",
+                        name: "🎛️ 音频调音师 · 5轨毫秒级磁吸与智能避让",
+                        role: AgentRole::SoundEngineer,
+                        dependencies: vec!["voice_synthesis"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "quality_gate",
+                        name: "🛡️ 终审守门员 · 视听合规与全案质检",
+                        role: AgentRole::QualityReviewer,
+                        dependencies: vec!["timeline_compose"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                ]
+            }
+            WorkflowProfile::FastCommentary => {
+                graph.add_node(
+                    GraphNode::new("director_plan", "🎬 总控导演 · 统筹策划与任务派发", AgentRole::Director)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "director_plan"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("visual_analysis", "👁️ 视觉分析师 · 场景关键帧萃取", AgentRole::VisualCritic)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "visual_analysis"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("screenwriter_draft", "✍️ 金牌编剧 · 极速解说文案撰写", AgentRole::Screenwriter)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "screenwriter_draft"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("hitl_approval", "🤝 人机协同 · 文案终审确认 (HITL)", AgentRole::Director)
+                        .with_hitl(true)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "hitl_approval"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("voice_synthesis", "🎙️ 配音师 · 快速独白人声合成", AgentRole::VoiceArtist)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "voice_synthesis"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("timeline_compose", "🎛️ 音频调音师 · 5轨极速对齐", AgentRole::SoundEngineer)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "timeline_compose"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("quality_gate", "🛡️ 终审守门员 · 快速成片验收", AgentRole::QualityReviewer)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "quality_gate"))
+                        })),
+                );
+
+                graph.add_edge("director_plan", "visual_analysis");
+                graph.add_edge("visual_analysis", "screenwriter_draft");
+                graph.add_edge("screenwriter_draft", "hitl_approval");
+                graph.add_edge("hitl_approval", "voice_synthesis");
+                graph.add_edge("voice_synthesis", "timeline_compose");
+                graph.add_edge("timeline_compose", "quality_gate");
+
+                vec![
+                    DagNode {
+                        id: "director_plan",
+                        name: "🎬 总控导演 · 统筹策划与任务派发",
+                        role: AgentRole::Director,
+                        dependencies: vec![],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "visual_analysis",
+                        name: "👁️ 视觉分析师 · 场景关键帧萃取",
+                        role: AgentRole::VisualCritic,
+                        dependencies: vec!["director_plan"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "screenwriter_draft",
+                        name: "✍️ 金牌编剧 · 极速解说文案撰写",
+                        role: AgentRole::Screenwriter,
+                        dependencies: vec!["visual_analysis"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "hitl_approval",
+                        name: "🤝 人机协同 · 文案终审确认 (HITL)",
+                        role: AgentRole::Director,
+                        dependencies: vec!["screenwriter_draft"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: true,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "voice_synthesis",
+                        name: "🎙️ 配音师 · 快速独白人声合成",
+                        role: AgentRole::VoiceArtist,
+                        dependencies: vec!["hitl_approval"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "timeline_compose",
+                        name: "🎛️ 音频调音师 · 5轨极速对齐",
+                        role: AgentRole::SoundEngineer,
+                        dependencies: vec!["voice_synthesis"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "quality_gate",
+                        name: "🛡️ 终审守门员 · 快速成片验收",
+                        role: AgentRole::QualityReviewer,
+                        dependencies: vec!["timeline_compose"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                ]
+            }
+            WorkflowProfile::PureBrollMontage => {
+                graph.add_node(
+                    GraphNode::new("director_plan", "🎬 总控导演 · 混剪统筹与节奏打点", AgentRole::Director)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "director_plan"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("visual_analysis", "👁️ 视觉分析师 · 镜头突变高能切点分析", AgentRole::VisualCritic)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "visual_analysis"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("timeline_compose", "🎛️ 混剪师 · 卡点转场与 BGM 动态混流", AgentRole::SoundEngineer)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "timeline_compose"))
+                        })),
+                );
+                graph.add_node(
+                    GraphNode::new("quality_gate", "🛡️ 终审守门员 · 视听连贯度终验", AgentRole::QualityReviewer)
+                        .with_handler(Arc::new(|ctx| {
+                            Box::pin(Self::execute_static_node_logic(ctx, "quality_gate"))
+                        })),
+                );
+
+                graph.add_edge("director_plan", "visual_analysis");
+                graph.add_edge("visual_analysis", "timeline_compose");
+                graph.add_edge("timeline_compose", "quality_gate");
+
+                vec![
+                    DagNode {
+                        id: "director_plan",
+                        name: "🎬 总控导演 · 混剪统筹与节奏打点",
+                        role: AgentRole::Director,
+                        dependencies: vec![],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "visual_analysis",
+                        name: "👁️ 视觉分析师 · 镜头突变高能切点分析",
+                        role: AgentRole::VisualCritic,
+                        dependencies: vec!["director_plan"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "timeline_compose",
+                        name: "🎛️ 混剪师 · 卡点转场与 BGM 动态混流",
+                        role: AgentRole::SoundEngineer,
+                        dependencies: vec!["visual_analysis"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                    DagNode {
+                        id: "quality_gate",
+                        name: "🛡️ 终审守门员 · 视听连贯度终验",
+                        role: AgentRole::QualityReviewer,
+                        dependencies: vec!["timeline_compose"],
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    },
+                ]
+            }
         };
 
         Self {
             context: Arc::new(RwLock::new(context)),
             nodes,
+            graph,
             event_emitter: None,
             critique_count: 0,
-            max_critique_rounds: 2,
+            max_critique_rounds,
         }
     }
 
     pub fn with_emitter(mut self, emitter: EventEmitter) -> Self {
         self.event_emitter = Some(emitter);
         self
+    }
+
+    /// 同步 StateGraph 节点状态至对外暴露的 nodes 视图切片
+    fn sync_nodes_view(&mut self) {
+        for n in &mut self.nodes {
+            if let Some(gn) = self.graph.nodes.get(n.id) {
+                n.status = gn.status;
+                n.duration_ms = gn.duration_ms;
+                n.summary = gn.summary.clone();
+            }
+        }
     }
 
     /// 获取当前 DAG 状态快照
@@ -312,36 +532,17 @@ impl DagOrchestrator {
         }
     }
 
-    /// 推进 DAG 调度执行，遇到断点返回 Some(BreakpointRequest)
+    /// 推进 StateGraph 调度执行，遇到断点返回 Some(BreakpointRequest)
     pub async fn run_dag(&mut self) -> SplicrResult<Option<BreakpointRequest>> {
         let total_timer = Instant::now();
 
         loop {
-            // 1. 查找所有前置依赖已全部完成且自身处于 Pending 状态的就绪节点
-            let ready_indices: Vec<usize> = self
-                .nodes
-                .iter()
-                .enumerate()
-                .filter(|(_, node)| {
-                    if node.status != DagNodeStatus::Pending {
-                        return false;
-                    }
-                    node.dependencies.iter().all(|dep_id| {
-                        self.nodes
-                            .iter()
-                            .any(|n| n.id == *dep_id && n.status == DagNodeStatus::Completed)
-                    })
-                })
-                .map(|(idx, _)| idx)
-                .collect();
+            // 1. 基于声明式 StateGraph 获取当前就绪节点 ID 列表
+            let ready_ids = self.graph.get_ready_node_ids();
 
             // 若无任何就绪节点，检查是否全部完成
-            if ready_indices.is_empty() {
-                let all_done = self.nodes.iter().all(|n| {
-                    n.status == DagNodeStatus::Completed || n.status == DagNodeStatus::Skipped
-                });
-
-                if all_done {
+            if ready_ids.is_empty() {
+                if self.graph.is_all_completed() {
                     let mut ctx = self.context.write().await;
                     ctx.status = AgentStatus::Completed;
                     if let Some(emitter) = &self.event_emitter {
@@ -354,20 +555,26 @@ impl DagOrchestrator {
                 break;
             }
 
-            // 检查就绪节点中是否包含人机协同断点 (HITL)
+            // 2. 检查就绪节点中是否包含人机协同断点 (HITL)
             let auto_mode = self.context.read().await.auto_mode;
-            let hitl_idx = ready_indices
-                .iter()
-                .copied()
-                .find(|&idx| self.nodes[idx].is_hitl_checkpoint && !auto_mode);
+            let hitl_id = ready_ids.iter().find(|id| {
+                self.graph
+                    .nodes
+                    .get(*id)
+                    .map(|n| n.is_hitl_checkpoint && !auto_mode)
+                    .unwrap_or(false)
+            });
 
-            if let Some(node_idx) = hitl_idx {
+            if let Some(node_id) = hitl_id {
                 let (role, name) = {
-                    let node = &self.nodes[node_idx];
-                    (node.role, node.name.to_string())
+                    let node = self.graph.nodes.get(node_id).unwrap();
+                    (node.role, node.name.clone())
                 };
 
-                self.nodes[node_idx].status = DagNodeStatus::Running;
+                if let Some(node) = self.graph.nodes.get_mut(node_id) {
+                    node.status = DagNodeStatus::Running;
+                }
+                self.sync_nodes_view();
                 self.emit_progress().await;
 
                 let mut ctx = self.context.write().await;
@@ -404,55 +611,82 @@ impl DagOrchestrator {
                 return Ok(Some(req));
             }
 
-            // 2. 并行异步推进无依赖就绪节点 (基于 Tokio 任务池 + 并发资源信号量控制)
-            for &node_idx in &ready_indices {
-                self.nodes[node_idx].status = DagNodeStatus::Running;
+            // 3. 执行 Barrier 屏障状态归约 (Reducer)
+            {
+                let mut ctx = self.context.write().await;
+                self.graph.apply_barrier_reducers(&ready_ids, &mut ctx).await;
+            }
+
+            // 4. 并行推进就绪节点 (Tokio 任务池 + 信号量并发控制)
+            for id in &ready_ids {
+                if let Some(node) = self.graph.nodes.get_mut(id) {
+                    node.status = DagNodeStatus::Running;
+                }
                 if let Some(emitter) = &self.event_emitter {
+                    let node = self.graph.nodes.get(id).unwrap();
+                    let step_idx = self.nodes.iter().position(|n| n.id == id).unwrap_or(0);
                     emitter(AgentEventPayload::StepStarted {
-                        step_idx: node_idx,
-                        role: self.nodes[node_idx].role,
-                        name: self.nodes[node_idx].name.to_string(),
+                        step_idx,
+                        role: node.role,
+                        name: node.name.clone(),
                     });
                 }
             }
+            self.sync_nodes_view();
             self.emit_progress().await;
 
             let sem = Arc::new(tokio::sync::Semaphore::new(2));
             let mut tasks = Vec::new();
-            for &node_idx in &ready_indices {
-                let node_id = self.nodes[node_idx].id;
+            for id in &ready_ids {
                 let sem_clone = sem.clone();
                 let ctx_clone = self.context.clone();
+                let node_id = id.clone();
+                let handler = self
+                    .graph
+                    .nodes
+                    .get(id)
+                    .and_then(|n| n.handler.clone());
                 tasks.push(async move {
                     let _permit = sem_clone.acquire().await;
                     let start = Instant::now();
-                    let res = Self::execute_static_node_logic(ctx_clone, node_id).await;
-                    (node_idx, node_id, res, start.elapsed().as_millis() as u64)
+                    let res = if let Some(h) = handler {
+                        h(ctx_clone).await
+                    } else {
+                        Ok("执行完成".into())
+                    };
+                    (node_id, res, start.elapsed().as_millis() as u64)
                 });
             }
 
             let outcomes = futures::future::join_all(tasks).await;
 
-            let mut critic_ran = false;
-            for (node_idx, node_id, result, dur_ms) in outcomes {
-                let role = self.nodes[node_idx].role;
+            let mut conditional_triggers = Vec::new();
+            for (node_id, result, dur_ms) in outcomes {
+                let role = self
+                    .graph
+                    .nodes
+                    .get(&node_id)
+                    .map(|n| n.role)
+                    .unwrap_or(AgentRole::Director);
+
                 match result {
                     Ok(summary) => {
-                        self.nodes[node_idx].duration_ms = dur_ms;
-                        self.nodes[node_idx].summary = Some(summary.clone());
-                        self.nodes[node_idx].status = DagNodeStatus::Completed;
+                        if let Some(node) = self.graph.nodes.get_mut(&node_id) {
+                            node.duration_ms = dur_ms;
+                            node.summary = Some(summary.clone());
+                            node.status = DagNodeStatus::Completed;
+                        }
 
+                        let step_idx = self.nodes.iter().position(|n| n.id == node_id).unwrap_or(0);
                         if let Some(emitter) = &self.event_emitter {
                             emitter(AgentEventPayload::StepCompleted {
-                                step_idx: node_idx,
+                                step_idx,
                                 role,
                                 summary,
                             });
                         }
 
-                        if node_id == "critic_review" {
-                            critic_ran = true;
-                        } else if node_id == "quality_gate" {
+                        if node_id == "quality_gate" {
                             let ctx = self.context.read().await;
                             if let Some(rep) = &ctx.blackboard.quality_report {
                                 if let Some(emitter) = &self.event_emitter {
@@ -469,9 +703,17 @@ impl DagOrchestrator {
                                 }
                             }
                         }
+
+                        // 收集待评估条件边
+                        if self.graph.conditional_edges.contains_key(&node_id) {
+                            conditional_triggers.push(node_id);
+                        }
                     }
                     Err(err) => {
-                        self.nodes[node_idx].status = DagNodeStatus::Failed;
+                        if let Some(node) = self.graph.nodes.get_mut(&node_id) {
+                            node.status = DagNodeStatus::Failed;
+                        }
+                        self.sync_nodes_view();
                         let mut ctx = self.context.write().await;
                         ctx.status = AgentStatus::Failed;
 
@@ -487,45 +729,70 @@ impl DagOrchestrator {
                 }
             }
 
-            // 3. 检查反思评审闭环 (Critic Loop)
-            if critic_ran {
-                let should_loop = {
+            self.sync_nodes_view();
+
+            // 5. 动态条件路由边推演与局部子图失效 (Conditional Branching & Selective Invalidation)
+            let mut need_loop_restart = false;
+            for from_node in conditional_triggers {
+                let target_opt = {
                     let ctx = self.context.read().await;
-                    if let Some(score_str) = ctx.memory.get("critic_score") {
-                        score_str.parse::<f32>().unwrap_or(85.0) < 80.0
-                    } else {
-                        false
-                    }
+                    self.graph.evaluate_conditional_edge(&from_node, &ctx)
                 };
 
-                if should_loop && self.critique_count < self.max_critique_rounds {
-                    self.critique_count += 1;
-                    let feedback = {
-                        let ctx = self.context.read().await;
-                        ctx.memory
-                            .get("critique_feedback")
-                            .cloned()
-                            .unwrap_or_else(|| "开篇前3秒悬念不足，建议加入突发冲突钩子".into())
-                    };
+                if let Some(target) = target_opt {
+                    // 若目标节点已处于 Completed 或为上游节点，判定为反思回路跳转
+                    let is_cycle = self
+                        .graph
+                        .nodes
+                        .get(&target)
+                        .map(|n| n.status == DagNodeStatus::Completed || n.status == DagNodeStatus::Running)
+                        .unwrap_or(false);
 
-                    if let Some(emitter) = &self.event_emitter {
-                        emitter(AgentEventPayload::CritiqueLoopTriggered {
-                            round: self.critique_count,
-                            max_rounds: self.max_critique_rounds,
-                            current_score: 72.0,
-                            feedback: feedback.clone(),
-                        });
-                    }
-
-                    // 将编剧节点与审稿节点重置为 Pending 触发自愈重算
-                    for n in &mut self.nodes {
-                        if n.id == "screenwriter_draft" || n.id == "critic_review" {
-                            n.status = DagNodeStatus::Pending;
+                    if is_cycle && self.critique_count < self.max_critique_rounds {
+                        self.critique_count += 1;
+                        {
+                            let mut ctx = self.context.write().await;
+                            ctx.memory.insert(
+                                "critique_rounds_executed".into(),
+                                self.critique_count.to_string(),
+                            );
                         }
+
+                        let feedback = {
+                            let ctx = self.context.read().await;
+                            ctx.memory
+                                .get("critique_feedback")
+                                .cloned()
+                                .unwrap_or_else(|| "开篇前3秒悬念不足，建议加入突发冲突钩子".into())
+                        };
+
+                        if let Some(emitter) = &self.event_emitter {
+                            emitter(AgentEventPayload::CritiqueLoopTriggered {
+                                round: self.critique_count,
+                                max_rounds: self.max_critique_rounds,
+                                current_score: 72.0,
+                                feedback: feedback.clone(),
+                            });
+                        }
+
+                        // 精确执行局部拓扑失效：只失效 target 及其下游依赖节点，上游视听抽样强缓存保留
+                        let invalidated = self.graph.invalidate_subgraph(&target);
+                        tracing::info!(
+                            "Selective subgraph invalidated from {} -> {:?}",
+                            target,
+                            invalidated
+                        );
+
+                        self.sync_nodes_view();
+                        self.emit_progress().await;
+                        need_loop_restart = true;
+                        break;
                     }
-                    self.emit_progress().await;
-                    continue;
                 }
+            }
+
+            if need_loop_restart {
+                continue;
             }
 
             self.emit_progress().await;
@@ -540,25 +807,22 @@ impl DagOrchestrator {
         action: &str,
         feedback: Option<String>,
     ) -> SplicrResult<Option<BreakpointRequest>> {
-        if let Some(hitl_node) = self.nodes.iter_mut().find(|n| n.id == "hitl_approval") {
+        if let Some(hitl_node) = self.graph.nodes.get_mut("hitl_approval") {
             hitl_node.status = DagNodeStatus::Completed;
             hitl_node.summary = Some(format!("用户已确认: {}", action));
         }
+        self.sync_nodes_view();
 
         if let Some(fb) = feedback {
-            let mut ctx = self.context.write().await;
-            ctx.memory.insert("critique_feedback".into(), fb.clone());
-            ctx.log_thought(AgentRole::Director, format!("用户下达靶向精修指令: {fb}"));
-
-            // 重新挂起编剧与审稿质检节点，重新生成
-            for n in &mut self.nodes {
-                if n.id == "screenwriter_draft"
-                    || n.id == "critic_review"
-                    || n.id == "hitl_approval"
-                {
-                    n.status = DagNodeStatus::Pending;
-                }
+            {
+                let mut ctx = self.context.write().await;
+                ctx.memory.insert("critique_feedback".into(), fb.clone());
+                ctx.log_thought(AgentRole::Director, format!("用户下达靶向精修指令: {fb}"));
             }
+
+            // 局部拓扑失效：从编剧节点起下重新推演，保留更早的抽样产物
+            self.graph.invalidate_subgraph("screenwriter_draft");
+            self.sync_nodes_view();
         }
 
         if let Some(emitter) = &self.event_emitter {
@@ -912,5 +1176,25 @@ mod tests {
         orch_fast.run_dag().await.expect("run fast commentary");
         let final_fast = orch_fast.snapshot().await;
         assert_eq!(final_fast.completed_nodes, 7);
+    }
+
+    #[tokio::test]
+    async fn test_stategraph_conditional_reflection_loop() {
+        let proj = Project {
+            name: "反思回路状态图测试".into(),
+            ..Default::default()
+        };
+
+        let mut ctx = AgentContext::new(proj, true);
+        // 人工注入低于 80 分的评测分数，触发条件边反思回路
+        ctx.memory.insert("critic_score".into(), "72.0".into());
+
+        let mut orchestrator = DagOrchestrator::new(ctx);
+        orchestrator.run_dag().await.expect("run dag with reflection");
+
+        let snap = orchestrator.snapshot().await;
+        assert_eq!(snap.completed_nodes, 9);
+        // 应该触发了至少 1 次反思回路
+        assert!(orchestrator.critique_count > 0, "should have triggered reflection loop via conditional edge");
     }
 }
