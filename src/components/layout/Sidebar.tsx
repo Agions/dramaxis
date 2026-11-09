@@ -5,6 +5,7 @@
 
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useSettingsStore, useUpdateStore, t } from "@dramaxis/core";
+import { DramaxisLogo } from "@components/common/DramaxisLogo";
 
 interface NavItem {
   to: "/" | "/production" | "/assets" | "/settings" | "/help";
@@ -52,10 +53,10 @@ export function Sidebar({ currentPath }: SidebarProps) {
         <button
           type="button"
           onClick={() => void navigate({ to: "/" })}
-          className="group relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-gold to-amber text-zinc-950 font-black text-xl shadow-[0_0_16px_var(--color-gold-glow)] transition-transform duration-300 hover:scale-105"
+          className="group relative flex h-11 w-11 items-center justify-center rounded-2xl border border-gold/30 bg-surface/90 shadow-[0_0_16px_var(--color-gold-glow)] transition-all duration-300 hover:scale-105 hover:border-gold/60 focus:outline-none"
           title="Dramaxis 剧枢 AI 视频解说与短剧创作平台"
         >
-          D
+          <DramaxisLogo size={32} />
           <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75" />
             <span className="relative inline-flex rounded-full h-3 w-3 bg-gold" />

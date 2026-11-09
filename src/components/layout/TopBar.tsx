@@ -11,49 +11,9 @@ import { useTauriQuery } from "@hooks/useTauriQuery";
 import { useUiStore, useSettingsStore, t } from "@dramaxis/core";
 import { themeIpc } from "@dramaxis/ipc";
 import { toast } from "sonner";
+import { DramaxisLogo } from "@components/common/DramaxisLogo";
 
-// Dramaxis Logo 图标 SVG（钢笔笔尖 + 播放三角，内联）
-function DramaxisIcon({ size = 28 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="Dramaxis Logo"
-    >
-      <defs>
-        <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="var(--color-gold)" />
-          <stop offset="100%" stopColor="var(--color-amber)" />
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="1" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-      {/* 钢笔笔尖 */}
-      <path
-        d="M6 16 L13 9 L16 12 L11 20 Z"
-        fill="url(#gold-grad)"
-        filter="url(#glow)"
-        opacity="0.9"
-      />
-      <circle cx="10" cy="16" r="1.2" fill="var(--color-bg)" />
-      {/* 播放三角 */}
-      <path
-        d="M14 10 L26 16 L14 22 Z"
-        fill="url(#gold-grad)"
-        filter="url(#glow)"
-      />
-    </svg>
-  );
-}
-
+// TopBar 应用顶栏
 export function TopBar() {
   const { data: version, isError } = useTauriQuery({
     command: "app_version",
@@ -68,17 +28,23 @@ export function TopBar() {
     <header className="flex h-12 w-full shrink-0 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur-md z-50 [app-region:drag]">
       {/* 左侧：Logo + 品牌名 */}
       <div className="flex items-center gap-2.5 [app-region:no-drag]">
-        <div className="flex h-[34px] w-[34px] items-center justify-center rounded-lg border border-border bg-surface shadow-[0_0_12px_var(--color-gold-glow)]">
-          <DramaxisIcon size={22} />
-        </div>
-        <div className="leading-tight">
-          <div className="text-base font-bold tracking-wide text-gold">
-            Dramaxis
+        <Link
+          to="/"
+          className="flex items-center gap-2.5 rounded-lg p-0.5 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+          title="Dramaxis 剧枢"
+        >
+          <div className="flex h-[34px] w-[34px] items-center justify-center rounded-xl border border-gold/30 bg-surface shadow-[0_0_14px_var(--color-gold-glow)] transition-transform hover:scale-105">
+            <DramaxisLogo size={24} />
           </div>
-          <div className="text-[10px] tracking-widest uppercase text-text-muted">
-            剧枢 · v{version ?? "1.1.0"}
+          <div className="leading-tight">
+            <div className="text-base font-black tracking-wide text-gold">
+              Dramaxis
+            </div>
+            <div className="text-[10px] tracking-widest uppercase text-text-muted">
+              剧枢 · v{version ?? "1.2.0"}
+            </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* 右侧：操作区 */}

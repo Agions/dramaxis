@@ -10,6 +10,7 @@ import { useSettingsStore } from "@dramaxis/core";
 import { useProject } from "@hooks/useProject";
 import { toast } from "sonner";
 import { projectIpc } from "@dramaxis/ipc";
+import { DramaxisLogo } from "@components/common/DramaxisLogo";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -67,21 +68,26 @@ function HomePage() {
         <div className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 sm:p-8 shadow-xl">
           <div className="absolute -top-16 -right-16 h-72 w-96 bg-gradient-to-bl from-gold-muted via-amber-muted to-transparent blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="space-y-2.5">
-              <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-[11px] font-bold text-gold shadow-[0_0_12px_rgba(245,200,66,0.15)]">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
-                <span>v1.1.0 · Rust Native 6-Agent 智能体协作中枢</span>
+            <div className="flex items-start sm:items-center gap-5">
+              <div className="hidden sm:flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-gold/30 bg-surface/80 p-2 shadow-[0_0_24px_var(--color-gold-glow)] backdrop-blur-md transition-transform hover:scale-105">
+                <DramaxisLogo size={64} />
               </div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight text-text-primary flex flex-wrap items-center gap-3">
-                <span>Dramaxis 剧枢</span>
-                <span className="bg-gradient-to-r from-gold via-gold-hover to-amber bg-clip-text text-transparent">
-                  电影级短剧 AI 叙事工厂
-                </span>
-              </h1>
-              <p className="text-xs md:text-sm text-text-secondary font-normal max-w-2xl leading-relaxed">
-                多模态切片 ➔ 6 大 Agent 自主编剧与 48kHz 配音 ➔ 5
-                轨毫秒级磁性对齐 ➔ 剪映草稿原生导出交付
-              </p>
+              <div className="space-y-2.5">
+                <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-[11px] font-bold text-gold shadow-[0_0_12px_rgba(245,200,66,0.15)]">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
+                  <span>v1.2.0 · Rust Native 6-Agent 智能体协作中枢</span>
+                </div>
+                <h1 className="text-3xl md:text-4xl font-black tracking-tight text-text-primary flex flex-wrap items-center gap-3">
+                  <span>Dramaxis 剧枢</span>
+                  <span className="bg-gradient-to-r from-gold via-gold-hover to-amber bg-clip-text text-transparent">
+                    电影级短剧 AI 叙事工厂
+                  </span>
+                </h1>
+                <p className="text-xs md:text-sm text-text-secondary font-normal max-w-2xl leading-relaxed">
+                  多模态切片 ➔ 6 大 Agent 自主编剧与 48kHz 配音 ➔ 5
+                  轨毫秒级磁性对齐 ➔ 剪映草稿原生导出交付
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center gap-3 shrink-0">

@@ -5,6 +5,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useTauriQuery } from "@hooks/useTauriQuery";
 import type { HelpCategory, HelpTopic, SearchHit } from "@dramaxis/ipc";
+import { DramaxisLogo } from "@components/common/DramaxisLogo";
 
 interface Shortcut {
   keys: string[];
@@ -118,17 +119,24 @@ export function HelpPage() {
         {/* 1. Header Banner */}
         <div className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 sm:p-8 shadow-xl">
           <div className="absolute -top-16 -right-16 h-64 w-80 bg-gradient-to-bl from-gold-muted via-amber-muted to-transparent blur-3xl pointer-events-none" />
-          <div className="relative z-10 space-y-3">
-            <div className="text-[10px] font-mono font-bold tracking-[0.2em] text-gold uppercase">
-              KNOWLEDGE BASE & ARCHITECTURE GUIDE
+          <div className="relative z-10 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+              <div className="space-y-3">
+                <div className="text-[10px] font-mono font-bold tracking-[0.2em] text-gold uppercase">
+                  KNOWLEDGE BASE & ARCHITECTURE GUIDE
+                </div>
+                <h1 className="text-3xl font-black tracking-tight text-text-primary">
+                  官方帮助与技术架构指南
+                </h1>
+                <p className="text-xs text-text-secondary max-w-xl">
+                  探索 Rust Native Multi-Agent 影视解说引擎、5
+                  轨毫秒级对齐与剪映草稿交付的全流程文档
+                </p>
+              </div>
+              <div className="hidden md:flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-gold/30 bg-surface/80 p-2 shadow-[0_0_24px_var(--color-gold-glow)]">
+                <DramaxisLogo size={60} />
+              </div>
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-text-primary">
-              官方帮助与技术架构指南
-            </h1>
-            <p className="text-xs text-text-secondary max-w-xl">
-              探索 Rust Native Multi-Agent 影视解说引擎、5
-              轨毫秒级对齐与剪映草稿交付的全流程文档
-            </p>
 
             <div className="pt-2">
               <input
