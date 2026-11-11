@@ -1,6 +1,6 @@
 //! dramaxis v1.1.0 · FFmpeg 智能拆条与镜头检测 Tauri 命令
 
-use dramaxis_core::error::SplicrError;
+use dramaxis_core::error::DramaxisError;
 use dramaxis_detect::{
     Ffmpeg, FfmpegProbe, HardwareAccelerationKind, SceneCut, SceneRagEngine, SceneVisualFeature,
 };
@@ -19,10 +19,10 @@ pub struct DetectScenesResult {
 pub async fn detect_scenes(
     file_path: String,
     threshold: Option<f64>,
-) -> Result<DetectScenesResult, SplicrError> {
+) -> Result<DetectScenesResult, DramaxisError> {
     let path = Path::new(&file_path);
     if !path.exists() {
-        return Err(SplicrError::InvalidInput(format!(
+        return Err(DramaxisError::InvalidInput(format!(
             "视频文件不存在: {file_path}"
         )));
     }
@@ -41,7 +41,7 @@ pub async fn detect_scenes(
             probe,
         })
     } else {
-        Err(SplicrError::Ffmpeg(
+        Err(DramaxisError::Ffmpeg(
             "FFmpeg 未安装或不在 PATH 中，请安装 FFmpeg 后重试".into(),
         ))
     }
@@ -49,11 +49,11 @@ pub async fn detect_scenes(
 
 /// 探测当前系统的 GPU 硬件加速编解码器支持
 #[tauri::command]
-pub async fn detect_hardware_acceleration() -> Result<Vec<HardwareAccelerationKind>, SplicrError> {
+pub async fn detect_hardware_acceleration() -> Result<Vec<HardwareAccelerationKind>, DramaxisError> {
     if let Ok(ffmpeg) = Ffmpeg::discover() {
         Ok(ffmpeg.probe_hardware_acceleration().await)
     } else {
-        Err(SplicrError::Ffmpeg(
+        Err(DramaxisError::Ffmpeg(
             "FFmpeg 未安装或不在 PATH 中，请安装 FFmpeg 后重试".into(),
         ))
     }
@@ -64,16 +64,16 @@ pub async fn detect_hardware_acceleration() -> Result<Vec<HardwareAccelerationKi
 pub async fn detect_analyze_scenes_rag(
     file_path: String,
     cuts: Option<Vec<f64>>,
-) -> Result<Vec<SceneVisualFeature>, SplicrError> {
+) -> Result<Vec<SceneVisualFeature>, DramaxisError> {
     let path = Path::new(&file_path);
     if !path.exists() {
-        return Err(SplicrError::InvalidInput(format!(
+        return Err(DramaxisError::InvalidInput(format!(
             "视频文件不存在: {file_path}"
         )));
     }
 
     let ffmpeg = Ffmpeg::discover()
-        .map_err(|_| SplicrError::Ffmpeg("FFmpeg 未安装或不在 PATH 中".into()))?;
+        .map_err(|_| DramaxisError::Ffmpeg("FFmpeg 未安装或不在 PATH 中".into()))?;
 
     let probe = ffmpeg.probe(path).await.ok();
     let total_duration = probe.as_ref().map(|p| p.duration_seconds).unwrap_or(60.0);

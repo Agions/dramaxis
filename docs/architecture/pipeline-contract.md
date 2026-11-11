@@ -6,7 +6,7 @@
 
 ## 1. 状态机
 
-```
+```text
 Idle ──start()──▶ Running ──全部成功──▶ Done
                      │
                      ├─步骤返回 Err────▶ Failed   (StepFailed + PipelineFailed)

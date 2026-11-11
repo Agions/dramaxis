@@ -12,7 +12,7 @@
 //!
 //! ## 安全设计
 //! - 所有命令为"固定参数构造",不经过 shell,不接受任意用户字符串拼接
-//! - 失败统一 `SplicrError::Ffmpeg(stderr tail)`
+//! - 失败统一 `DramaxisError::Ffmpeg(stderr tail)`
 
 #![allow(dead_code)]
 
@@ -22,7 +22,7 @@ pub use multimodal::{SceneRagEngine, SceneVisualFeature};
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
-use dramaxis_core::error::{SplicrError, SplicrResult};
+use dramaxis_core::error::{DramaxisError, DramaxisResult};
 use serde::{Deserialize, Serialize};
 
 // ════════════════════════════════════════════════════════════════════════
@@ -71,11 +71,11 @@ pub struct Ffmpeg {
 
 impl Ffmpeg {
     /// 从 PATH 发现 ffmpeg + ffprobe。缺失返回 `Ffmpeg` 错误。
-    pub fn discover() -> SplicrResult<Self> {
+    pub fn discover() -> DramaxisResult<Self> {
         let ffmpeg = which("ffmpeg")
-            .ok_or_else(|| SplicrError::Ffmpeg("ffmpeg 不在 PATH 中 (请先安装 ffmpeg)".into()))?;
+            .ok_or_else(|| DramaxisError::Ffmpeg("ffmpeg 不在 PATH 中 (请先安装 ffmpeg)".into()))?;
         let ffprobe = which("ffprobe")
-            .ok_or_else(|| SplicrError::Ffmpeg("ffprobe 不在 PATH 中 (请先安装 ffmpeg)".into()))?;
+            .ok_or_else(|| DramaxisError::Ffmpeg("ffprobe 不在 PATH 中 (请先安装 ffmpeg)".into()))?;
         Ok(Self {
             ffmpeg_bin: ffmpeg,
             ffprobe_bin: ffprobe,
@@ -127,9 +127,9 @@ impl Ffmpeg {
 
     // ── 探针 ────────────────────────────────────────────────────────────
 
-    pub async fn probe(&self, path: &Path) -> SplicrResult<FfmpegProbe> {
+    pub async fn probe(&self, path: &Path) -> DramaxisResult<FfmpegProbe> {
         if !path.exists() {
-            return Err(SplicrError::Ffmpeg(format!(
+            return Err(DramaxisError::Ffmpeg(format!(
                 "文件不存在: {}",
                 path.display()
             )));
@@ -156,7 +156,7 @@ impl Ffmpeg {
     // ── 场景检测 ────────────────────────────────────────────────────────
 
     /// select+showinfo 场景检测。返回切点时间列表 (秒)。
-    pub async fn detect_scenes(&self, input: &Path, threshold: f64) -> SplicrResult<Vec<SceneCut>> {
+    pub async fn detect_scenes(&self, input: &Path, threshold: f64) -> DramaxisResult<Vec<SceneCut>> {
         let filter = format!("select='gt(scene,{threshold})',showinfo");
         let stderr = self
             .run_stderr(
@@ -182,7 +182,7 @@ impl Ffmpeg {
         input: &Path,
         timestamp_seconds: f64,
         output: &Path,
-    ) -> SplicrResult<()> {
+    ) -> DramaxisResult<()> {
         let ts = format!("{:.3}", timestamp_seconds);
         self.run_encode(
             &[
@@ -207,7 +207,7 @@ impl Ffmpeg {
         input: &Path,
         cuts: &[SceneCut],
         out_dir: &Path,
-    ) -> SplicrResult<Vec<PathBuf>> {
+    ) -> DramaxisResult<Vec<PathBuf>> {
         let _ = tokio::fs::create_dir_all(out_dir).await;
         let mut paths = Vec::new();
         for (idx, cut) in cuts.iter().enumerate() {
@@ -250,7 +250,7 @@ impl Ffmpeg {
     // ── 转码操作 (白名单参数) ───────────────────────────────────────────
 
     /// 抽取音轨 → wav (16k 单声道,TTS 参考音频标准格式)
-    pub async fn extract_audio(&self, input: &Path, output: &Path) -> SplicrResult<()> {
+    pub async fn extract_audio(&self, input: &Path, output: &Path) -> DramaxisResult<()> {
         self.run_encode(
             &[
                 "-i",
@@ -278,7 +278,7 @@ impl Ffmpeg {
         height: u32,
         fps: u32,
         bitrate: &str,
-    ) -> SplicrResult<()> {
+    ) -> DramaxisResult<()> {
         let filter = format!(
             "scale={width}:{height}:force_original_aspect_ratio=decrease,\
              pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1"
@@ -307,7 +307,7 @@ impl Ffmpeg {
     }
 
     /// SRT 字幕烧录
-    pub async fn burn_captions(&self, input: &Path, srt: &Path, output: &Path) -> SplicrResult<()> {
+    pub async fn burn_captions(&self, input: &Path, srt: &Path, output: &Path) -> DramaxisResult<()> {
         // subtitles 滤镜需要转义路径中的特殊字符
         let srt_escaped = srt
             .to_string_lossy()
@@ -339,7 +339,7 @@ impl Ffmpeg {
         video: &Path,
         narration: &Path,
         output: &Path,
-    ) -> SplicrResult<()> {
+    ) -> DramaxisResult<()> {
         let has_audio = self
             .probe(video)
             .await
@@ -394,9 +394,9 @@ impl Ffmpeg {
     }
 
     /// 多段拼接 (concat demuxer,先写 list 文件)
-    pub async fn concat(&self, inputs: &[PathBuf], output: &Path) -> SplicrResult<()> {
+    pub async fn concat(&self, inputs: &[PathBuf], output: &Path) -> DramaxisResult<()> {
         if inputs.is_empty() {
-            return Err(SplicrError::Ffmpeg("concat: 输入列表为空".into()));
+            return Err(DramaxisError::Ffmpeg("concat: 输入列表为空".into()));
         }
         let list_path = output.with_extension("concat.txt");
         let list_content = inputs
@@ -433,7 +433,7 @@ impl Ffmpeg {
         &self,
         args: &[&str],
         on_progress: Option<&ProgressFn>,
-    ) -> SplicrResult<()> {
+    ) -> DramaxisResult<()> {
         let _ = self.run_stderr(args, on_progress).await?;
         Ok(())
     }
@@ -443,7 +443,7 @@ impl Ffmpeg {
         &self,
         args: &[&str],
         on_progress: Option<&ProgressFn>,
-    ) -> Result<String, SplicrError> {
+    ) -> Result<String, DramaxisError> {
         // -nostats 去掉 time= 行;需要进度回调时保留 stats
         let mut full: Vec<&str> = vec!["-hide_banner"];
         if on_progress.is_none() {
@@ -547,9 +547,9 @@ struct RawExecError {
     stderr_tail: String,
 }
 
-impl From<RawExecError> for SplicrError {
+impl From<RawExecError> for DramaxisError {
     fn from(e: RawExecError) -> Self {
-        SplicrError::Ffmpeg(e.stderr_tail)
+        DramaxisError::Ffmpeg(e.stderr_tail)
     }
 }
 
@@ -558,9 +558,9 @@ impl From<RawExecError> for SplicrError {
 // ════════════════════════════════════════════════════════════════════════
 
 /// 解析 ffprobe -print_format json 输出
-pub fn parse_probe_json(json: &str) -> SplicrResult<FfmpegProbe> {
+pub fn parse_probe_json(json: &str) -> DramaxisResult<FfmpegProbe> {
     let v: serde_json::Value = serde_json::from_str(json)
-        .map_err(|e| SplicrError::Ffmpeg(format!("ffprobe JSON 解析失败: {e}")))?;
+        .map_err(|e| DramaxisError::Ffmpeg(format!("ffprobe JSON 解析失败: {e}")))?;
 
     let duration = v["format"]["duration"]
         .as_str()

@@ -15,7 +15,7 @@ use crate::types::{
     AgentEventPayload, AgentRole, AgentStatus, BreakpointRequest, DagNodeInfo, DagNodeStatus,
     DagSnapshot, QualityReport, WorkflowProfile,
 };
-use dramaxis_core::SplicrResult;
+use dramaxis_core::DramaxisResult;
 use dramaxis_script::flywheel::ScriptFlywheelEngine;
 use dramaxis_script::LlmRequest;
 use std::sync::Arc;
@@ -533,7 +533,7 @@ impl DagOrchestrator {
     }
 
     /// 推进 StateGraph 调度执行，遇到断点返回 Some(BreakpointRequest)
-    pub async fn run_dag(&mut self) -> SplicrResult<Option<BreakpointRequest>> {
+    pub async fn run_dag(&mut self) -> DramaxisResult<Option<BreakpointRequest>> {
         let total_timer = Instant::now();
 
         loop {
@@ -806,7 +806,7 @@ impl DagOrchestrator {
         &mut self,
         action: &str,
         feedback: Option<String>,
-    ) -> SplicrResult<Option<BreakpointRequest>> {
+    ) -> DramaxisResult<Option<BreakpointRequest>> {
         if let Some(hitl_node) = self.graph.nodes.get_mut("hitl_approval") {
             hitl_node.status = DagNodeStatus::Completed;
             hitl_node.summary = Some(format!("用户已确认: {}", action));
@@ -839,7 +839,7 @@ impl DagOrchestrator {
     pub async fn execute_static_node_logic(
         context: Arc<RwLock<AgentContext>>,
         node_id: &str,
-    ) -> SplicrResult<String> {
+    ) -> DramaxisResult<String> {
         match node_id {
             "director_plan" => {
                 let mut ctx = context.write().await;
@@ -854,69 +854,88 @@ impl DagOrchestrator {
                 Ok(res.unwrap_or_else(|| "画面关键帧与场景采样完成".into()))
             }
             "dialogue_probe" => {
-                let mut ctx = context.write().await;
-                ctx.log_thought(
-                    AgentRole::SoundEngineer,
-                    "启动音频通道探测器，提取原片音频并进行 Whisper 语音活动分段...",
-                );
-                let first_media = ctx.project.media_files.first().map(|m| m.path.clone());
-                let (has_speech, dur_sec, summary) = if let Some(media_path) = first_media {
-                    let p = std::path::Path::new(&media_path);
-                    if p.exists() {
-                        if let Ok(ffmpeg) = dramaxis_detect::Ffmpeg::discover() {
-                            if let Ok(probe) = ffmpeg.probe(p).await {
-                                let has_audio = probe.audio_codec.is_some();
-                                let d = probe.duration_seconds;
-                                if has_audio {
-                                    (
-                                        true,
-                                        d,
-                                        format!("检测到原片音轨 ({})，时长 {:.1}s", probe.audio_codec.unwrap_or_default(), d),
-                                    )
-                                } else {
-                                    (false, d, "原片无音轨，已标记为纯静音画面素材".into())
-                                }
-                            } else {
-                                (true, 60.0, "原片音轨分析就绪".into())
-                            }
-                        } else {
-                            (true, 60.0, "原片音轨分析就绪".into())
-                        }
-                    } else {
-                        (true, 60.0, "原片音轨分析就绪".into())
-                    }
-                } else {
+                // 1. 无锁快照读取输入，避免与 visual_analysis 并行执行时产生全局写锁互斥
+                let (first_media, dur_hint) = {
+                    let mut ctx = context.write().await;
+                    ctx.log_thought(
+                        AgentRole::SoundEngineer,
+                        "启动音频通道探测器，提取原片音频并进行真实 VAD 静音端点检测与活动分段...",
+                    );
+                    let m = ctx.project.media_files.first().map(|m| m.path.clone());
                     let d = ctx
                         .blackboard
                         .visual_brief
                         .as_ref()
                         .map(|v| v.total_duration_sec)
                         .unwrap_or(60.0);
-                    (true, d, "音频通道探测完成".into())
+                    (m, d)
                 };
 
-                let intervals = if has_speech {
-                    vec![crate::blackboard::SpeechInterval {
-                        start: 0.0,
-                        end: dur_sec * 0.45,
-                    }]
+                // 2. 在锁外执行耗时的 FFmpeg probe 与 VAD 静音检测
+                let (has_speech, _dur_sec, summary, intervals) = if let Some(media_path) = first_media {
+                    let p = std::path::Path::new(&media_path);
+                    if p.exists() {
+                        let probe_res = if let Ok(ffmpeg) = dramaxis_detect::Ffmpeg::discover() {
+                            ffmpeg.probe(p).await.ok()
+                        } else {
+                            None
+                        };
+
+                        if let Some(probe) = probe_res {
+                            let has_audio = probe.audio_codec.is_some();
+                            let d = probe.duration_seconds;
+                            if has_audio {
+                                // 接入 dramaxis-subtitle 真实 VAD 检测
+                                let vad_cfg = dramaxis_subtitle::vad::VadConfig::default();
+                                let segments = dramaxis_subtitle::vad::detect_segments(p, &vad_cfg)
+                                    .await
+                                    .unwrap_or_default();
+
+                                let ivs: Vec<crate::blackboard::SpeechInterval> = segments
+                                    .into_iter()
+                                    .map(|s| crate::blackboard::SpeechInterval {
+                                        start: s.start_ms as f64 / 1000.0,
+                                        end: s.end_ms as f64 / 1000.0,
+                                    })
+                                    .collect();
+
+                                let summary = format!(
+                                    "检测到原片音轨 ({})，时长 {:.1}s，识别到 {} 处语音活动区间",
+                                    probe.audio_codec.unwrap_or_default(),
+                                    d,
+                                    ivs.len()
+                                );
+                                (true, d, summary, ivs)
+                            } else {
+                                (false, d, "原片无音轨，已标记为纯静音画面素材".into(), Vec::new())
+                            }
+                        } else {
+                            (true, dur_hint, "原片音轨分析就绪".into(), Vec::new())
+                        }
+                    } else {
+                        (true, dur_hint, "素材文件不存在，使用默认音频配置".into(), Vec::new())
+                    }
                 } else {
-                    Vec::new()
+                    (true, dur_hint, "无可用音轨，音频通道探测完成".into(), Vec::new())
                 };
 
-                ctx.blackboard
-                    .set_audio_brief(crate::blackboard::AudioBriefArtifact {
-                        has_original_speech: has_speech,
-                        speech_intervals: intervals,
-                        bgm_intensity_peaks: vec![3.0, 15.0, 30.0],
-                        dialogue_summary: summary.clone(),
-                    });
-                ctx.memory.insert("dialogue_summary".into(), summary);
-                ctx.log_action(
-                    AgentRole::SoundEngineer,
-                    "对白抽取",
-                    "完成音频音轨抽取与静音断句探测",
-                );
+                // 3. 毫秒级极速写锁提交 Delta 至 Blackboard
+                {
+                    let mut ctx = context.write().await;
+                    ctx.blackboard
+                        .set_audio_brief(crate::blackboard::AudioBriefArtifact {
+                            has_original_speech: has_speech,
+                            speech_intervals: intervals,
+                            bgm_intensity_peaks: vec![3.0, 15.0, 30.0],
+                            dialogue_summary: summary.clone(),
+                        });
+                    ctx.memory.insert("dialogue_summary".into(), summary);
+                    ctx.log_action(
+                        AgentRole::SoundEngineer,
+                        "对白抽取",
+                        "完成音频音轨抽取与静音断句探测",
+                    );
+                }
                 Ok("原声对白与音频探测完成".into())
             }
             "screenwriter_draft" => {

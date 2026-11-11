@@ -8,7 +8,7 @@
  * 设计原则:
  * - 与 src-tauri/src/commands/*.rs 1:1 对应
  * - 字段命名严格 camelCase (Rust 命令参数序列化策略)
- * - 错误统一从 SplicrError JSON 反序列化
+ * - 错误统一从 DramaxisError JSON 反序列化
  */
 
 // ────────────────────────────────────────────────────────────────────────
@@ -30,10 +30,10 @@ export type LlmProviderKind =
   | "qwen37";
 
 // ────────────────────────────────────────────────────────────────────────
-// 错误类型 (与 dramaxis-core::SplicrError / DramaxisError wire 格式 1:1)
+// 错误类型 (与 dramaxis-core::DramaxisError wire 格式 1:1)
 // ────────────────────────────────────────────────────────────────────────
 
-export interface SplicrError {
+export interface DramaxisError {
   kind:
     | "io"
     | "config"
@@ -49,7 +49,7 @@ export interface SplicrError {
 }
 
 export type CommandResult<T> = T;
-export type CommandError = SplicrError | { error: SplicrError };
+export type CommandError = DramaxisError | { error: DramaxisError };
 
 /* >>> gen-ipc start */
 export interface IpcContracts {
@@ -1394,7 +1394,7 @@ export interface IpcEventPayloads {
   "pipeline:step_failed": {
     runId: string;
     stepId: string;
-    error: SplicrError;
+    error: DramaxisError;
   };
   "pipeline:progress": { runId: string; percent: number };
   "pipeline:log": {
@@ -1411,7 +1411,7 @@ export interface IpcEventPayloads {
   "updater:downloading": { version: string };
   "updater:download_progress": { percent: number };
   "updater:ready": { version: string };
-  "updater:error": { error: SplicrError };
+  "updater:error": { error: DramaxisError };
   "updater:event": UpdateState | UpdateInfo | UpdateProgress | string;
   "app:theme_changed": { theme: string };
   "app:locale_changed": { locale: string };
@@ -1420,7 +1420,7 @@ export interface IpcEventPayloads {
   "app:secure_key_rotated": Record<string, never>;
   "app:service_started": { name: string };
   "app:service_stopped": { name: string };
-  "app:error_reported": { error: SplicrError };
+  "app:error_reported": { error: DramaxisError };
   "app:log_flushed": { lines: number };
 }
 

@@ -31,7 +31,7 @@ impl AppContext {
     /// 获取已注册的 service。语法糖,减少 boilerplate。
     pub async fn service<T: std::any::Any + Send + Sync>(
         &self,
-    ) -> Result<Arc<T>, super::SplicrError> {
+    ) -> Result<Arc<T>, super::DramaxisError> {
         self.services.resolve::<T>().await
     }
 }

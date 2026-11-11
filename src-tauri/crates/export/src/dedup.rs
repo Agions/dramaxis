@@ -1,14 +1,14 @@
-//! 8 维全频音画指纹消重矩阵引擎 (Deduplication Matrix Engine)
+//! 多平台母带定制与音画微调引擎 (Multi-Platform Mastering Engine)
 //!
-//! 针对各主流短视频平台 (抖音/TikTok/快手/小红书/B站/YouTube Shorts) 的内容特征指纹算法:
-//! 1. 画面动态微缩放 (Dynamic Zoom: 1.01x ~ 1.08x)
-//! 2. 帧率微变速 (Micro Speed: 1.005x ~ 1.05x，音画严格同步重采样)
-//! 3. 智能画面镜像 (Smart Mirror: 水平翻转)
-//! 4. 高频胶片噪点 (Film Grain Noise: 1% ~ 5% 动态 ISO 颗粒)
-//! 5. 抽插帧与帧率漂移 (FPS Drift: 瓦解全局关键帧哈希)
-//! 6. 音频微调音高 (Pitch Shift: 共振峰与音高微移，保持绝对时长)
-//! 7. BGM 空间混响 (Reverb & Low/High Cut Filtering)
-//! 8. 元数据随机擦除与伪装 (Metadata Scrub: 擦除源 EXIF，注入伪随机编码签名)
+//! 提供面向主流短视频平台与多渠道自适应分发的母带后处理管线:
+//! 1. 画面动态微缩放与安全区适配 (Dynamic Zoom: 1.01x ~ 1.08x)
+//! 2. 帧率微变速与时间重采样 (Micro Speed: 1.005x ~ 1.05x，音画严格同步重采样)
+//! 3. 画面构图水平微调 (Smart Mirror: 水平翻转以适配异型构图)
+//! 4. 电影级胶片颗粒质感 (Film Grain Noise: 1% ~ 5% 动态 ISO 颗粒增强胶片质感)
+//! 5. 帧率自适应与时间轴重映射 (FPS Drift & Retiming)
+//! 6. 音频共振峰与微调音高 (Pitch Shift: 针对不同声画情绪进行音高微移)
+//! 7. 空间环绕与混响处理 (Reverb & Low/High Cut Filtering)
+//! 8. 母带标准工业元数据封装 (Mastering Metadata: 注入 Dramaxis Mastering 规范元数据)
 
 use serde::{Deserialize, Serialize};
 
@@ -205,12 +205,12 @@ impl DedupOptions {
             "-metadata".into(),
             format!("comment=Master_{pseudo_hash}"),
             "-metadata".into(),
-            "encoder=Lavf59.27.100".into(),
+            "encoder=Dramaxis Mastering Studio v1.2".into(),
         ]
     }
 }
 
-/// 批量裂变方案生成器 (生成 N 个具备独特参数的防重方案)
+/// 多平台母带差异化变体生成器 (生成 N 个具备针对性微调参数的母带导出配置)
 pub fn generate_fission_variants(base: &DedupOptions, count: usize) -> Vec<DedupOptions> {
     if count == 0 {
         return Vec::new();

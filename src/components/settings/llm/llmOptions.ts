@@ -44,9 +44,9 @@ export const LLM_OPTIONS: LlmMeta[] = [
     id: "claude",
     name: "Claude",
     badge: "文学大师",
-    desc: "claude-sonnet-4-20250514 · 细腻情感修辞与深度影评",
+    desc: "claude-3-7-sonnet-20250219 · 细腻情感修辞与深度影评",
     icon: "🟣",
-    defaultModel: "claude-sonnet-4-20250514",
+    defaultModel: "claude-3-7-sonnet-20250219",
     color: "from-purple-500/20 to-violet-500/10",
   },
   {

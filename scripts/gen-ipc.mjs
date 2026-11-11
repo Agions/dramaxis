@@ -83,8 +83,7 @@ const TS_ALIASES = {
 
 // 跳过生成的 internal / edge-case 类型 (与 IPC 无关或 wire 格式有手动 override)
 const SKIP_TYPES = new Set([
-  "SplicrError", // 手工定义统一 wire 格式 { kind, message }
-  "DramaxisError",
+  "DramaxisError", // 手工定义统一 wire 格式 { kind, message }
   "LlmProviderKind", // kebab-case 把 DeepSeek 序列化为 "deep-seek",但手工约定是 "deepseek"
   "AppContext",
   "AppContextBuilder",

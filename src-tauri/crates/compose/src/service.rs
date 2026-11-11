@@ -17,7 +17,7 @@ use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 
 use crate::executors::{default_executors, PipelineDeps};
-use crate::{Pipeline, PipelineEvent, PipelineState, Project, SplicrResult, StepStatus};
+use crate::{Pipeline, PipelineEvent, PipelineState, Project, DramaxisResult, StepStatus};
 
 /// IPC 友好的状态快照。
 #[derive(Debug, Clone, Serialize)]
@@ -78,9 +78,9 @@ impl PipelineService {
     }
 
     /// 启动流水线 (后台任务)。运行中重复调用返回错误。
-    pub async fn start(&self, project: Project, deps: Arc<PipelineDeps>) -> SplicrResult<()> {
+    pub async fn start(&self, project: Project, deps: Arc<PipelineDeps>) -> DramaxisResult<()> {
         if self.is_running() {
-            return Err(crate::SplicrError::Pipeline("流水线正在运行中".into()));
+            return Err(crate::DramaxisError::Pipeline("流水线正在运行中".into()));
         }
 
         let pipeline = self.pipeline.clone();

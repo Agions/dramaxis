@@ -59,4 +59,17 @@ impl AgentContext {
             timestamp: chrono::Utc::now().timestamp_millis(),
         });
     }
+
+    /// 生成安全脱敏后的上下文副本供前端 IPC 传输，彻底防止运行时凭据 (如 API Key、Secret) 泄露至 Webview
+    pub fn sanitized_for_ipc(&self) -> Self {
+        let mut cloned = self.clone();
+        cloned.memory.retain(|k, _| {
+            let lower = k.to_lowercase();
+            !lower.contains("key")
+                && !lower.contains("secret")
+                && !lower.contains("token")
+                && !lower.contains("password")
+        });
+        cloned
+    }
 }

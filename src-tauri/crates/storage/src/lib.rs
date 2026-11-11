@@ -7,7 +7,7 @@
 //! - `assets_search`      : 在项目已有 media_files 中按 name/path substring 过滤
 //!
 //! ## 安全
-//! - 所有 IO 失败统一 `SplicrError::Io`
+//! - 所有 IO 失败统一 `DramaxisError::Io`
 //! - 缩略图路径用 `<cache_dir>/thumb/<sha256(path)>.jpg` 防目录穿越
 //! - 扫描递归深度上限 8,文件大小上限 2 GB
 
@@ -50,7 +50,7 @@ pub enum AssetError {
     #[error("SQLite 错误: {0}")]
     Sqlite(#[from] rusqlite::Error),
     #[error("dramaxis 错误: {0}")]
-    Core(#[from] dramaxis_core::error::SplicrError),
+    Core(#[from] dramaxis_core::error::DramaxisError),
 }
 
 pub type AssetResult<T> = Result<T, AssetError>;

@@ -11,7 +11,7 @@ use std::sync::Arc;
 use dramaxis_compose::executors::PipelineDeps;
 use dramaxis_compose::service::{PipelineService, PipelineStatus};
 use dramaxis_compose::{AlignmentPlan, DualDrivenAligner, Project, StepDef, STEPS};
-use dramaxis_core::error::SplicrError;
+use dramaxis_core::error::DramaxisError;
 use dramaxis_core::services::{ConfigService, ConfigSnapshot};
 use dramaxis_core::AppContext;
 use dramaxis_detect::{Ffmpeg, SceneVisualFeature};
@@ -32,11 +32,11 @@ pub fn pipeline_step_defs() -> Vec<StepDef> {
 
 /// 状态快照 (前端 polling)
 #[tauri::command]
-pub async fn pipeline_status(state: State<'_, AppContext>) -> Result<PipelineStatus, SplicrError> {
+pub async fn pipeline_status(state: State<'_, AppContext>) -> Result<PipelineStatus, DramaxisError> {
     let svc = state
         .service::<PipelineService>()
         .await
-        .map_err(|e| SplicrError::Pipeline(e.to_string()))?;
+        .map_err(|e| DramaxisError::Pipeline(e.to_string()))?;
     Ok(svc.status().await)
 }
 
@@ -47,24 +47,24 @@ pub async fn pipeline_start(
     state: State<'_, AppContext>,
     project: Project,
     workdir: Option<String>,
-) -> Result<(), SplicrError> {
+) -> Result<(), DramaxisError> {
     let svc = state
         .service::<PipelineService>()
         .await
-        .map_err(|e| SplicrError::Pipeline(e.to_string()))?;
+        .map_err(|e| DramaxisError::Pipeline(e.to_string()))?;
 
     // 取配置
     let config_svc = state
         .service::<ConfigService>()
         .await
-        .map_err(|e| SplicrError::Pipeline(e.to_string()))?;
+        .map_err(|e| DramaxisError::Pipeline(e.to_string()))?;
     let config = config_svc.snapshot().await;
 
     // 构造依赖
-    let deps = build_deps(config, workdir).map_err(|e| SplicrError::Pipeline(e.to_string()))?;
+    let deps = build_deps(config, workdir).map_err(|e| DramaxisError::Pipeline(e.to_string()))?;
     svc.start(project, Arc::new(deps))
         .await
-        .map_err(|e| SplicrError::Pipeline(e.to_string()))?;
+        .map_err(|e| DramaxisError::Pipeline(e.to_string()))?;
 
     // 事件桥接:一次性 task,把 broadcast → Tauri event
     let mut rx = svc.subscribe();
@@ -90,22 +90,22 @@ pub async fn pipeline_start(
 
 /// 取消 (下一步边界生效)
 #[tauri::command]
-pub async fn pipeline_cancel(state: State<'_, AppContext>) -> Result<(), SplicrError> {
+pub async fn pipeline_cancel(state: State<'_, AppContext>) -> Result<(), DramaxisError> {
     let svc = state
         .service::<PipelineService>()
         .await
-        .map_err(|e| SplicrError::Pipeline(e.to_string()))?;
+        .map_err(|e| DramaxisError::Pipeline(e.to_string()))?;
     svc.cancel();
     Ok(())
 }
 
 /// 重置回 Idle
 #[tauri::command]
-pub async fn pipeline_reset(state: State<'_, AppContext>) -> Result<(), SplicrError> {
+pub async fn pipeline_reset(state: State<'_, AppContext>) -> Result<(), DramaxisError> {
     let svc = state
         .service::<PipelineService>()
         .await
-        .map_err(|e| SplicrError::Pipeline(e.to_string()))?;
+        .map_err(|e| DramaxisError::Pipeline(e.to_string()))?;
     svc.reset().await;
     Ok(())
 }
@@ -240,7 +240,7 @@ pub fn compose_align_script_with_scenes(
     scenes: Vec<SceneVisualFeature>,
     script_lines: Vec<String>,
     voice_duration: Option<f64>,
-) -> Result<AlignmentPlan, SplicrError> {
+) -> Result<AlignmentPlan, DramaxisError> {
     let aligner = DualDrivenAligner::new();
     let duration = voice_duration.unwrap_or(0.0);
     Ok(aligner.align(&scenes, &script_lines, duration))

@@ -49,7 +49,7 @@ export interface UseProjectReturn {
 
   /** 异步操作状态 */
   loading: boolean;
-  /** 最近一次失败信息 (SplicrError 或 Error) */
+  /** 最近一次失败信息 (DramaxisError 或 Error) */
   error: unknown;
 }
 

@@ -1,9 +1,9 @@
 # Monorepo 架构与双向隔离设计 (Monorepo Architecture)
 
-splicr 采用 **双向 Monorepo (Dual-Workspace Monorepo)** 架构：
+Dramaxis 采用 **双向 Monorepo (Dual-Workspace Monorepo)** 架构：
 
-- **后端**：基于 Cargo Workspace 编排 12 个独立的 Rust Crates。
-- **前端**：基于 pnpm Workspace 拆分为 4 个可复用 NPM Packages。
+- **后端**：基于 Cargo Workspace 编排 11 个独立的 Rust Crates。
+- **前端**：基于 pnpm Workspace 拆分为 4 个可复用 NPM Packages (`@dramaxis/*`)。
 
 ---
 
@@ -12,39 +12,46 @@ splicr 采用 **双向 Monorepo (Dual-Workspace Monorepo)** 架构：
 ```mermaid
 graph TD
     subgraph RustWorkspace ["Cargo Workspace (src-tauri/crates/*)"]
-        splicr_core["splicr-core (领域实体/DI)"]
-        splicr_agent["splicr-agent"]
-        splicr_script["splicr-script"]
-        splicr_voice["splicr-voice"]
-        splicr_subtitle["splicr-subtitle"]
-        splicr_detect["splicr-detect"]
-        splicr_intake["splicr-intake"]
-        splicr_compose["splicr-compose"]
-        splicr_export["splicr-export"]
-        splicr_storage["splicr-storage"]
-        splicr_plugin["splicr-plugin"]
-        splicr_update["splicr-update"]
+        dramaxis_core["dramaxis-core (领域实体/错误/DI)"]
+        dramaxis_agent["dramaxis-agent (StateGraph/Blackboard)"]
+        dramaxis_script["dramaxis-script (11 LLM/Hook/Flywheel)"]
+        dramaxis_voice["dramaxis-voice (Edge/OpenAI/SoVITS/Mimo)"]
+        dramaxis_subtitle["dramaxis-subtitle (VAD/SRT/ASS)"]
+        dramaxis_detect["dramaxis-detect (FFmpeg/Scene-RAG)"]
+        dramaxis_intake["dramaxis-intake (媒体导入/编排计划)"]
+        dramaxis_compose["dramaxis-compose (DualDrivenAligner/混流)"]
+        dramaxis_export["dramaxis-export (剪映草稿/多平台母带)"]
+        dramaxis_storage["dramaxis-storage (SQLite/.dramaxis/Keychain)"]
+        dramaxis_update["dramaxis-update (自动更新)"]
     end
 
     subgraph TauriApp ["Tauri Host (src-tauri)"]
-        Tauri["splicr (src-tauri)"]
+        Tauri["dramaxis (src-tauri)"]
     end
 
     subgraph PnpmWorkspace ["pnpm Workspace (packages/*)"]
-        pkg_ipc["@splicr/ipc"]
-        pkg_core["@splicr/core"]
-        pkg_ui["@splicr/ui"]
-        pkg_utils["@splicr/utils"]
+        pkg_ipc["@dramaxis/ipc"]
+        pkg_core["@dramaxis/core"]
+        pkg_ui["@dramaxis/ui"]
+        pkg_utils["@dramaxis/utils"]
     end
 
     subgraph WebApp ["React App (src/)"]
-        App["splicr App (src/)"]
+        App["Dramaxis Studio (src/)"]
     end
 
-    Tauri --> splicr_core
-    Tauri --> splicr_agent
-    Tauri --> splicr_compose
-    Tauri --> splicr_update
+    Tauri --> dramaxis_core
+    Tauri --> dramaxis_agent
+    Tauri --> dramaxis_compose
+    Tauri --> dramaxis_export
+    Tauri --> dramaxis_storage
+    Tauri --> dramaxis_update
+
+    dramaxis_agent --> dramaxis_detect
+    dramaxis_agent --> dramaxis_script
+    dramaxis_agent --> dramaxis_voice
+    dramaxis_agent --> dramaxis_subtitle
+    dramaxis_agent --> dramaxis_compose
 
     App --> pkg_ipc
     App --> pkg_core
@@ -58,10 +65,11 @@ graph TD
 
 ### 1. 彻底杜绝循环依赖
 
-- 领域实体全部集中在 `splicr-core::domain` 中，其他 11 个 Crate 仅单向依赖 `splicr-core`。
-- 前端 `packages/ui` 纯粹承载表现组件，绝不反向依赖业务 Store 或具体路由视图。
+- 核心领域实体全部集中在 `dramaxis-core::domain` 中，其他 10 个 Crate 单向依赖 `dramaxis-core`。
+- `dramaxis-agent` 作为顶层智能编排层，单向调用 `detect`、`script`、`voice`、`subtitle`、`compose` 提供的底层原子算子，底层算子库绝不反向依赖 `dramaxis-agent`。
+- 前端 `@dramaxis/ui` 纯粹承载通用表现组件，绝不反向依赖业务 Store 或具体路由视图。
 
 ### 2. 独立编译缓存与极速构建
 
 - 修改前端 UI 组件不会触发 Rust 耗时重编译。
-- 修改底层某单一 Crate（如 `splicr-update`），增量编译可在 2~3 秒内极速完成。
+- 修改底层某单一 Crate（如 `dramaxis-export` 或 `dramaxis-script`），增量编译可在数秒内完成。

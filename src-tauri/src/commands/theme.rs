@@ -6,13 +6,13 @@
 
 use std::collections::HashMap;
 
-use dramaxis_core::error::SplicrError;
+use dramaxis_core::error::DramaxisError;
 use dramaxis_core::Translator;
 use tauri::{AppHandle, Emitter, State};
 
 /// 当前后端文案语言 (BCP-47,如 "zh-CN")
 #[tauri::command]
-pub async fn i18n_get_locale(tr: State<'_, Translator>) -> Result<String, SplicrError> {
+pub async fn i18n_get_locale(tr: State<'_, Translator>) -> Result<String, DramaxisError> {
     Ok(tr.locale().as_str().to_owned())
 }
 
@@ -22,7 +22,7 @@ pub async fn i18n_set_locale(
     app: AppHandle,
     tr: State<'_, Translator>,
     locale: String,
-) -> Result<bool, SplicrError> {
+) -> Result<bool, DramaxisError> {
     let ok = tr.try_set_locale(&locale);
     if ok {
         // 与前端 useLocale / theme store 联动的既有事件契约
@@ -40,7 +40,7 @@ pub async fn i18n_translate(
     tr: State<'_, Translator>,
     key: String,
     args: Option<HashMap<String, String>>,
-) -> Result<String, SplicrError> {
+) -> Result<String, DramaxisError> {
     let Some(args) = args else {
         return Ok(tr.t(&key));
     };

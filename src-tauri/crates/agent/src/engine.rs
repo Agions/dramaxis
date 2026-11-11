@@ -1,7 +1,7 @@
 use crate::agents::*;
 use crate::context::AgentContext;
 use crate::types::{AgentEventPayload, AgentRole, AgentStatus, BreakpointRequest};
-use dramaxis_core::SplicrResult;
+use dramaxis_core::DramaxisResult;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -39,7 +39,7 @@ impl AgentOrchestrator {
         self.context.clone()
     }
 
-    pub async fn run_step(&self, step_idx: usize) -> SplicrResult<Option<BreakpointRequest>> {
+    pub async fn run_step(&self, step_idx: usize) -> DramaxisResult<Option<BreakpointRequest>> {
         if step_idx >= self.agents.len() {
             let mut ctx = self.context.write().await;
             ctx.status = AgentStatus::Completed;
@@ -120,7 +120,7 @@ impl AgentOrchestrator {
         Ok(None)
     }
 
-    pub async fn run_all(&self) -> SplicrResult<()> {
+    pub async fn run_all(&self) -> DramaxisResult<()> {
         for i in 0..self.agents.len() {
             let _ = self.run_step(i).await?;
         }

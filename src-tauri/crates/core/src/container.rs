@@ -50,14 +50,14 @@ impl ServiceContainer {
     }
 
     /// 解析一个服务 (返回克隆的 Arc)。
-    /// 未注册返回 `SplicrError::Config`。
-    pub async fn resolve<T: Any + Send + Sync>(&self) -> Result<Arc<T>, super::SplicrError> {
+    /// 未注册返回 `DramaxisError::Config`。
+    pub async fn resolve<T: Any + Send + Sync>(&self) -> Result<Arc<T>, super::DramaxisError> {
         let id = TypeId::of::<T>();
         let map = self.services.lock().await;
         map.get(&id)
             .and_then(|s| s.clone().downcast::<T>().ok())
             .ok_or_else(|| {
-                super::SplicrError::Config(format!(
+                super::DramaxisError::Config(format!(
                     "service {:?} not registered",
                     std::any::type_name::<T>()
                 ))

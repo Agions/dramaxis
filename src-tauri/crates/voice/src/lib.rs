@@ -8,7 +8,7 @@
 //!
 //! ## 设计
 //! - [`TtsEngine`] trait 是唯一出口,业务层只依赖 trait
-//! - 所有失败统一为 `SplicrError::Tts { provider, message }`
+//! - 所有失败统一为 `DramaxisError::Tts { provider, message }`
 //! - 合成产物直接落盘 (`output_path`),返回写入字节数
 
 #![allow(dead_code)]
@@ -16,7 +16,7 @@
 use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
-use dramaxis_core::error::{SplicrError, SplicrResult};
+use dramaxis_core::error::{DramaxisError, DramaxisResult};
 use futures::{SinkExt, StreamExt};
 use tokio_tungstenite::tungstenite::Message;
 
@@ -53,16 +53,16 @@ pub struct TtsOutcome {
 pub trait TtsEngine: Send + Sync {
     fn kind(&self) -> TtsProviderKind;
 
-    /// 合成并落盘。失败返回 `SplicrError::Tts`。
-    async fn synthesize(&self, req: &TtsRequest) -> SplicrResult<TtsOutcome>;
+    /// 合成并落盘。失败返回 `DramaxisError::Tts`。
+    async fn synthesize(&self, req: &TtsRequest) -> DramaxisResult<TtsOutcome>;
 }
 
-fn tts_err(provider: TtsProviderKind, message: impl Into<String>) -> SplicrError {
-    SplicrError::Tts(format!("{provider:?}: {}", message.into()))
+fn tts_err(provider: TtsProviderKind, message: impl Into<String>) -> DramaxisError {
+    DramaxisError::Tts(format!("{provider:?}: {}", message.into()))
 }
 
 /// 落盘 helper: 自动建父目录。
-async fn write_output(path: &Path, bytes: &[u8]) -> SplicrResult<u64> {
+async fn write_output(path: &Path, bytes: &[u8]) -> DramaxisResult<u64> {
     if let Some(parent) = path.parent() {
         tokio::fs::create_dir_all(parent).await?;
     }
@@ -114,7 +114,7 @@ impl TtsEngine for OpenAiTtsEngine {
         TtsProviderKind::OpenAi
     }
 
-    async fn synthesize(&self, req: &TtsRequest) -> SplicrResult<TtsOutcome> {
+    async fn synthesize(&self, req: &TtsRequest) -> DramaxisResult<TtsOutcome> {
         let base = self.opts.base_url.trim().trim_end_matches('/');
         let url = if base.ends_with("/audio/speech") {
             base.to_string()
@@ -238,7 +238,7 @@ impl TtsEngine for EdgeTtsEngine {
         TtsProviderKind::Edge
     }
 
-    async fn synthesize(&self, req: &TtsRequest) -> SplicrResult<TtsOutcome> {
+    async fn synthesize(&self, req: &TtsRequest) -> DramaxisResult<TtsOutcome> {
         let conn_id = random_connection_id();
         let url = format!("{EDGE_URL}?TrustedClientToken={EDGE_TOKEN}&ConnectionId={conn_id}");
 
@@ -356,7 +356,7 @@ impl TtsEngine for GptSovitsTtsEngine {
         TtsProviderKind::GptSovits
     }
 
-    async fn synthesize(&self, req: &TtsRequest) -> SplicrResult<TtsOutcome> {
+    async fn synthesize(&self, req: &TtsRequest) -> DramaxisResult<TtsOutcome> {
         if self.opts.ref_audio_path.is_empty() {
             return Err(tts_err(
                 TtsProviderKind::GptSovits,
@@ -459,7 +459,7 @@ impl TtsEngine for MimoTtsEngine {
         TtsProviderKind::Mimo
     }
 
-    async fn synthesize(&self, req: &TtsRequest) -> SplicrResult<TtsOutcome> {
+    async fn synthesize(&self, req: &TtsRequest) -> DramaxisResult<TtsOutcome> {
         let base_url = self.opts.base_url.trim_end_matches('/');
         let url = if base_url.contains("/audio/speech") || base_url.contains("/t2a") {
             base_url.to_string()
@@ -616,7 +616,7 @@ mod tests {
         let err = r.unwrap_err();
         assert!(matches!(
             err,
-            SplicrError::Tts(msg) if msg.contains("GptSovits")
+            DramaxisError::Tts(msg) if msg.contains("GptSovits")
         ));
     }
 

@@ -9,7 +9,7 @@
 //! - 生成 draft_info.json, draft_meta_info.json 与 draft_content.json
 
 use dramaxis_core::domain::{MediaFile, Timeline, TrackKind};
-use dramaxis_core::error::{SplicrError, SplicrResult};
+use dramaxis_core::error::{DramaxisError, DramaxisResult};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -116,7 +116,7 @@ pub fn detect_jianying_draft_root() -> (PathBuf, bool) {
 }
 
 /// 核心生成器: 创建剪映完整 5 轨工程草稿
-pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraftResult> {
+pub fn create_capcut_draft(opts: CapcutDraftOptions) -> DramaxisResult<CapcutDraftResult> {
     let (detected_root, is_installed) = detect_jianying_draft_root();
     let base_dir = if let Some(custom) = &opts.target_dir {
         PathBuf::from(custom)
@@ -128,7 +128,7 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
     let draft_folder = base_dir.join(&draft_id);
 
     std::fs::create_dir_all(&draft_folder)
-        .map_err(|e| SplicrError::Io(format!("创建剪映工程目录失败: {e}")))?;
+        .map_err(|e| DramaxisError::Io(format!("创建剪映工程目录失败: {e}")))?;
 
     // 1. 计算总时长 (优先视频时长，其次配音时长，兜底 60s)
     let total_duration_sec = opts
@@ -153,9 +153,9 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
         }
     });
     let info_str = serde_json::to_string_pretty(&info_content)
-        .map_err(|e| SplicrError::Io(format!("序列化 draft_info.json 失败: {e}")))?;
+        .map_err(|e| DramaxisError::Io(format!("序列化 draft_info.json 失败: {e}")))?;
     std::fs::write(draft_folder.join("draft_info.json"), info_str)
-        .map_err(|e| SplicrError::Io(format!("写入 draft_info.json 失败: {e}")))?;
+        .map_err(|e| DramaxisError::Io(format!("写入 draft_info.json 失败: {e}")))?;
 
     // 3. 生成 draft_meta_info.json
     let meta_content = serde_json::json!({
@@ -169,9 +169,9 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
         "tm_duration": total_duration_us
     });
     let meta_str = serde_json::to_string_pretty(&meta_content)
-        .map_err(|e| SplicrError::Io(format!("序列化 draft_meta_info.json 失败: {e}")))?;
+        .map_err(|e| DramaxisError::Io(format!("序列化 draft_meta_info.json 失败: {e}")))?;
     std::fs::write(draft_folder.join("draft_meta_info.json"), meta_str)
-        .map_err(|e| SplicrError::Io(format!("写入 draft_meta_info.json 失败: {e}")))?;
+        .map_err(|e| DramaxisError::Io(format!("写入 draft_meta_info.json 失败: {e}")))?;
 
     // 4. 组装 draft_content.json 中的材料与多轨
     let mut materials_videos = Vec::new();
@@ -482,7 +482,7 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
             }
         ],
         "config": {
-            "anti_deduplication": {
+            "mastering_enhancement": {
                 "smart_crop": true,
                 "ambient_blur": ambient_blur,
                 "sweep_light": true,
@@ -492,9 +492,9 @@ pub fn create_capcut_draft(opts: CapcutDraftOptions) -> SplicrResult<CapcutDraft
     });
 
     let content_str = serde_json::to_string_pretty(&content_data)
-        .map_err(|e| SplicrError::Io(format!("序列化 draft_content.json 失败: {e}")))?;
+        .map_err(|e| DramaxisError::Io(format!("序列化 draft_content.json 失败: {e}")))?;
     std::fs::write(draft_folder.join("draft_content.json"), content_str)
-        .map_err(|e| SplicrError::Io(format!("写入 draft_content.json 失败: {e}")))?;
+        .map_err(|e| DramaxisError::Io(format!("写入 draft_content.json 失败: {e}")))?;
 
     Ok(CapcutDraftResult {
         draft_folder: draft_folder.to_string_lossy().to_string(),
@@ -511,7 +511,7 @@ pub fn export_capcut_from_timeline(
     timeline: &Timeline,
     media_files: &[MediaFile],
     target_dir: Option<String>,
-) -> SplicrResult<CapcutDraftResult> {
+) -> DramaxisResult<CapcutDraftResult> {
     let mut video_path = None;
     let mut video_dur = None;
     let mut scene_cuts = Vec::new();

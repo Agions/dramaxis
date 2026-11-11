@@ -3,7 +3,7 @@ use crate::context::AgentContext;
 use crate::types::{AgentRole, AgentStatus, QualityReport};
 use async_trait::async_trait;
 use dramaxis_core::domain::{Clip, ScriptSegment, Timeline};
-use dramaxis_core::error::{LlmProviderKind, SplicrResult};
+use dramaxis_core::error::{LlmProviderKind, DramaxisResult};
 use dramaxis_core::services::AgentModelMatrix;
 use dramaxis_detect::Ffmpeg;
 use dramaxis_script::LlmRequest;
@@ -79,7 +79,7 @@ pub fn resolve_agent_llm(
 pub trait Agent: Send + Sync {
     fn role(&self) -> AgentRole;
     fn name(&self) -> &str;
-    async fn execute(&self, ctx: &mut AgentContext) -> SplicrResult<Option<String>>;
+    async fn execute(&self, ctx: &mut AgentContext) -> DramaxisResult<Option<String>>;
 }
 
 pub struct DirectorAgent;
@@ -91,7 +91,7 @@ impl Agent for DirectorAgent {
     fn name(&self) -> &str {
         "🎬 总控导演 (Director)"
     }
-    async fn execute(&self, ctx: &mut AgentContext) -> SplicrResult<Option<String>> {
+    async fn execute(&self, ctx: &mut AgentContext) -> DramaxisResult<Option<String>> {
         let media_count = ctx.project.media_files.len();
         let project_name = &ctx.project.name;
 
@@ -126,7 +126,7 @@ impl Agent for VisualCriticAgent {
     fn name(&self) -> &str {
         "👁️ 画面视觉分析师 (VisualCritic)"
     }
-    async fn execute(&self, ctx: &mut AgentContext) -> SplicrResult<Option<String>> {
+    async fn execute(&self, ctx: &mut AgentContext) -> DramaxisResult<Option<String>> {
         let first_media = ctx.project.media_files.first().map(|m| m.path.clone());
 
         let (cuts_vec, duration, keyframes_b64) = if let Some(media_path) = first_media {
@@ -309,7 +309,7 @@ impl Agent for ScreenwriterAgent {
     fn name(&self) -> &str {
         "✍️ 金牌编剧 (Screenwriter)"
     }
-    async fn execute(&self, ctx: &mut AgentContext) -> SplicrResult<Option<String>> {
+    async fn execute(&self, ctx: &mut AgentContext) -> DramaxisResult<Option<String>> {
         let cuts = ctx
             .memory
             .get("scene_count")
@@ -499,7 +499,7 @@ impl Agent for VoiceArtistAgent {
     fn name(&self) -> &str {
         "🎙️ 声乐调音师 (VoiceArtist)"
     }
-    async fn execute(&self, ctx: &mut AgentContext) -> SplicrResult<Option<String>> {
+    async fn execute(&self, ctx: &mut AgentContext) -> DramaxisResult<Option<String>> {
         let script = ctx.memory.get("script_text").cloned().unwrap_or_default();
         let word_count = script.chars().count();
         let est_duration = (word_count as f64 / 4.5).max(15.0);
@@ -536,7 +536,26 @@ impl Agent for VoiceArtistAgent {
         let voice_audio_path = if is_real_synthesized {
             cache_dir.to_string_lossy().to_string()
         } else {
-            "virtual_track_a1.mp3".to_string()
+            // 当网络离线或 TTS 服务不可达时，基于 FFmpeg 或本地微帧生成真实占位音频，严禁使用虚构不存在路径
+            if let Ok(ffmpeg) = Ffmpeg::discover() {
+                let dur_str = format!("{:.2}", est_duration);
+                let _ = tokio::process::Command::new(&ffmpeg.ffmpeg_bin)
+                    .args([
+                        "-y",
+                        "-f", "lavfi",
+                        "-i", "anullsrc=r=48000:cl=mono",
+                        "-t", &dur_str,
+                        "-q:a", "9",
+                        "-acodec", "libmp3lame",
+                        &cache_dir.to_string_lossy(),
+                    ])
+                    .output()
+                    .await;
+            }
+            if !cache_dir.exists() {
+                let _ = std::fs::write(&cache_dir, [0xFF, 0xFB, 0x90, 0x64, 0x00]);
+            }
+            cache_dir.to_string_lossy().to_string()
         };
 
         // 若生成真实音频，使用 Ffmpeg Probe 提取真实毫秒级音频时长
@@ -588,7 +607,7 @@ impl Agent for SoundEngineerAgent {
     fn name(&self) -> &str {
         "🎛️ 混音剪辑师 (SoundEngineer)"
     }
-    async fn execute(&self, ctx: &mut AgentContext) -> SplicrResult<Option<String>> {
+    async fn execute(&self, ctx: &mut AgentContext) -> DramaxisResult<Option<String>> {
         let voice_dur = ctx
             .memory
             .get("voice_duration")
@@ -762,7 +781,7 @@ impl Agent for QualityReviewerAgent {
     fn name(&self) -> &str {
         "🔍 终审质量守门员 (QualityReviewer)"
     }
-    async fn execute(&self, ctx: &mut AgentContext) -> SplicrResult<Option<String>> {
+    async fn execute(&self, ctx: &mut AgentContext) -> DramaxisResult<Option<String>> {
         let cuts = ctx
             .memory
             .get("scene_count")
@@ -818,14 +837,52 @@ impl Agent for QualityReviewerAgent {
         let pacing_score: f32 = (88.0 + (cuts_num * 1.5)).min(96.0);
 
         // 4. 违禁与敏感合规 (Gate 4)
-        let compliance_passed = true;
+        // 扫描剧本文案与分镜，核查平台违禁极限词、虚假承诺与敏感词
+        let mut compliance_violations = Vec::new();
+        let prohibited_words = [
+            "国家级", "世界级", "最高级", "最佳", "第一", "唯一", "首个", "顶级",
+            "极品", "绝对", "独家垄断", "毫无保留包赚", "暴利", "刷单", "兼职日入",
+        ];
 
-        // 综合加权得分
+        let full_script_text = ctx
+            .project
+            .scripts
+            .iter()
+            .map(|s| s.text.as_str())
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        for pw in &prohibited_words {
+            if full_script_text.contains(*pw) {
+                compliance_violations.push(*pw);
+            }
+        }
+
+        // 平台时长与语速合规检查
+        let total_video_dur = ctx
+            .project
+            .media_files
+            .first()
+            .map(|m| m.duration_seconds)
+            .unwrap_or(30.0);
+        if total_video_dur < 3.0 {
+            suggestions.push("素材总时长过短 (< 3s)，建议补充镜头以满足平台最低门槛".into());
+        }
+
+        let compliance_passed = compliance_violations.is_empty();
+        if !compliance_passed {
+            for v in &compliance_violations {
+                suggestions.push(format!("文案触发平台禁用极限词预警: '{v}'，建议替换为合规表达"));
+            }
+        }
+
+        // 综合加权得分 (若合规门禁未通过，合规项记 0 分以拉低综合分)
+        let compliance_score = if compliance_passed { 100.0 } else { 0.0 };
         let overall_score: f32 = (hook_score * 0.35
             + (100.0 - sync_tolerance_ms * 0.1) * 0.25
             + pacing_score * 0.25
-            + 100.0 * 0.15)
-            .min(100.0);
+            + compliance_score * 0.15)
+            .clamp(0.0, 100.0);
 
         // 更新 ScriptSegment.score
         for seg in &mut ctx.project.scripts {

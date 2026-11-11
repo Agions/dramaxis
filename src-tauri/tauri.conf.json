@@ -39,7 +39,7 @@
     "category": "Video",
     "copyright": "© 2026 Agions",
     "shortDescription": "Dramaxis (剧枢) — 电影级多智能体影视叙事与智能解说创作平台",
-    "longDescription": "Dramaxis（剧枢）融合了 Fablr 与 splicr 的双核能力，基于 Rust Native 多智能体架构 + 4 大沉浸式创作工坊，提供素材多模态抽帧、黄金 3 秒 Hook、第一人称剧本撰写、声乐克隆、5 轨毫秒级对齐与剪映草稿深度互通。",
+    "longDescription": "Dramaxis（剧枢）是新一代影视解说与智能剪辑创作平台，基于 Rust Native 多智能体架构 + 4 大沉浸式创作工坊，提供素材多模态抽帧、黄金 3 秒 Hook、第一人称剧本撰写、声乐克隆、5 轨毫秒级对齐与剪映草稿深度互通。",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

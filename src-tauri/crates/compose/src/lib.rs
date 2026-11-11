@@ -29,7 +29,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::sync::broadcast;
 
 pub use dramaxis_core::domain::{Clip, MediaFile, Project, ScriptSegment, Timeline, Track};
-pub use dramaxis_core::error::{SplicrError, SplicrResult};
+pub use dramaxis_core::error::{DramaxisError, DramaxisResult};
 
 // ════════════════════════════════════════════════════════════════════════
 // 7 步定义
@@ -153,7 +153,7 @@ pub trait StepExecutor: Send + Sync {
     /// 步骤索引 (0..=6, 与 `STEPS` 下标一致)
     fn step_index(&self) -> u8;
     /// 执行一步 (副作用在内部完成)
-    async fn execute(&self, project: &mut Project) -> SplicrResult<()>;
+    async fn execute(&self, project: &mut Project) -> DramaxisResult<()>;
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -247,10 +247,10 @@ impl Pipeline {
         &self,
         project: &mut Project,
         executors: &[Box<dyn StepExecutor>],
-    ) -> SplicrResult<()> {
+    ) -> DramaxisResult<()> {
         // 前置校验 (fail-fast): 先于任何状态变更, 避免错配导致状态永久卡在 Running
         if executors.len() > STEPS.len() {
-            return Err(SplicrError::Pipeline(format!(
+            return Err(DramaxisError::Pipeline(format!(
                 "too many executors: {} > {}",
                 executors.len(),
                 STEPS.len()
@@ -258,7 +258,7 @@ impl Pipeline {
         }
         for (idx, exec) in executors.iter().enumerate() {
             if exec.step_index() as usize != idx {
-                return Err(SplicrError::Pipeline(format!(
+                return Err(DramaxisError::Pipeline(format!(
                     "executor index mismatch at slot {idx}: got {}",
                     exec.step_index()
                 )));
@@ -287,7 +287,7 @@ impl Pipeline {
                 let _ = self.events_tx.send(PipelineEvent::PipelineFailed {
                     message: msg.clone(),
                 });
-                return Err(SplicrError::Pipeline(msg));
+                return Err(DramaxisError::Pipeline(msg));
             }
 
             // 标记当前步 active + emit
@@ -374,7 +374,7 @@ mod tests {
         fn step_index(&self) -> u8 {
             self.idx
         }
-        async fn execute(&self, _p: &mut Project) -> SplicrResult<()> {
+        async fn execute(&self, _p: &mut Project) -> DramaxisResult<()> {
             Ok(())
         }
     }
@@ -389,8 +389,8 @@ mod tests {
         fn step_index(&self) -> u8 {
             self.idx
         }
-        async fn execute(&self, _p: &mut Project) -> SplicrResult<()> {
-            Err(SplicrError::Pipeline("intentional fail".into()))
+        async fn execute(&self, _p: &mut Project) -> DramaxisResult<()> {
+            Err(DramaxisError::Pipeline("intentional fail".into()))
         }
     }
 
@@ -455,7 +455,7 @@ mod tests {
             fn step_index(&self) -> u8 {
                 1
             }
-            async fn execute(&self, _p: &mut Project) -> SplicrResult<()> {
+            async fn execute(&self, _p: &mut Project) -> DramaxisResult<()> {
                 self.p.cancel();
                 Ok(())
             }

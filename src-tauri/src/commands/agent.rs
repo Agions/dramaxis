@@ -5,7 +5,7 @@ use dramaxis_agent::{
     DagOrchestrator, DagSnapshot, WorkflowProfile,
 };
 use dramaxis_core::domain::Project;
-use dramaxis_core::error::SplicrError;
+use dramaxis_core::error::DramaxisError;
 use dramaxis_core::services::{ConfigService, ConfigSnapshot};
 use dramaxis_core::AppContext;
 use std::sync::Arc;
@@ -42,7 +42,7 @@ pub async fn agent_start(
     workflow_profile: Option<WorkflowProfile>,
     app_ctx: State<'_, AppContext>,
     state: State<'_, AgentServiceState>,
-) -> Result<AgentContext, SplicrError> {
+) -> Result<AgentContext, DramaxisError> {
     let mut ctx = AgentContext::new(project, auto_mode);
 
     // 自动装配当前设置中的 LLM 与 TTS 凭证至 Agent 上下文内存
@@ -85,21 +85,21 @@ pub async fn agent_start(
         *dag_lock = Some(dag);
     }
 
-    Ok(ctx)
+    Ok(ctx.sanitized_for_ipc())
 }
 
 /// 执行完整的 DAG 状态机编排推演 (支持并行分支、反思回路与 HITL 断点)
 #[tauri::command]
 pub async fn agent_run_dag(
     state: State<'_, AgentServiceState>,
-) -> Result<Option<BreakpointRequest>, SplicrError> {
+) -> Result<Option<BreakpointRequest>, DramaxisError> {
     let mut lock = state.dag.write().await;
     if let Some(dag) = lock.as_mut() {
         dag.run_dag()
             .await
-            .map_err(|e| SplicrError::Pipeline(e.to_string()))
+            .map_err(|e| DramaxisError::Pipeline(e.to_string()))
     } else {
-        Err(SplicrError::Pipeline(
+        Err(DramaxisError::Pipeline(
             "DAG 智能体调度器尚未初始化".to_string(),
         ))
     }
@@ -111,14 +111,14 @@ pub async fn agent_resume_breakpoint(
     action: String,
     feedback: Option<String>,
     state: State<'_, AgentServiceState>,
-) -> Result<Option<BreakpointRequest>, SplicrError> {
+) -> Result<Option<BreakpointRequest>, DramaxisError> {
     let mut lock = state.dag.write().await;
     if let Some(dag) = lock.as_mut() {
         dag.resume_breakpoint(&action, feedback)
             .await
-            .map_err(|e| SplicrError::Pipeline(e.to_string()))
+            .map_err(|e| DramaxisError::Pipeline(e.to_string()))
     } else {
-        Err(SplicrError::Pipeline(
+        Err(DramaxisError::Pipeline(
             "DAG 智能体调度器尚未初始化".to_string(),
         ))
     }
@@ -128,7 +128,7 @@ pub async fn agent_resume_breakpoint(
 #[tauri::command]
 pub async fn agent_get_dag_snapshot(
     state: State<'_, AgentServiceState>,
-) -> Result<Option<DagSnapshot>, SplicrError> {
+) -> Result<Option<DagSnapshot>, DramaxisError> {
     let lock = state.dag.read().await;
     if let Some(dag) = lock.as_ref() {
         let snap = dag.snapshot().await;
@@ -143,14 +143,14 @@ pub async fn agent_get_dag_snapshot(
 pub async fn agent_step(
     step_idx: usize,
     state: State<'_, AgentServiceState>,
-) -> Result<Option<BreakpointRequest>, SplicrError> {
+) -> Result<Option<BreakpointRequest>, DramaxisError> {
     let lock = state.orchestrator.read().await;
     if let Some(orch) = lock.as_ref() {
         orch.run_step(step_idx)
             .await
-            .map_err(|e| SplicrError::Pipeline(e.to_string()))
+            .map_err(|e| DramaxisError::Pipeline(e.to_string()))
     } else {
-        Err(SplicrError::Pipeline("智能体调度器尚未初始化".to_string()))
+        Err(DramaxisError::Pipeline("智能体调度器尚未初始化".to_string()))
     }
 }
 
@@ -158,17 +158,17 @@ pub async fn agent_step(
 #[tauri::command]
 pub async fn agent_get_context(
     state: State<'_, AgentServiceState>,
-) -> Result<Option<AgentContext>, SplicrError> {
+) -> Result<Option<AgentContext>, DramaxisError> {
     let dag_lock = state.dag.read().await;
     if let Some(dag) = dag_lock.as_ref() {
         let ctx = dag.context.read().await;
-        return Ok(Some(ctx.clone()));
+        return Ok(Some(ctx.sanitized_for_ipc()));
     }
     let lock = state.orchestrator.read().await;
     if let Some(orch) = lock.as_ref() {
         let ctx_lock = orch.context().await;
         let ctx = ctx_lock.read().await;
-        Ok(Some(ctx.clone()))
+        Ok(Some(ctx.sanitized_for_ipc()))
     } else {
         Ok(None)
     }
@@ -178,7 +178,7 @@ pub async fn agent_get_context(
 #[tauri::command]
 pub async fn agent_get_blackboard(
     state: State<'_, AgentServiceState>,
-) -> Result<Option<Blackboard>, SplicrError> {
+) -> Result<Option<Blackboard>, DramaxisError> {
     let dag_lock = state.dag.read().await;
     if let Some(dag) = dag_lock.as_ref() {
         let ctx = dag.context.read().await;
@@ -198,7 +198,7 @@ pub async fn agent_get_blackboard(
 pub async fn agent_rollback_script(
     version: u32,
     state: State<'_, AgentServiceState>,
-) -> Result<bool, SplicrError> {
+) -> Result<bool, DramaxisError> {
     let dag_lock = state.dag.read().await;
     if let Some(dag) = dag_lock.as_ref() {
         let mut ctx = dag.context.write().await;

@@ -10,7 +10,7 @@
 use std::path::Path;
 
 use chrono::Utc;
-use dramaxis_core::error::{SplicrError, SplicrResult};
+use dramaxis_core::error::{DramaxisError, DramaxisResult};
 use dramaxis_detect::{Ffmpeg, HardwareAccelerationKind};
 use serde::{Deserialize, Serialize};
 
@@ -224,10 +224,10 @@ pub async fn render_video_pipeline(
     subtitle_style: Option<&str>,
     output_file: &Path,
     on_progress: Option<Box<dyn Fn(f64) + Send + Sync>>,
-) -> SplicrResult<(f64, u64)> {
+) -> DramaxisResult<(f64, u64)> {
     let video_p = Path::new(video_path);
     if !video_p.exists() {
-        return Err(SplicrError::InvalidInput(format!(
+        return Err(DramaxisError::InvalidInput(format!(
             "视频素材源文件不存在: {video_path}"
         )));
     }
@@ -541,7 +541,7 @@ pub async fn execute_batch_fission<F>(
     params: BatchFissionParams,
     output_dir: &Path,
     on_step_progress: F,
-) -> SplicrResult<BatchFissionResult>
+) -> DramaxisResult<BatchFissionResult>
 where
     F: Fn(u32, u32, f64, String),
 {

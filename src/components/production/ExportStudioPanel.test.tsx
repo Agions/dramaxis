@@ -75,7 +75,7 @@ describe("ExportStudioPanel", () => {
       screen.getByText("剪映 PC 原生工程草稿 (.draft)"),
     ).toBeInTheDocument();
     expect(screen.getByText("一键导出至剪映草稿库")).toBeInTheDocument();
-    expect(screen.getByText("高完播率防重矩阵 (Anti-Dup)")).toBeInTheDocument();
+    expect(screen.getByText("多平台母带定制与微调 (Mastering)")).toBeInTheDocument();
     expect(screen.getByText("1.03x")).toBeInTheDocument();
     expect(screen.getByText("9:16 竖屏高斯模糊环境底衬")).toBeInTheDocument();
   });
@@ -231,13 +231,13 @@ describe("ExportStudioPanel", () => {
       />,
     );
 
-    // 点击强力裂变预设
-    const aggPresetBtn = screen.getByText("强力裂变");
+    // 点击多渠道定制预设
+    const aggPresetBtn = screen.getByText("多渠道定制");
     fireEvent.click(aggPresetBtn);
     expect(handleZoom).toHaveBeenCalledWith(1.06);
 
-    // 点击批量生成裂变视频
-    const fissionBtn = screen.getByText("批量生成 3 份成片");
+    // 点击批量生成母带
+    const fissionBtn = screen.getByText("批量导出 3 份母带");
     fireEvent.click(fissionBtn);
 
     await waitFor(() => {
@@ -248,7 +248,7 @@ describe("ExportStudioPanel", () => {
         }),
       );
       expect(toast.success).toHaveBeenCalledWith(
-        expect.stringContaining("成功并发裂变 3 份独立短视频"),
+        expect.stringContaining("成功批量导出 3 份定制母带"),
         expect.any(Object),
       );
     });

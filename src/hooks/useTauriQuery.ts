@@ -3,7 +3,7 @@
  *
  * 自动处理:
  * - Query Key 命名空间 (避免与其它 query 冲突)
- * - 错误抛出 SplicrError (可在 onError 中统一 toast)
+ * - 错误抛出 DramaxisError (可在 onError 中统一 toast)
  * - 禁用 retry (因为 Tauri 错误不是网络抖动)
  * - 缓存 5s (frontend 频繁 query 时降级 IPC 调用)
  */
@@ -14,10 +14,10 @@ import {
   type UseQueryOptions,
   type UseQueryResult,
 } from "@tanstack/react-query";
-import type { CommandResultOf, IpcCommand, SplicrError } from "@dramaxis/ipc";
+import type { CommandResultOf, IpcCommand, DramaxisError } from "@dramaxis/ipc";
 
 export interface UseTauriQueryOptions<C extends IpcCommand> extends Omit<
-  UseQueryOptions<CommandResultOf<C>, SplicrError, CommandResultOf<C>>,
+  UseQueryOptions<CommandResultOf<C>, DramaxisError, CommandResultOf<C>>,
   "queryKey" | "queryFn"
 > {
   command: C;
@@ -27,9 +27,9 @@ export interface UseTauriQueryOptions<C extends IpcCommand> extends Omit<
 
 export function useTauriQuery<C extends IpcCommand>(
   options: UseTauriQueryOptions<C>,
-): UseQueryResult<CommandResultOf<C>, SplicrError> {
+): UseQueryResult<CommandResultOf<C>, DramaxisError> {
   const { command, args, queryKeyPrefix, ...rest } = options;
-  return useQuery<CommandResultOf<C>, SplicrError, CommandResultOf<C>>({
+  return useQuery<CommandResultOf<C>, DramaxisError, CommandResultOf<C>>({
     queryKey: [queryKeyPrefix, command, args] as const,
     queryFn: async () => {
       try {
@@ -42,12 +42,12 @@ export function useTauriQuery<C extends IpcCommand>(
           "message" in err &&
           typeof (err as { kind: unknown }).kind === "string"
         ) {
-          throw err as SplicrError;
+          throw err as DramaxisError;
         }
         throw {
           kind: "other",
           message: err instanceof Error ? err.message : String(err),
-        } satisfies SplicrError;
+        } satisfies DramaxisError;
       }
     },
     retry: false,

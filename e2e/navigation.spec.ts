@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-test.describe("splicr 页面导航", () => {
+test.describe("Dramaxis 页面导航", () => {
   test("首页可以加载并显示应用壳层", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle(/splicr/i);
+    await expect(page).toHaveTitle(/dramaxis/i);
     await expect(page.getByRole("navigation")).toBeVisible();
   });
 

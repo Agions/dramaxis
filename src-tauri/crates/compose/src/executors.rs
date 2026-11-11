@@ -17,7 +17,7 @@ use dramaxis_detect::Ffmpeg;
 use dramaxis_script::{LlmProvider, LlmRequest};
 use dramaxis_voice::{TtsEngine, TtsRequest};
 
-use crate::{SplicrError, SplicrResult, StepExecutor};
+use crate::{DramaxisError, DramaxisResult, StepExecutor};
 
 // ════════════════════════════════════════════════════════════════════════
 // 依赖注入
@@ -74,9 +74,9 @@ impl StepExecutor for IngestStep {
         0
     }
 
-    async fn execute(&self, project: &mut Project) -> SplicrResult<()> {
+    async fn execute(&self, project: &mut Project) -> DramaxisResult<()> {
         if project.media_files.is_empty() {
-            return Err(SplicrError::Project(
+            return Err(DramaxisError::Project(
                 "请先在素材页导入至少一个视频文件".into(),
             ));
         }
@@ -89,7 +89,7 @@ impl StepExecutor for IngestStep {
         // 逐个校验 + 探针补全元数据
         for mf in project.media_files.iter_mut() {
             if !mf.path.exists() {
-                return Err(SplicrError::Project(format!(
+                return Err(DramaxisError::Project(format!(
                     "素材文件不存在: {}",
                     mf.path.display()
                 )));
@@ -122,7 +122,7 @@ impl StepExecutor for SceneSplitStep {
         1
     }
 
-    async fn execute(&self, project: &mut Project) -> SplicrResult<()> {
+    async fn execute(&self, project: &mut Project) -> DramaxisResult<()> {
         let media = &project.media_files[0];
         let duration = if media.duration_seconds > 0.0 {
             media.duration_seconds
@@ -209,9 +209,9 @@ impl StepExecutor for ScriptGenStep {
         2
     }
 
-    async fn execute(&self, project: &mut Project) -> SplicrResult<()> {
+    async fn execute(&self, project: &mut Project) -> DramaxisResult<()> {
         let llm = self.deps.llm.as_ref().ok_or_else(|| {
-            SplicrError::Config("未配置 LLM 提供商或 API 密钥,请先到设置页填写".into())
+            DramaxisError::Config("未配置 LLM 提供商或 API 密钥,请先到设置页填写".into())
         })?;
 
         // 场景摘要 → prompt
@@ -302,9 +302,9 @@ impl StepExecutor for VoiceCaptionsStep {
         3
     }
 
-    async fn execute(&self, project: &mut Project) -> SplicrResult<()> {
+    async fn execute(&self, project: &mut Project) -> DramaxisResult<()> {
         let tts = self.deps.tts.as_ref().ok_or_else(|| {
-            SplicrError::Config("未配置 TTS 引擎,请先到设置页选择配音引擎".into())
+            DramaxisError::Config("未配置 TTS 引擎,请先到设置页选择配音引擎".into())
         })?;
 
         let total = project
@@ -383,7 +383,7 @@ impl StepExecutor for SubtitleStep {
         4
     }
 
-    async fn execute(&self, _project: &mut Project) -> SplicrResult<()> {
+    async fn execute(&self, _project: &mut Project) -> DramaxisResult<()> {
         // 字幕生成通过前端 subtitleIpc.generate 独立完成，
         // 此处仅负责流水线状态标记为 Done。
         tracing::info!("[subtitle] 字幕合成步骤标记为完成");
@@ -449,7 +449,7 @@ impl StepExecutor for ComposeStep {
         5
     }
 
-    async fn execute(&self, project: &mut Project) -> SplicrResult<()> {
+    async fn execute(&self, project: &mut Project) -> DramaxisResult<()> {
         tracing::info!(
             "[compose] 正在为项目「{}」执行画面与音频智能对齐...",
             project.name
@@ -501,15 +501,15 @@ impl StepExecutor for ExportStep {
         6
     }
 
-    async fn execute(&self, project: &mut Project) -> SplicrResult<()> {
+    async fn execute(&self, project: &mut Project) -> DramaxisResult<()> {
         let ff = self.deps.ffmpeg.as_ref().ok_or_else(|| {
-            SplicrError::Ffmpeg("ffmpeg 未安装或不在 PATH 中,无法导出成片".into())
+            DramaxisError::Ffmpeg("ffmpeg 未安装或不在 PATH 中,无法导出成片".into())
         })?;
 
         let media = project
             .media_files
             .first()
-            .ok_or_else(|| SplicrError::Project("没有可导出的素材".into()))?;
+            .ok_or_else(|| DramaxisError::Project("没有可导出的素材".into()))?;
 
         let export_dir = self.deps.workdir.join("export");
         tokio::fs::create_dir_all(&export_dir).await?;
@@ -598,7 +598,7 @@ mod tests {
         };
         let mut p = Project::default();
         let r = step.execute(&mut p).await;
-        assert!(matches!(r, Err(SplicrError::Project(_))));
+        assert!(matches!(r, Err(DramaxisError::Project(_))));
     }
 
     #[tokio::test]
@@ -608,7 +608,7 @@ mod tests {
         };
         let mut p = project_with_media();
         let r = step.execute(&mut p).await;
-        assert!(matches!(r, Err(SplicrError::Project(_))));
+        assert!(matches!(r, Err(DramaxisError::Project(_))));
     }
 
     #[tokio::test]
@@ -631,7 +631,7 @@ mod tests {
         };
         let mut p = project_with_media();
         let r = step.execute(&mut p).await;
-        assert!(matches!(r, Err(SplicrError::Config(_))));
+        assert!(matches!(r, Err(DramaxisError::Config(_))));
     }
 
     #[test]
@@ -654,7 +654,7 @@ mod tests {
         };
         let mut p = project_with_media();
         let r = step.execute(&mut p).await;
-        assert!(matches!(r, Err(SplicrError::Config(_))));
+        assert!(matches!(r, Err(DramaxisError::Config(_))));
     }
 
     #[tokio::test]
@@ -664,7 +664,7 @@ mod tests {
         };
         let mut p = project_with_media();
         let r = step.execute(&mut p).await;
-        assert!(matches!(r, Err(SplicrError::Ffmpeg(_))));
+        assert!(matches!(r, Err(DramaxisError::Ffmpeg(_))));
     }
 
     #[test]

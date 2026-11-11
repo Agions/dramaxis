@@ -5,7 +5,7 @@
  * - 剪映原生 PC 工程草稿 (.draft) 全真实材料与多轨组装导出
  * - 多平台直接渲染 MP4 视频 (抖音/B站/小红书/快手)
  * - 实时 FFmpeg 硬件加速压制进度条 (export://progress)
- * - 8 维全频消重矩阵 (动态微缩放 + 9:16 环境高斯模糊底衬 + 批量裂变)
+ * - 多平台母带定制 (自适应微调 + 9:16 环境高斯模糊底衬 + 多版本批量导出)
  */
 
 import { memo, useState, useCallback } from "react";
@@ -149,7 +149,7 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
       setPitchShiftRate(1.015);
       setEnableBgmReverb(true);
       setEnableMetadataScrub(true);
-      toast.info("已切换至【工业标准】防重模式 (推荐)");
+      toast.info("已切换至【工业标准】母带模式 (推荐)");
     } else if (preset === "aggressive") {
       onAntiDupZoomChange(1.06);
       setEnableSpeed(true);
@@ -162,7 +162,7 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
       setPitchShiftRate(1.025);
       setEnableBgmReverb(true);
       setEnableMetadataScrub(true);
-      toast.info("已切换至【强力裂变】高频混淆防重模式");
+      toast.info("已切换至【多渠道定制】母带微调模式");
     }
   }, [onAntiDupZoomChange]);
 
@@ -359,7 +359,7 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
 
     setIsFissioning(true);
     setFissionProgress(0);
-    setFissionMessage(`启动 ${fissionCount} 份多维裂变流水线...`);
+    setFissionMessage(`启动 ${fissionCount} 份多版本母带导出流水线...`);
 
     const currentDedup: DedupOptions = {
       intensity: dedupIntensity,
@@ -401,12 +401,12 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
         subtitleStyle,
       });
 
-      toast.success(`成功并发裂变 ${res.variants.length} 份独立短视频！`, {
-        description: `各版本指纹互斥防重，可直接分发各平台多矩阵账号`,
+      toast.success(`成功批量导出 ${res.variants.length} 份定制母带！`, {
+        description: `各版本参数差异化适配，可直接分发各平台渠道`,
       });
     } catch (e: unknown) {
       const err = e as { message?: string };
-      toast.error("批量裂变失败", {
+      toast.error("批量导出失败", {
         description: err?.message ?? "请检查 FFmpeg 与素材参数",
       });
     } finally {

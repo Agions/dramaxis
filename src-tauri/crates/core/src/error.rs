@@ -6,9 +6,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 /// 全应用统一 Result 别名。
-pub type SplicrResult<T> = Result<T, SplicrError>;
 pub type DramaxisResult<T> = Result<T, DramaxisError>;
-pub type DramaxisError = SplicrError;
 
 /// 全应用统一错误。9 类变体覆盖所有业务失败路径。
 ///
@@ -20,7 +18,7 @@ pub type DramaxisError = SplicrError;
 /// - `Updater` 由自动更新返回 (下载 / 校验)
 /// - `Other` 仅作为兜底,新增业务错误前优先复用现有变体
 #[derive(Debug, Error)]
-pub enum SplicrError {
+pub enum DramaxisError {
     /// IO 错误 (文件 / 网络 / 临时目录创建失败)
     #[error("IO error: {0}")]
     Io(String),
@@ -69,9 +67,9 @@ pub enum SplicrError {
     Other(String),
 }
 
-impl From<std::io::Error> for SplicrError {
+impl From<std::io::Error> for DramaxisError {
     fn from(e: std::io::Error) -> Self {
-        SplicrError::Io(e.to_string())
+        DramaxisError::Io(e.to_string())
     }
 }
 
@@ -102,8 +100,8 @@ pub enum TtsProviderKind {
     Mimo,
 }
 
-// 把 SplicrError 序列化为 JSON 对象给 Tauri 前端
-impl Serialize for SplicrError {
+// 把 DramaxisError 序列化为 JSON 对象给 Tauri 前端
+impl Serialize for DramaxisError {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         use serde::ser::SerializeStruct;
         let code = match self {
@@ -119,7 +117,8 @@ impl Serialize for SplicrError {
             Self::InvalidInput(_) => "invalid_input",
             Self::Other(_) => "other",
         };
-        let mut st = s.serialize_struct("SplicrError", 2)?;
+        let mut st = s.serialize_struct("DramaxisError", 3)?;
+        st.serialize_field("kind", code)?;
         st.serialize_field("code", code)?;
         st.serialize_field("message", &self.to_string())?;
         st.end()
@@ -132,9 +131,10 @@ mod tests {
 
     #[test]
     fn serialization_shape() {
-        let err = SplicrError::Config("missing api_key".into());
+        let err = DramaxisError::Config("missing api_key".into());
         let json = serde_json::to_value(&err).unwrap();
         assert_eq!(json["code"], "config");
+        assert_eq!(json["kind"], "config");
         assert!(json["message"]
             .as_str()
             .unwrap()
@@ -143,7 +143,7 @@ mod tests {
 
     #[test]
     fn llm_error_carries_provider() {
-        let err = SplicrError::Llm {
+        let err = DramaxisError::Llm {
             provider: LlmProviderKind::OpenAi,
             message: "401".into(),
         };

@@ -1,6 +1,6 @@
 //! dramaxis v1.1.0 · 智能字幕与 ASS/SRT/VTT 渲染 Tauri 命令
 
-use dramaxis_core::error::SplicrError;
+use dramaxis_core::error::DramaxisError;
 use dramaxis_export::{SubtitleFormat, SubtitleItem};
 
 #[derive(serde::Deserialize)]
@@ -22,9 +22,9 @@ pub struct SubtitleGenerateResult {
 #[tauri::command]
 pub async fn subtitle_generate(
     params: SubtitleGenerateParams,
-) -> Result<SubtitleGenerateResult, SplicrError> {
+) -> Result<SubtitleGenerateResult, DramaxisError> {
     if params.script_text.trim().is_empty() {
-        return Err(SplicrError::InvalidInput("字幕生成文本不能为空".into()));
+        return Err(DramaxisError::InvalidInput("字幕生成文本不能为空".into()));
     }
 
     let lines: Vec<&str> = params
@@ -68,7 +68,7 @@ pub async fn subtitle_generate(
     };
 
     let content = dramaxis_export::render_subtitles(&items, sub_fmt)
-        .map_err(|e| SplicrError::InvalidInput(format!("渲染字幕失败: {e}")))?;
+        .map_err(|e| DramaxisError::InvalidInput(format!("渲染字幕失败: {e}")))?;
 
     let count = items.len();
 

@@ -15,7 +15,7 @@
 //! - 本 crate 只做**纯编排计划** (素材 → 输出计划的映射),不碰 IO;
 //!   真正的 ffmpeg 拼接 / 转码由 [`dramaxis-ffmpeg`] 在执行层完成
 //! - 复用 [`dramaxis_core::domain::ExportStrategy`] 枚举,避免类型重复
-//! - 校验失败返回 [`VideoPlanError`],由上层转 `SplicrError::Pipeline`
+//! - 校验失败返回 [`VideoPlanError`],由上层转 `DramaxisError::Pipeline`
 //!
 //! ## 用法
 //! ```

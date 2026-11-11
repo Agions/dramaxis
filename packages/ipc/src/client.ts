@@ -4,7 +4,7 @@
  * 设计:
  * - 唯一对 @tauri-apps/api 的强依赖点 (其它文件 import '@/ipc/client' 即可)
  * - 编译期类型保障: callIpc<C>('cmd', args) 时 args / result 自动强类型
- * - 错误统一: 异常 JSON 反序列化为 SplicrError
+ * - 错误统一: 异常 JSON 反序列化为 DramaxisError
  */
 
 import { invoke } from "@tauri-apps/api/core";
@@ -12,7 +12,7 @@ import type {
   CommandArgs,
   CommandResultOf,
   IpcCommand,
-  SplicrError,
+  DramaxisError,
 } from "./types.gen";
 
 /** 强类型 callIpc,穿透到 Rust 端 command */
@@ -27,7 +27,7 @@ export async function callIpc<C extends IpcCommand>(
       payload as Record<string, unknown>,
     );
   } catch (err) {
-    // Rust 端返回 Result<T, SplicrError> 时,Err 序列化为 { kind, message }
+    // Rust 端返回 Result<T, DramaxisError> 时,Err 序列化为 { kind, message }
     if (
       err &&
       typeof err === "object" &&
@@ -35,11 +35,11 @@ export async function callIpc<C extends IpcCommand>(
       "message" in err &&
       typeof (err as { kind: unknown }).kind === "string"
     ) {
-      throw err as SplicrError;
+      throw err as DramaxisError;
     }
     throw {
       kind: "other",
       message: err instanceof Error ? err.message : String(err),
-    } satisfies SplicrError;
+    } satisfies DramaxisError;
   }
 }

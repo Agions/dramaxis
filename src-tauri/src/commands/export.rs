@@ -15,7 +15,7 @@
 use std::path::PathBuf;
 
 use dramaxis_core::domain::{ExportStrategy, ProjectSettings};
-use dramaxis_core::error::SplicrError;
+use dramaxis_core::error::DramaxisError;
 pub use dramaxis_export::capcut::{CapcutDraftOptions, CapcutDraftResult};
 pub use dramaxis_export::dedup::{DedupIntensity, DedupOptions};
 pub use dramaxis_export::renderer::{
@@ -35,16 +35,16 @@ use tauri::{Emitter, Manager};
 pub async fn export_plan(
     mode: ExportMode,
     settings: Option<ProjectSettings>,
-) -> Result<ExportPlan, SplicrError> {
+) -> Result<ExportPlan, DramaxisError> {
     ExportPlanner::new()
         .plan(mode, settings.as_ref())
-        .map_err(|e| SplicrError::InvalidInput(e.to_string()))
+        .map_err(|e| DramaxisError::InvalidInput(e.to_string()))
 }
 
 /// 校验自定义编码参数
 #[tauri::command]
-pub async fn export_validate_params(params: ExportParams) -> Result<(), SplicrError> {
-    validate_params(&params).map_err(|e| SplicrError::InvalidInput(e.to_string()))
+pub async fn export_validate_params(params: ExportParams) -> Result<(), DramaxisError> {
+    validate_params(&params).map_err(|e| DramaxisError::InvalidInput(e.to_string()))
 }
 
 /// 渲染字幕文本 (SRT / ASS / VTT)
@@ -52,8 +52,8 @@ pub async fn export_validate_params(params: ExportParams) -> Result<(), SplicrEr
 pub async fn export_render_subtitles(
     items: Vec<SubtitleItem>,
     format: SubtitleFormat,
-) -> Result<String, SplicrError> {
-    render_subtitles(&items, format).map_err(|e| SplicrError::InvalidInput(e.to_string()))
+) -> Result<String, DramaxisError> {
+    render_subtitles(&items, format).map_err(|e| DramaxisError::InvalidInput(e.to_string()))
 }
 
 /// 按 4 策略生成多视频编排计划
@@ -62,16 +62,16 @@ pub async fn video_build_plans(
     sources: Vec<PathBuf>,
     strategy: ExportStrategy,
     options: Option<PlanOptions>,
-) -> Result<Vec<OutputPlan>, SplicrError> {
+) -> Result<Vec<OutputPlan>, DramaxisError> {
     let opts = options.unwrap_or_default();
-    build_plans(&sources, strategy, &opts).map_err(|e| SplicrError::InvalidInput(e.to_string()))
+    build_plans(&sources, strategy, &opts).map_err(|e| DramaxisError::InvalidInput(e.to_string()))
 }
 
 /// 导出剪映工程草稿 (.draft 完整多轨与材料)
 #[tauri::command]
 pub async fn export_capcut_draft(
     params: CapcutDraftOptions,
-) -> Result<CapcutDraftResult, SplicrError> {
+) -> Result<CapcutDraftResult, DramaxisError> {
     create_capcut_draft(params)
 }
 
@@ -79,7 +79,7 @@ pub async fn export_capcut_draft(
 #[tauri::command]
 pub async fn export_get_dedup_preset(
     intensity: DedupIntensity,
-) -> Result<DedupOptions, SplicrError> {
+) -> Result<DedupOptions, DramaxisError> {
     Ok(match intensity {
         DedupIntensity::Mild => DedupOptions::mild(),
         DedupIntensity::Standard => DedupOptions::standard(),
@@ -93,7 +93,7 @@ pub async fn export_get_dedup_preset(
 pub async fn export_render_video(
     app_handle: tauri::AppHandle,
     params: RenderVideoParams,
-) -> Result<RenderVideoResult, SplicrError> {
+) -> Result<RenderVideoResult, DramaxisError> {
     let preset = params.platform_preset.as_deref().unwrap_or("douyin");
 
     let output_file: PathBuf = if let Some(out) = params.output_path {
@@ -168,7 +168,7 @@ pub async fn export_render_video(
 pub async fn export_batch_fission(
     app_handle: tauri::AppHandle,
     params: BatchFissionParams,
-) -> Result<BatchFissionResult, SplicrError> {
+) -> Result<BatchFissionResult, DramaxisError> {
     let output_dir: PathBuf = if let Some(dir) = &params.output_dir {
         PathBuf::from(dir)
     } else {
@@ -198,10 +198,10 @@ pub async fn export_batch_fission(
 
 /// 在操作系统文件资源管理器中安全打开指定路径
 #[tauri::command]
-pub async fn export_open_folder(path: String) -> Result<(), SplicrError> {
+pub async fn export_open_folder(path: String) -> Result<(), DramaxisError> {
     let p = std::path::PathBuf::from(&path);
     if !p.exists() {
-        return Err(SplicrError::Io(format!("目标路径不存在: {path}")));
+        return Err(DramaxisError::Io(format!("目标路径不存在: {path}")));
     }
 
     #[cfg(target_os = "macos")]
@@ -210,7 +210,7 @@ pub async fn export_open_folder(path: String) -> Result<(), SplicrError> {
             .arg("-R")
             .arg(&path)
             .spawn()
-            .map_err(|e| SplicrError::Io(format!("调用 open 命令失败: {e}")))?;
+            .map_err(|e| DramaxisError::Io(format!("调用 open 命令失败: {e}")))?;
     }
 
     #[cfg(target_os = "windows")]
@@ -218,7 +218,7 @@ pub async fn export_open_folder(path: String) -> Result<(), SplicrError> {
         tokio::process::Command::new("explorer")
             .arg(format!("/select,\"{}\"", path))
             .spawn()
-            .map_err(|e| SplicrError::Io(format!("调用 explorer 失败: {e}")))?;
+            .map_err(|e| DramaxisError::Io(format!("调用 explorer 失败: {e}")))?;
     }
 
     #[cfg(target_os = "linux")]
@@ -231,7 +231,7 @@ pub async fn export_open_folder(path: String) -> Result<(), SplicrError> {
         tokio::process::Command::new("xdg-open")
             .arg(target)
             .spawn()
-            .map_err(|e| SplicrError::Io(format!("调用 xdg-open 失败: {e}")))?;
+            .map_err(|e| DramaxisError::Io(format!("调用 xdg-open 失败: {e}")))?;
     }
 
     Ok(())
@@ -239,7 +239,7 @@ pub async fn export_open_folder(path: String) -> Result<(), SplicrError> {
 
 /// 唤起本机剪映 PC 客户端
 #[tauri::command]
-pub async fn export_launch_jianying() -> Result<(), SplicrError> {
+pub async fn export_launch_jianying() -> Result<(), DramaxisError> {
     #[cfg(target_os = "macos")]
     {
         let status = tokio::process::Command::new("open")
@@ -252,7 +252,7 @@ pub async fn export_launch_jianying() -> Result<(), SplicrError> {
                 .status()
                 .await;
             if alt_status.is_err() || !alt_status.unwrap().success() {
-                return Err(SplicrError::Other(
+                return Err(DramaxisError::Other(
                     "未能在本机发现已安装的剪映专业版应用程序".into(),
                 ));
             }
@@ -270,18 +270,18 @@ pub async fn export_launch_jianying() -> Result<(), SplicrError> {
             if possible_exe.exists() {
                 tokio::process::Command::new(possible_exe)
                     .spawn()
-                    .map_err(|e| SplicrError::Io(format!("启动剪映失败: {e}")))?;
+                    .map_err(|e| DramaxisError::Io(format!("启动剪映失败: {e}")))?;
                 return Ok(());
             }
         }
-        Err(SplicrError::Other(
+        Err(DramaxisError::Other(
             "未能在本机默认路径发现剪映可执行文件".into(),
         ))
     }
 
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     {
-        Err(SplicrError::Other(
+        Err(DramaxisError::Other(
             "Linux 及其他平台暂不支持直接唤起剪映客户端".into(),
         ))
     }

@@ -8,7 +8,7 @@
 //! 5. **子图局部拓扑失效 (invalidate_subgraph)**：反思回退时仅失效受影响下游，完好前置强缓存
 
 use crate::types::{AgentRole, DagNodeStatus};
-use dramaxis_core::{SplicrError, SplicrResult};
+use dramaxis_core::{DramaxisError, DramaxisResult};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::future::Future;
 use std::pin::Pin;
@@ -19,7 +19,7 @@ pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
 /// 节点异步处理函数类型
 pub type NodeHandler<S> =
-    Arc<dyn Fn(Arc<RwLock<S>>) -> BoxFuture<'static, SplicrResult<String>> + Send + Sync>;
+    Arc<dyn Fn(Arc<RwLock<S>>) -> BoxFuture<'static, DramaxisResult<String>> + Send + Sync>;
 
 /// 状态归约回调函数类型 (Barrier Reducer)
 pub type StateReducer<S> = Arc<dyn Fn(&mut S) + Send + Sync>;
@@ -307,11 +307,11 @@ impl<S: Send + Sync + 'static> StateGraph<S> {
         &self,
         node_id: &str,
         state: Arc<RwLock<S>>,
-    ) -> SplicrResult<String> {
+    ) -> DramaxisResult<String> {
         let node = self
             .nodes
             .get(node_id)
-            .ok_or_else(|| SplicrError::Pipeline(format!("Node {} not found in StateGraph", node_id)))?;
+            .ok_or_else(|| DramaxisError::Pipeline(format!("Node {} not found in StateGraph", node_id)))?;
 
         let handler = match &node.handler {
             Some(h) => h.clone(),
@@ -336,7 +336,7 @@ impl<S: Send + Sync + 'static> StateGraph<S> {
                             Ok(format!("{fallback_res} [已触发策略级优雅降级]"))
                         }
                         Err(fallback_err) => {
-                            Err(SplicrError::Pipeline(format!(
+                            Err(DramaxisError::Pipeline(format!(
                                 "Node {node_id} failed primary ({primary_err}) and fallback ({fallback_err})"
                             )))
                         }
@@ -527,7 +527,7 @@ mod tests {
             GraphNode::new("faulty_node", "故障节点", AgentRole::VoiceArtist)
                 .with_handler(Arc::new(|_| {
                     Box::pin(async move {
-                        Err(SplicrError::Pipeline("网络配音服务异常中断".into()))
+                        Err(DramaxisError::Pipeline("网络配音服务异常中断".into()))
                     })
                 }))
                 .with_fallback(Arc::new(|_| {

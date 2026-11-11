@@ -30,7 +30,7 @@ pub mod hooks;
 pub use flywheel::*;
 pub use hooks::*;
 
-pub use dramaxis_core::error::{LlmProviderKind, SplicrError, SplicrResult};
+pub use dramaxis_core::error::{LlmProviderKind, DramaxisError, DramaxisResult};
 
 // ════════════════════════════════════════════════════════════════════════
 // 输入 / 输出契约
@@ -45,7 +45,7 @@ pub struct LlmRequest {
     pub max_tokens: Option<u32>,  // 默认 4096
     pub temperature: Option<f32>, // 默认 0.7
     pub stream: bool,             // 是否流式
-    /// 多模态视觉关键帧 (Base64 字符串列表, 供 GPT-5.6 / Gemini / Qwen3.8 等视觉模型分析)
+    /// 多模态视觉关键帧 (Base64 字符串列表, 供 GPT-4o / Gemini 2.0 / Qwen2.5-VL 等视觉模型分析)
     #[serde(default)]
     pub images_base64: Vec<String>,
 }
@@ -64,7 +64,7 @@ pub struct LlmResponse {
 pub trait LlmProvider: Send + Sync {
     fn kind(&self) -> LlmProviderKind;
     fn default_model(&self) -> &'static str;
-    async fn chat(&self, req: &LlmRequest) -> SplicrResult<LlmResponse>;
+    async fn chat(&self, req: &LlmRequest) -> DramaxisResult<LlmResponse>;
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -111,7 +111,7 @@ impl LlmProvider for OpenAiCompatible {
         self.default_model
     }
 
-    async fn chat(&self, req: &LlmRequest) -> SplicrResult<LlmResponse> {
+    async fn chat(&self, req: &LlmRequest) -> DramaxisResult<LlmResponse> {
         let start = std::time::Instant::now();
 
         let user_content = if req.images_base64.is_empty() {
@@ -150,7 +150,7 @@ impl LlmProvider for OpenAiCompatible {
             .json(&body)
             .send()
             .await
-            .map_err(|e| SplicrError::Llm {
+            .map_err(|e| DramaxisError::Llm {
                 provider: self.kind,
                 message: format!("request send failed: {e}"),
             })?;
@@ -158,7 +158,7 @@ impl LlmProvider for OpenAiCompatible {
         let status = resp.status();
         if !status.is_success() {
             let body = resp.text().await.unwrap_or_default();
-            return Err(SplicrError::Llm {
+            return Err(DramaxisError::Llm {
                 provider: self.kind,
                 message: format!("HTTP {status}: {body}"),
             });
@@ -185,7 +185,7 @@ impl LlmProvider for OpenAiCompatible {
             usage: Option<Usage>,
         }
 
-        let api: ApiResp = resp.json().await.map_err(|e| SplicrError::Llm {
+        let api: ApiResp = resp.json().await.map_err(|e| DramaxisError::Llm {
             provider: self.kind,
             message: format!("response json parse failed: {e}"),
         })?;
@@ -242,10 +242,10 @@ impl LlmProvider for ClaudeProvider {
     }
 
     fn default_model(&self) -> &'static str {
-        "claude-sonnet-4-20250514"
+        "claude-3-7-sonnet-20250219"
     }
 
-    async fn chat(&self, req: &LlmRequest) -> SplicrResult<LlmResponse> {
+    async fn chat(&self, req: &LlmRequest) -> DramaxisResult<LlmResponse> {
         let start = std::time::Instant::now();
 
         let body = serde_json::json!({
@@ -266,7 +266,7 @@ impl LlmProvider for ClaudeProvider {
             .json(&body)
             .send()
             .await
-            .map_err(|e| SplicrError::Llm {
+            .map_err(|e| DramaxisError::Llm {
                 provider: LlmProviderKind::Claude,
                 message: format!("request send failed: {e}"),
             })?;
@@ -274,7 +274,7 @@ impl LlmProvider for ClaudeProvider {
         let status = resp.status();
         if !status.is_success() {
             let body = resp.text().await.unwrap_or_default();
-            return Err(SplicrError::Llm {
+            return Err(DramaxisError::Llm {
                 provider: LlmProviderKind::Claude,
                 message: format!("HTTP {status}: {body}"),
             });
@@ -301,7 +301,7 @@ impl LlmProvider for ClaudeProvider {
             usage: Option<ClaudeUsage>,
         }
 
-        let api: ApiResp = resp.json().await.map_err(|e| SplicrError::Llm {
+        let api: ApiResp = resp.json().await.map_err(|e| DramaxisError::Llm {
             provider: LlmProviderKind::Claude,
             message: format!("response json parse failed: {e}"),
         })?;
@@ -314,7 +314,7 @@ impl LlmProvider for ClaudeProvider {
             .collect::<Vec<_>>()
             .join("");
 
-        let model = api.model.unwrap_or_else(|| "claude-sonnet-5".into());
+        let model = api.model.unwrap_or_else(|| "claude-3-7-sonnet-20250219".into());
         let tokens_used = api
             .usage
             .map(|u| u.input_tokens + u.output_tokens)
@@ -361,7 +361,7 @@ impl LlmProvider for GeminiProvider {
         "gemini-2.5-flash"
     }
 
-    async fn chat(&self, req: &LlmRequest) -> SplicrResult<LlmResponse> {
+    async fn chat(&self, req: &LlmRequest) -> DramaxisResult<LlmResponse> {
         let start = std::time::Instant::now();
 
         let model = req
@@ -397,7 +397,7 @@ impl LlmProvider for GeminiProvider {
             .json(&body)
             .send()
             .await
-            .map_err(|e| SplicrError::Llm {
+            .map_err(|e| DramaxisError::Llm {
                 provider: LlmProviderKind::Gemini,
                 message: format!("request send failed: {e}"),
             })?;
@@ -405,7 +405,7 @@ impl LlmProvider for GeminiProvider {
         let status = resp.status();
         if !status.is_success() {
             let body = resp.text().await.unwrap_or_default();
-            return Err(SplicrError::Llm {
+            return Err(DramaxisError::Llm {
                 provider: LlmProviderKind::Gemini,
                 message: format!("HTTP {status}: {body}"),
             });
@@ -439,7 +439,7 @@ impl LlmProvider for GeminiProvider {
             usage_metadata: Option<UsageMetadata>,
         }
 
-        let api: ApiResp = resp.json().await.map_err(|e| SplicrError::Llm {
+        let api: ApiResp = resp.json().await.map_err(|e| DramaxisError::Llm {
             provider: LlmProviderKind::Gemini,
             message: format!("response json parse failed: {e}"),
         })?;
@@ -638,9 +638,9 @@ impl LlmManager {
     }
 
     /// 顺序尝试所有 provider,直到有成功响应 (包含 Prompt 缓存与容灾降级)。
-    pub async fn chat(&self, req: &LlmRequest) -> SplicrResult<LlmResponse> {
+    pub async fn chat(&self, req: &LlmRequest) -> DramaxisResult<LlmResponse> {
         if self.chain.is_empty() {
-            return Err(SplicrError::Llm {
+            return Err(DramaxisError::Llm {
                 provider: LlmProviderKind::OpenAi, // 占位
                 message: "no LLM provider configured".into(),
             });
@@ -659,7 +659,7 @@ impl LlmManager {
             }
         }
 
-        let mut last_err: Option<SplicrError> = None;
+        let mut last_err: Option<DramaxisError> = None;
         for provider in &self.chain {
             match provider.chat(req).await {
                 Ok(resp) => {
@@ -690,7 +690,7 @@ impl LlmManager {
         }
 
         Err(last_err.unwrap_or_else(|| {
-            SplicrError::Other("LlmManager: chain empty after iteration".into())
+            DramaxisError::Other("LlmManager: chain empty after iteration".into())
         }))
     }
 }

@@ -8,31 +8,31 @@
 //!
 //! 所有命令通过 `AppContext.services` 解析 `UpdateService` 单例。
 
-use dramaxis_core::error::SplicrError;
+use dramaxis_core::error::DramaxisError;
 use dramaxis_core::AppContext;
 use dramaxis_update::{UpdateInfo, UpdateState};
 use tauri::{AppHandle, Emitter, State};
 
 /// 查询当前更新状态快照
 #[tauri::command]
-pub async fn update_get_state(state: State<'_, AppContext>) -> Result<UpdateState, SplicrError> {
+pub async fn update_get_state(state: State<'_, AppContext>) -> Result<UpdateState, DramaxisError> {
     let svc = state
         .service::<dramaxis_update::UpdateService>()
         .await
-        .map_err(|e| SplicrError::Updater(e.to_string()))?;
+        .map_err(|e| DramaxisError::Updater(e.to_string()))?;
     Ok(svc.snapshot().await)
 }
 
 /// 探测 GitHub Releases latest。返回 UpdateInfo(同时写状态)
 #[tauri::command]
-pub async fn update_check(state: State<'_, AppContext>) -> Result<UpdateInfo, SplicrError> {
+pub async fn update_check(state: State<'_, AppContext>) -> Result<UpdateInfo, DramaxisError> {
     let svc = state
         .service::<dramaxis_update::UpdateService>()
         .await
-        .map_err(|e| SplicrError::Updater(e.to_string()))?;
+        .map_err(|e| DramaxisError::Updater(e.to_string()))?;
     svc.check()
         .await
-        .map_err(|e| SplicrError::Updater(e.to_string()))
+        .map_err(|e| DramaxisError::Updater(e.to_string()))
 }
 
 /// 下载 latest binary 到本地。返回文件路径。
@@ -41,15 +41,15 @@ pub async fn update_check(state: State<'_, AppContext>) -> Result<UpdateInfo, Sp
 pub async fn update_download(
     app: AppHandle,
     state: State<'_, AppContext>,
-) -> Result<String, SplicrError> {
+) -> Result<String, DramaxisError> {
     let svc = state
         .service::<dramaxis_update::UpdateService>()
         .await
-        .map_err(|e| SplicrError::Updater(e.to_string()))?;
+        .map_err(|e| DramaxisError::Updater(e.to_string()))?;
     let path = svc
         .download(None)
         .await
-        .map_err(|e| SplicrError::Updater(e.to_string()))?;
+        .map_err(|e| DramaxisError::Updater(e.to_string()))?;
 
     // 额外 emit 一个 phase=ready 事件(给 listen 兜底)
     let _ = app.emit("updater:event", "ready");
@@ -62,19 +62,19 @@ pub async fn update_download(
 pub async fn update_install(
     app: AppHandle,
     state: State<'_, AppContext>,
-) -> Result<UpdateInstallResult, SplicrError> {
+) -> Result<UpdateInstallResult, DramaxisError> {
     let svc = state
         .service::<dramaxis_update::UpdateService>()
         .await
-        .map_err(|e| SplicrError::Updater(e.to_string()))?;
+        .map_err(|e| DramaxisError::Updater(e.to_string()))?;
     let snap = svc.snapshot().await;
     let path = snap
         .downloaded_path
-        .ok_or_else(|| SplicrError::Updater("尚未下载更新，请先调用 update_download".into()))?;
+        .ok_or_else(|| DramaxisError::Updater("尚未下载更新，请先调用 update_download".into()))?;
 
     let file_path = std::path::PathBuf::from(&path);
     if !file_path.exists() {
-        return Err(SplicrError::Updater(
+        return Err(DramaxisError::Updater(
             "下载的安装包不存在，请重新下载".into(),
         ));
     }
@@ -111,11 +111,11 @@ pub struct UpdateInstallResult {
 
 /// 重置状态(用户取消 / 完成后清场)
 #[tauri::command]
-pub async fn update_reset(state: State<'_, AppContext>) -> Result<(), SplicrError> {
+pub async fn update_reset(state: State<'_, AppContext>) -> Result<(), DramaxisError> {
     let svc = state
         .service::<dramaxis_update::UpdateService>()
         .await
-        .map_err(|e| SplicrError::Updater(e.to_string()))?;
+        .map_err(|e| DramaxisError::Updater(e.to_string()))?;
     svc.reset().await;
     Ok(())
 }

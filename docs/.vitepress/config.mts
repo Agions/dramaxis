@@ -11,7 +11,7 @@ export default defineConfig({
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }],
     ['meta', { name: 'theme-color', content: '#F5C842' }],
-    ['meta', { name: 'keywords', content: 'Dramaxis, 剧枢, AI视频解说, Multi-Agent, Tauri 2, Rust, FFmpeg, 剪映草稿, 消重矩阵' }]
+    ['meta', { name: 'keywords', content: 'Dramaxis, 剧枢, AI视频解说, Multi-Agent, Tauri 2, Rust, FFmpeg, 剪映草稿, 多平台母带定制' }]
   ],
 
   themeConfig: {
@@ -21,12 +21,12 @@ export default defineConfig({
     nav: [
       { text: '📖 指南与实战', link: '/guide/getting-started', activeMatch: '/guide/' },
       { text: '🏛️ 架构设计', link: '/architecture/overview', activeMatch: '/architecture/' },
-      { text: '🦀 Rust Crates', link: '/crates/splicr-core', activeMatch: '/crates/' },
+      { text: '🦀 Rust Crates', link: '/crates/dramaxis-core', activeMatch: '/crates/' },
       { text: '📦 前端 Packages', link: '/packages/ipc', activeMatch: '/packages/' },
       { text: '🔌 IPC 契约字典', link: '/api/commands-dictionary', activeMatch: '/api/' },
       { text: '🛠️ DevOps 与交付', link: '/devops/local-development', activeMatch: '/devops/' },
       {
-        text: 'v1.1.0',
+        text: 'v1.2.0',
         items: [
           { text: 'Changelog 更新日志', link: 'https://github.com/Agions/dramaxis/releases' },
           { text: 'GitHub 源码仓库', link: 'https://github.com/Agions/dramaxis' },
@@ -41,7 +41,7 @@ export default defineConfig({
           text: '🚀 指南与实战',
           items: [
             { text: '快速上手 (Getting Started)', link: '/guide/getting-started' },
-            { text: '6-Agent 电影解说编排实战', link: '/guide/multi-agent-studio' },
+            { text: '6-Agent 智能体编排实战', link: '/guide/multi-agent-studio' },
             { text: '剪映草稿 (.draft) 导出流程', link: '/guide/capcut-export' },
             { text: '常见问题与避坑指南 (FAQ)', link: '/guide/faq' }
           ]
@@ -53,6 +53,7 @@ export default defineConfig({
           items: [
             { text: '全栈洋葱模型拓扑与分层', link: '/architecture/overview' },
             { text: '6-Agent 协同中枢与状态机', link: '/architecture/multi-agent-engine' },
+            { text: '核心流水线契约 (Pipeline Contract)', link: '/architecture/pipeline-contract' },
             { text: 'Monorepo 架构与双向隔离', link: '/architecture/monorepo-design' },
             { text: '安全体系与 Keychain 凭证隔离', link: '/architecture/security-keychain' }
           ]
@@ -62,17 +63,17 @@ export default defineConfig({
         {
           text: '🦀 Rust Crates 核心领域参考',
           items: [
-            { text: 'splicr-core (统一模型/DI/错误)', link: '/crates/splicr-core' },
-            { text: 'splicr-agent (6-Agent 智能体集群)', link: '/crates/splicr-agent' },
-            { text: 'splicr-script (11 大 LLM 矩阵适配)', link: '/crates/splicr-script' },
-            { text: 'splicr-voice (48kHz TTS/音色克隆)', link: '/crates/splicr-voice' },
-            { text: 'splicr-subtitle (VAD/动态字幕)', link: '/crates/splicr-subtitle' },
-            { text: 'splicr-detect (FFmpeg 突变打点)', link: '/crates/splicr-detect' },
-            { text: 'splicr-intake (4 大生成策略分流)', link: '/crates/splicr-intake' },
-            { text: 'splicr-compose (5 轨毫秒级磁吸)', link: '/crates/splicr-compose' },
-            { text: 'splicr-export (剪映二进制/转码)', link: '/crates/splicr-export' },
-            { text: 'splicr-storage (资产扫描与持久化)', link: '/crates/splicr-storage' },
-            { text: 'splicr-update (断点续传/自更新)', link: '/crates/splicr-update' }
+            { text: 'dramaxis-core (统一模型/DI/错误)', link: '/crates/dramaxis-core' },
+            { text: 'dramaxis-agent (6-Agent 智能体集群)', link: '/crates/dramaxis-agent' },
+            { text: 'dramaxis-script (11 大 LLM 矩阵适配)', link: '/crates/dramaxis-script' },
+            { text: 'dramaxis-voice (48kHz TTS/音色克隆)', link: '/crates/dramaxis-voice' },
+            { text: 'dramaxis-subtitle (VAD/动态字幕)', link: '/crates/dramaxis-subtitle' },
+            { text: 'dramaxis-detect (FFmpeg 突变打点)', link: '/crates/dramaxis-detect' },
+            { text: 'dramaxis-intake (4 大生成策略分流)', link: '/crates/dramaxis-intake' },
+            { text: 'dramaxis-compose (5 轨毫秒级磁吸)', link: '/crates/dramaxis-compose' },
+            { text: 'dramaxis-export (剪映二进制/母带压制)', link: '/crates/dramaxis-export' },
+            { text: 'dramaxis-storage (资产扫描与持久化)', link: '/crates/dramaxis-storage' },
+            { text: 'dramaxis-update (断点续传/自更新)', link: '/crates/dramaxis-update' }
           ]
         }
       ],
@@ -80,10 +81,10 @@ export default defineConfig({
         {
           text: '📦 前端 Monorepo Packages',
           items: [
-            { text: '@splicr/ipc (类型契约与命令分发)', link: '/packages/ipc' },
-            { text: '@splicr/core (Zustand 状态机与派生)', link: '/packages/core' },
-            { text: '@splicr/ui (调色台设计系统与原子组件)', link: '/packages/ui' },
-            { text: '@splicr/utils (时间轴/格式化通用工具)', link: '/packages/utils' }
+            { text: '@dramaxis/ipc (类型契约与命令分发)', link: '/packages/ipc' },
+            { text: '@dramaxis/core (Zustand 状态机与派生)', link: '/packages/core' },
+            { text: '@dramaxis/ui (调色台设计系统与原子组件)', link: '/packages/ui' },
+            { text: '@dramaxis/utils (时间轴/格式化通用工具)', link: '/packages/utils' }
           ]
         }
       ],

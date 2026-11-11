@@ -5,7 +5,7 @@
 use std::path::{Path, PathBuf};
 
 use dramaxis_core::domain::{MediaFile, Project};
-use dramaxis_core::error::SplicrError;
+use dramaxis_core::error::DramaxisError;
 use dramaxis_core::services::ProjectService;
 use dramaxis_core::AppContext;
 use dramaxis_storage::bundle::{create_bundle, open_bundle, redo_bundle, save_bundle, undo_bundle};
@@ -13,11 +13,11 @@ use tauri::{Manager, State};
 
 /// 列举最近项目 (真实从 ProjectService 取)
 #[tauri::command]
-pub async fn project_list_recent(state: State<'_, AppContext>) -> Result<Vec<String>, SplicrError> {
+pub async fn project_list_recent(state: State<'_, AppContext>) -> Result<Vec<String>, DramaxisError> {
     let svc = state
         .service::<ProjectService>()
         .await
-        .map_err(|e| SplicrError::Project(e.to_string()))?;
+        .map_err(|e| DramaxisError::Project(e.to_string()))?;
     let paths = svc.recent_projects().await;
     Ok(paths
         .into_iter()
@@ -31,17 +31,17 @@ pub async fn project_list_recent(state: State<'_, AppContext>) -> Result<Vec<Str
 pub async fn project_create_blank(
     app: tauri::AppHandle,
     state: State<'_, AppContext>,
-) -> Result<ProjectRecord, SplicrError> {
+) -> Result<ProjectRecord, DramaxisError> {
     let proj = Project {
         timeline: dramaxis_core::domain::Timeline::default_5tracks(),
         ..Default::default()
     };
-    let base_dir = project_dir(&app).map_err(|e| SplicrError::Io(e.to_string()))?;
+    let base_dir = project_dir(&app).map_err(|e| DramaxisError::Io(e.to_string()))?;
     let bundle_path = base_dir.join(format!("{}.dramaxis", proj.id));
 
     // 1. 创建标准 .dramaxis 工程包与 SQLite 数据库
     let _bundle = create_bundle(&bundle_path, &proj)
-        .map_err(|e| SplicrError::Project(format!("创建 .dramaxis 工程包失败: {e}")))?;
+        .map_err(|e| DramaxisError::Project(format!("创建 .dramaxis 工程包失败: {e}")))?;
 
     // 2. 建立兼容性本地目录骨架与 JSON 快照
     let media_dir = bundle_path.join("media");
@@ -52,7 +52,7 @@ pub async fn project_create_blank(
     let svc = state
         .service::<ProjectService>()
         .await
-        .map_err(|e| SplicrError::Project(e.to_string()))?;
+        .map_err(|e| DramaxisError::Project(e.to_string()))?;
     svc.push_recent(bundle_path.clone()).await;
 
     Ok(ProjectRecord {
@@ -66,7 +66,7 @@ pub async fn project_create_blank(
 pub async fn project_load(
     path: String,
     state: State<'_, AppContext>,
-) -> Result<ProjectRecord, SplicrError> {
+) -> Result<ProjectRecord, DramaxisError> {
     let p = PathBuf::from(&path);
 
     // 1. 优先尝试通过 .dramaxis 工程包加载（包含遗留 JSON 自动升级）
@@ -91,9 +91,9 @@ pub async fn project_load(
 
     let bytes = tokio::fs::read(&fallback_file)
         .await
-        .map_err(|e| SplicrError::Io(e.to_string()))?;
+        .map_err(|e| DramaxisError::Io(e.to_string()))?;
     let proj: Project = serde_json::from_slice(&bytes)
-        .map_err(|e| SplicrError::Project(format!("解析项目文件失败: {e}")))?;
+        .map_err(|e| DramaxisError::Project(format!("解析项目文件失败: {e}")))?;
 
     if let Ok(svc) = state.service::<ProjectService>().await {
         svc.push_recent(fallback_file.clone()).await;
@@ -107,7 +107,7 @@ pub async fn project_load(
 
 /// 把 Project 落盘到指定工程包或路径 (写入 SQLite WAL 事务并保存 Checkpoint)
 #[tauri::command]
-pub async fn project_save(path: String, project: Project) -> Result<(), SplicrError> {
+pub async fn project_save(path: String, project: Project) -> Result<(), DramaxisError> {
     let p = PathBuf::from(&path);
 
     // 1. 若为 .dramaxis 工程包或包含 project.db 的目录，使用 SQLite WAL 保存
@@ -127,7 +127,7 @@ pub async fn project_save(path: String, project: Project) -> Result<(), SplicrEr
     // 2. 否则按单文件或普通目录保存
     write_project(&p, &project)
         .await
-        .map_err(|e| SplicrError::Io(e.to_string()))
+        .map_err(|e| DramaxisError::Io(e.to_string()))
 }
 
 /// 执行工程包内的撤销操作 (Undo)，还原上一历史检查点
@@ -135,9 +135,9 @@ pub async fn project_save(path: String, project: Project) -> Result<(), SplicrEr
 pub async fn project_undo(
     path: String,
     project_id: String,
-) -> Result<Option<Project>, SplicrError> {
+) -> Result<Option<Project>, DramaxisError> {
     let p = PathBuf::from(&path);
-    undo_bundle(&p, &project_id).map_err(|e| SplicrError::Project(format!("撤销失败: {e}")))
+    undo_bundle(&p, &project_id).map_err(|e| DramaxisError::Project(format!("撤销失败: {e}")))
 }
 
 /// 执行工程包内的重做操作 (Redo)，重做前向历史检查点
@@ -145,14 +145,14 @@ pub async fn project_undo(
 pub async fn project_redo(
     path: String,
     project_id: String,
-) -> Result<Option<Project>, SplicrError> {
+) -> Result<Option<Project>, DramaxisError> {
     let p = PathBuf::from(&path);
-    redo_bundle(&p, &project_id).map_err(|e| SplicrError::Project(format!("重做失败: {e}")))
+    redo_bundle(&p, &project_id).map_err(|e| DramaxisError::Project(format!("重做失败: {e}")))
 }
 
 /// 删除指定路径的 Project 文件或工程包，并同步从最近工程列表中注销
 #[tauri::command]
-pub async fn project_delete(state: State<'_, AppContext>, path: String) -> Result<(), SplicrError> {
+pub async fn project_delete(state: State<'_, AppContext>, path: String) -> Result<(), DramaxisError> {
     let p = PathBuf::from(&path);
     if p.is_file() {
         let _ = tokio::fs::remove_file(&p).await;
@@ -176,7 +176,7 @@ pub async fn project_add_media(
     path: String,
     project: Project,
     media: MediaFile,
-) -> Result<Project, SplicrError> {
+) -> Result<Project, DramaxisError> {
     let p = PathBuf::from(&path);
     let mut proj = project;
 
@@ -220,7 +220,7 @@ pub async fn project_add_media(
     } else {
         write_project(&p, &proj)
             .await
-            .map_err(|e| SplicrError::Io(e.to_string()))?;
+            .map_err(|e| DramaxisError::Io(e.to_string()))?;
     }
 
     Ok(proj)

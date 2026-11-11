@@ -77,22 +77,22 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
   onBatchFission,
 }: DedupMatrixCardProps) {
   const presets = [
-    { id: "mild" as const, label: "轻度扰动", desc: "画质优先" },
+    { id: "mild" as const, label: "自然原生", desc: "画质优先" },
     { id: "standard" as const, label: "工业标准", desc: "推荐平衡" },
-    { id: "aggressive" as const, label: "强力裂变", desc: "多号矩阵" },
+    { id: "aggressive" as const, label: "多渠道定制", desc: "平台微调" },
   ];
 
   return (
     <>
-      {/* 8 维全频消重矩阵参数 */}
+      {/* 多平台母带定制与微调参数 */}
       <div className="rounded-xl border border-border bg-bg p-3 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold text-text-primary">
-              高完播率防重矩阵 (Anti-Dup)
+              多平台母带定制与微调 (Mastering)
             </span>
             <span className="rounded bg-gold/15 px-1 py-0.2 text-[8px] font-mono text-gold font-bold">
-              8 维混淆
+              8 项音画微调
             </span>
           </div>
           <span className="text-[9px] font-mono text-gold">AI 自动应用</span>
@@ -279,9 +279,9 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
                 />
               </label>
 
-              {/* 8. 元数据随机擦除 */}
+              {/* 8. 母带标准元数据封装 */}
               <label className="flex items-center justify-between cursor-pointer">
-                <span>擦除源文件 EXIF 并随机化签名</span>
+                <span>封装 Dramaxis 工业标准母带元数据</span>
                 <input
                   type="checkbox"
                   checked={enableMetadataScrub}
@@ -294,27 +294,27 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
         </div>
       </div>
 
-      {/* 批量裂变任务池 */}
+      {/* 多版本母带批量渲染任务池 */}
       <div className="rounded-xl border border-gold/40 bg-surface p-3 space-y-2.5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className="text-xs">⚡</span>
             <span className="text-xs font-bold text-text-primary">
-              一键批量裂变出片 (Batch Fission)
+              多版本母带批量导出 (Multi-Variant Export)
             </span>
           </div>
           <span className="text-[9px] font-mono text-gold font-bold">
-            全自动互斥指纹
+            多渠道差异微调
           </span>
         </div>
         <p className="text-[10px] text-text-muted leading-relaxed">
-          基于当前工程自动生成多份音画特征互斥的成片，每份具备独特的微缩放、音高、变速与噪点指纹。
+          基于当前工程自动生成多份针对不同发布渠道微调的母带成品，分别适配微缩放构图、声调微调与胶片质感。
         </p>
 
         {isFissioning && (
           <div className="rounded-lg border border-gold/30 bg-bg p-2 space-y-1.5">
             <div className="flex items-center justify-between text-[10px]">
-              <span className="font-bold text-gold">{fissionMessage || "正在批量裂变..."}</span>
+              <span className="font-bold text-gold">{fissionMessage || "正在批量导出多版本母带..."}</span>
               <span className="font-mono font-bold text-gold">{fissionProgress}%</span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-surface-elevated overflow-hidden">
@@ -350,7 +350,7 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
             onClick={onBatchFission}
             className="rounded-lg bg-gradient-to-r from-amber to-gold px-3 py-1.5 text-[11px] font-black text-zinc-950 transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
           >
-            {isFissioning ? "裂变压制中..." : `批量生成 ${fissionCount} 份成片`}
+            {isFissioning ? "母带批量压制中..." : `批量导出 ${fissionCount} 份母带`}
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 //! dramaxis v1.1.0 · AI 脚本生成 Tauri 命令
 
-use dramaxis_core::error::SplicrError;
+use dramaxis_core::error::DramaxisError;
 use dramaxis_core::services::ConfigService;
 use dramaxis_core::AppContext;
 use dramaxis_script::{factory_custom, LlmProviderKind, LlmRequest};
@@ -57,9 +57,9 @@ pub async fn script_generate(
     app: tauri::AppHandle,
     params: ScriptGenerateParams,
     app_ctx: State<'_, AppContext>,
-) -> Result<ScriptGenerateResult, SplicrError> {
+) -> Result<ScriptGenerateResult, DramaxisError> {
     if params.prompt.trim().is_empty() {
-        return Err(SplicrError::InvalidInput("提示词不能为空".into()));
+        return Err(DramaxisError::InvalidInput("提示词不能为空".into()));
     }
 
     use tauri::Emitter;
@@ -239,13 +239,13 @@ use dramaxis_script::{HookCandidate, RetentionTensionArc, ScriptFlywheelEngine, 
 
 /// 启发式生成 4 种不同公式的 3 秒 Hook 候选文案 (离线高保真兜底 + 算法赋能)
 #[tauri::command]
-pub async fn script_generate_hooks(synopsis: String) -> Result<Vec<HookCandidate>, SplicrError> {
+pub async fn script_generate_hooks(synopsis: String) -> Result<Vec<HookCandidate>, DramaxisError> {
     Ok(dramaxis_script::generate_heuristic_hooks(&synopsis))
 }
 
 /// 解构对标参考爆款文案，提炼风格画像与 Few-Shot Prompt
 #[tauri::command]
-pub fn script_deconstruct_reference(text: String) -> Result<StyleProfile, SplicrError> {
+pub fn script_deconstruct_reference(text: String) -> Result<StyleProfile, DramaxisError> {
     let engine = ScriptFlywheelEngine::new();
     Ok(engine.deconstruct_reference(&text))
 }
@@ -255,7 +255,7 @@ pub fn script_deconstruct_reference(text: String) -> Result<StyleProfile, Splicr
 pub fn script_calculate_retention_arc(
     script: String,
     duration_sec: Option<f64>,
-) -> Result<RetentionTensionArc, SplicrError> {
+) -> Result<RetentionTensionArc, DramaxisError> {
     let engine = ScriptFlywheelEngine::new();
     let duration = duration_sec.unwrap_or(60.0);
     Ok(engine.calculate_retention_arc(&script, duration))

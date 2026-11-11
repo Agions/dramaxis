@@ -1,6 +1,6 @@
 //! dramaxis v1.1.0 · TTS 试听与合成 Tauri 命令
 
-use dramaxis_core::error::SplicrError;
+use dramaxis_core::error::DramaxisError;
 use dramaxis_core::services::ConfigService;
 use dramaxis_core::AppContext;
 use dramaxis_voice::{
@@ -109,9 +109,9 @@ fn build_tts_engine(params: &VoicePreviewParams) -> Box<dyn dramaxis_voice::TtsE
 pub async fn voice_preview(
     app_handle: tauri::AppHandle,
     params: VoicePreviewParams,
-) -> Result<VoicePreviewResult, SplicrError> {
+) -> Result<VoicePreviewResult, DramaxisError> {
     if params.text.trim().is_empty() {
-        return Err(SplicrError::InvalidInput("试听文本不能为空".into()));
+        return Err(DramaxisError::InvalidInput("试听文本不能为空".into()));
     }
 
     // 回退已保存的配置
@@ -151,7 +151,7 @@ pub async fn voice_preview(
     let tts_cache_dir = cache_dir.join("tts");
     tokio::fs::create_dir_all(&tts_cache_dir)
         .await
-        .map_err(|e| SplicrError::Io(format!("创建 TTS 缓存目录失败: {e}")))?;
+        .map_err(|e| DramaxisError::Io(format!("创建 TTS 缓存目录失败: {e}")))?;
 
     let file_id = chrono::Utc::now().timestamp_millis();
     let ext = if resolved_params.provider == "gpt-sovits" {
@@ -170,7 +170,7 @@ pub async fn voice_preview(
             output_path: output_path.clone(),
         })
         .await
-        .map_err(|e| SplicrError::Tts(format!("TTS 试听合成失败: {e}")))?;
+        .map_err(|e| DramaxisError::Tts(format!("TTS 试听合成失败: {e}")))?;
 
     Ok(VoicePreviewResult {
         file_path: output_path.to_string_lossy().to_string(),
@@ -185,9 +185,9 @@ pub async fn voice_synthesize(
     app_handle: tauri::AppHandle,
     params: VoicePreviewParams,
     output_path: String,
-) -> Result<VoicePreviewResult, SplicrError> {
+) -> Result<VoicePreviewResult, DramaxisError> {
     if params.text.trim().is_empty() {
-        return Err(SplicrError::InvalidInput("合成文本不能为空".into()));
+        return Err(DramaxisError::InvalidInput("合成文本不能为空".into()));
     }
 
     // 回退已保存的配置
@@ -230,7 +230,7 @@ pub async fn voice_synthesize(
             output_path: out_path.clone(),
         })
         .await
-        .map_err(|e| SplicrError::Tts(format!("TTS 完整合成失败: {e}")))?;
+        .map_err(|e| DramaxisError::Tts(format!("TTS 完整合成失败: {e}")))?;
 
     Ok(VoicePreviewResult {
         file_path: out_path.to_string_lossy().to_string(),

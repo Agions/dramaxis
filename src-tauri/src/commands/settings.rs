@@ -5,7 +5,7 @@
 
 use std::path::PathBuf;
 
-use dramaxis_core::error::SplicrError;
+use dramaxis_core::error::DramaxisError;
 use dramaxis_core::services::{ConfigService, ConfigSnapshot};
 use dramaxis_core::AppContext;
 use dramaxis_storage::CredentialVault;
@@ -18,8 +18,8 @@ const CONFIG_FILE: &str = "config.json";
 pub async fn settings_get(
     app: tauri::AppHandle,
     state: State<'_, AppContext>,
-) -> Result<ConfigSnapshot, SplicrError> {
-    let path = config_path(&app).map_err(|e| SplicrError::Config(e.to_string()))?;
+) -> Result<ConfigSnapshot, DramaxisError> {
+    let path = config_path(&app).map_err(|e| DramaxisError::Config(e.to_string()))?;
     let mut snap = if let Ok(bytes) = tokio::fs::read(&path).await {
         serde_json::from_slice::<ConfigSnapshot>(&bytes).unwrap_or_default()
     } else {
@@ -51,12 +51,12 @@ pub async fn settings_set(
     app: tauri::AppHandle,
     state: State<'_, AppContext>,
     snapshot: ConfigSnapshot,
-) -> Result<(), SplicrError> {
-    let path = config_path(&app).map_err(|e| SplicrError::Config(e.to_string()))?;
+) -> Result<(), DramaxisError> {
+    let path = config_path(&app).map_err(|e| DramaxisError::Config(e.to_string()))?;
     if let Some(parent) = path.parent() {
         tokio::fs::create_dir_all(parent)
             .await
-            .map_err(|e| SplicrError::Io(e.to_string()))?;
+            .map_err(|e| DramaxisError::Io(e.to_string()))?;
     }
 
     // 1. 凭证隔离持久化至受保护金库 (credentials.vault)
@@ -81,16 +81,16 @@ pub async fn settings_set(
     }
 
     let bytes =
-        serde_json::to_vec_pretty(&sanitized).map_err(|e| SplicrError::Config(e.to_string()))?;
+        serde_json::to_vec_pretty(&sanitized).map_err(|e| DramaxisError::Config(e.to_string()))?;
     tokio::fs::write(&path, bytes)
         .await
-        .map_err(|e| SplicrError::Io(e.to_string()))?;
+        .map_err(|e| DramaxisError::Io(e.to_string()))?;
 
     // 3. 内存中保留真实可用凭证
     let svc = state
         .service::<ConfigService>()
         .await
-        .map_err(|e| SplicrError::Config(e.to_string()))?;
+        .map_err(|e| DramaxisError::Config(e.to_string()))?;
     svc.set_snapshot(snapshot).await;
     Ok(())
 }
@@ -112,7 +112,7 @@ pub async fn settings_test_llm(
     api_key: String,
     model: Option<String>,
     base_url: Option<String>,
-) -> Result<LlmTestResult, SplicrError> {
+) -> Result<LlmTestResult, DramaxisError> {
     use dramaxis_core::error::LlmProviderKind;
 
     let kind = match provider.to_lowercase().as_str() {
