@@ -10,12 +10,23 @@ import type { ConfigSnapshot, LlmTestResult } from "@dramaxis/ipc";
 import type { LlmMeta } from "./llmOptions";
 
 const QUICK_MODELS = [
-  "deepseek-chat",
-  "deepseek-reasoner",
-  "gpt-4o",
-  "gpt-4o-mini",
-  "qwen-plus",
-  "claude-3-5-sonnet-20241022",
+  "deepseek-v4-pro",
+  "deepseek-flash",
+  "gpt-5",
+  "o3-mini",
+  "claude-sonnet-5-5",
+  "claude-opus-5-5",
+  "gemini-3.8-flash",
+  "gemini-3.1-pro-preview",
+  "qwen3.8-max",
+  "qwen3.7-plus",
+  "qwen3.8-omni-flash",
+  "kimi-k3.1-pro",
+  "glm-5.3",
+  "glm-5.3-flash",
+  "doubao-seed-2-1-pro-260915",
+  "hy4",
+  "deepseek-r1:14b",
 ];
 
 interface LlmConfigFormProps {

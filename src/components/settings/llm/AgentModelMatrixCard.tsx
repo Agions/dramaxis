@@ -12,26 +12,26 @@ const AGENT_ROLES = [
   {
     key: "screenwriter" as const,
     title: "✍️ 金牌编剧 (Screenwriter)",
-    desc: "专精文学创作与高反转剧情，推荐 DeepSeek-V3 / Claude 3.5 Sonnet / Qwen-Plus",
-    defaultPlaceholder: "如 deepseek-chat 或 claude-3-5-sonnet",
+    desc: "专精文学创作与高反转剧情，推荐 DeepSeek-V4 Pro / Claude Sonnet 5.5 / Qwen3.8-Max",
+    defaultPlaceholder: "如 claude-sonnet-5-5 或 deepseek-v4-pro",
   },
   {
     key: "visualCritic" as const,
     title: "👁️ 视觉分析师 (VisualCritic)",
-    desc: "专精多模态关键帧视听锚定，推荐 Gemini 2.5 Flash / Qwen-VL / Doubao-Vision",
-    defaultPlaceholder: "如 gemini-2.5-flash 或 qwen-vl-max",
+    desc: "专精多模态关键帧视听锚定，推荐 Gemini 3.8 Flash / Qwen3.8-Omni / Doubao-Vision",
+    defaultPlaceholder: "如 gemini-3.8-flash 或 qwen3.8-omni-flash",
   },
   {
     key: "qualityReviewer" as const,
     title: "🔍 审稿质检员 (QualityReviewer)",
-    desc: "专精严谨逻辑推理、爆点留存曲线评估，推荐 DeepSeek-R1 / OpenAI o1-mini",
-    defaultPlaceholder: "如 deepseek-reasoner 或 o1-mini",
+    desc: "专精严谨逻辑推理、爆点留存曲线评估，推荐 DeepSeek-V4 Pro / OpenAI o3-mini",
+    defaultPlaceholder: "如 deepseek-v4-pro 或 o3-mini",
   },
   {
     key: "director" as const,
     title: "🎬 总控统筹导演 (Director)",
-    desc: "专精快速任务规划与工具调用，推荐 Qwen-Turbo / GPT-4o-mini",
-    defaultPlaceholder: "如 qwen-turbo 或 gpt-4o-mini",
+    desc: "专精快速任务规划与长程 Agent 协同，推荐 GLM-5.3 / Kimi-K3.1-Pro / GPT-5",
+    defaultPlaceholder: "如 glm-5.3 或 kimi-k3.1-pro",
   },
 ];
 

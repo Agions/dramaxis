@@ -102,16 +102,16 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
           onChange={(e) => onLlmProviderChange(e.target.value)}
           className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-xs font-semibold text-text-primary outline-none focus:border-gold"
         >
-          <option value="qwen">通义千问 (qwen-plus 推荐)</option>
-          <option value="deepseek">DeepSeek (deepseek-chat / R1)</option>
-          <option value="open-ai">OpenAI (gpt-4o)</option>
-          <option value="claude">Claude (claude-3-7-sonnet)</option>
-          <option value="gemini">Gemini (gemini-2.5-flash)</option>
-          <option value="kimi">Kimi · 月之暗面 (moonshot-v1)</option>
-          <option value="glm5">智谱 GLM (glm-4-flash)</option>
-          <option value="doubao">豆包 Doubao (doubao-pro)</option>
-          <option value="hunyuan">腾讯混元 (hunyuan-standard)</option>
-          <option value="local">本地 Ollama (llama3.2)</option>
+          <option value="qwen">通义千问 (qwen3.8-max 推荐)</option>
+          <option value="deepseek">DeepSeek (deepseek-v4-pro / flash 强推理)</option>
+          <option value="open-ai">OpenAI (gpt-5 / o3-mini)</option>
+          <option value="claude">Claude (claude-sonnet-5-5 推荐)</option>
+          <option value="gemini">Gemini (gemini-3.8-flash)</option>
+          <option value="kimi">Kimi · 月之暗面 (kimi-k3.1-pro)</option>
+          <option value="glm5">智谱 GLM (glm-5.3)</option>
+          <option value="doubao">豆包 Doubao (doubao-seed-2-1-pro)</option>
+          <option value="hunyuan">腾讯混元 (hy4 旗舰)</option>
+          <option value="local">本地 Ollama (deepseek-r1 / qwq:32b)</option>
           <option value="custom">⚙️ 自定义模型 (OpenAI兼容/中转)</option>
         </select>
         {llmProvider === "custom" && (

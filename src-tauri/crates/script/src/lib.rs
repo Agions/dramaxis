@@ -242,7 +242,7 @@ impl LlmProvider for ClaudeProvider {
     }
 
     fn default_model(&self) -> &'static str {
-        "claude-3-7-sonnet-20250219"
+        "claude-sonnet-5-5"
     }
 
     async fn chat(&self, req: &LlmRequest) -> DramaxisResult<LlmResponse> {
@@ -358,7 +358,7 @@ impl LlmProvider for GeminiProvider {
     }
 
     fn default_model(&self) -> &'static str {
-        "gemini-2.5-flash"
+        "gemini-3.8-flash"
     }
 
     async fn chat(&self, req: &LlmRequest) -> DramaxisResult<LlmResponse> {
@@ -482,7 +482,7 @@ pub fn openai(api_key: impl Into<String>) -> OpenAiProvider {
         LlmProviderKind::OpenAi,
         api_key,
         "https://api.openai.com/v1/chat/completions",
-        "gpt-4o",
+        "gpt-5",
     )
 }
 
@@ -491,7 +491,7 @@ pub fn qwen(api_key: impl Into<String>) -> OpenAiCompatible {
         LlmProviderKind::Qwen,
         api_key,
         "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-        "qwen-plus",
+        "qwen3.8-max",
     )
 }
 
@@ -500,7 +500,7 @@ pub fn kimi(api_key: impl Into<String>) -> OpenAiCompatible {
         LlmProviderKind::Kimi,
         api_key,
         "https://api.moonshot.cn/v1/chat/completions",
-        "moonshot-v1-auto",
+        "kimi-k3.1-pro",
     )
 }
 
@@ -509,7 +509,7 @@ pub fn glm5(api_key: impl Into<String>) -> OpenAiCompatible {
         LlmProviderKind::Glm5,
         api_key,
         "https://open.bigmodel.cn/api/paas/v4/chat/completions",
-        "glm-4-flash",
+        "glm-5.3",
     )
 }
 
@@ -518,7 +518,7 @@ pub fn deepseek(api_key: impl Into<String>) -> OpenAiCompatible {
         LlmProviderKind::DeepSeek,
         api_key,
         "https://api.deepseek.com/v1/chat/completions",
-        "deepseek-chat",
+        "deepseek-v4-pro",
     )
 }
 
@@ -527,7 +527,7 @@ pub fn doubao(api_key: impl Into<String>) -> OpenAiCompatible {
         LlmProviderKind::Doubao,
         api_key,
         "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
-        "doubao-pro-32k",
+        "doubao-seed-2-1-pro-260915",
     )
 }
 
@@ -536,7 +536,7 @@ pub fn hunyuan(api_key: impl Into<String>) -> OpenAiCompatible {
         LlmProviderKind::Hunyuan,
         api_key,
         "https://api.hunyuan.tencent.com/v1/chat/completions",
-        "hunyuan-standard",
+        "hy4",
     )
 }
 
@@ -548,7 +548,7 @@ pub fn local(base_url: Option<String>) -> OpenAiCompatible {
         LlmProviderKind::Local,
         "no-key-required",
         base_url.unwrap_or_else(|| "http://localhost:11434/v1/chat/completions".into()),
-        "llama3.2",
+        "deepseek-r1:14b",
     )
 }
 
@@ -557,7 +557,7 @@ pub fn qwen37(api_key: impl Into<String>) -> OpenAiCompatible {
         LlmProviderKind::Qwen37,
         api_key,
         "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-        "qwen-turbo",
+        "qwen3.8-omni-flash",
     )
 }
 

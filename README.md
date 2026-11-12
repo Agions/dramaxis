@@ -115,16 +115,25 @@ graph TD
 
 ### 11 大主流 LLM 引擎支持 (`dramaxis-script`)
 
-- 🇨🇳 **通义千问 (Qwen)**：`qwen-plus` / `qwen-max` / `qwen-turbo`
-- 🇨🇳 **DeepSeek**：`deepseek-chat` (V3) / `deepseek-reasoner` (R1)
-- 🇺🇸 **OpenAI**：`gpt-4o` / `gpt-4o-mini`
-- 🇺🇸 **Claude (Anthropic)**：`claude-3-7-sonnet-20250219` / `claude-3-5-sonnet`
-- 🇺🇸 **Gemini (Google)**：`gemini-2.5-flash` / `gemini-2.5-pro`
-- 🇨🇳 **Kimi (月之暗面)**：`moonshot-v1-auto`
-- 🇨🇳 **智谱 GLM**：`glm-4-flash` / `glm-4-plus`
-- 🇨🇳 **字节豆包 (Doubao)**：`doubao-pro-32k`
-- 🇨🇳 **腾讯混元 (Hunyuan)**：`hunyuan-standard`
-- 🏠 **本地离线模型 (Local)**：Ollama / LMStudio (`llama3.2` / `qwen2.5`)
+- 🇨🇳 **通义千问 (Qwen)**：`qwen3.8-max` (阿里超大规模基座旗舰) / `qwen3.7-plus` / `qwen3.8-omni-flash` (原生全模态流式交互) / `qwen4-max-preview`
+- 🇨🇳 **DeepSeek**：`deepseek-v4-pro` (V4 Pro 影视文学撰稿与高难任务) / `deepseek-flash` (V4.1 全模态混合专家架构) / `deepseek-chat` / `deepseek-reasoner`
+- 🇺🇸 **OpenAI**：`gpt-5` (新一代智能旗舰) / `o3-mini` / `o3` / `gpt-4.5-preview` / `gpt-4o`
+- 🇺🇸 **Claude (Anthropic)**：`claude-sonnet-5-5` (自适应混合思考旗舰) / `claude-opus-5-5` (终极智能编程与长程 Agent) / `claude-haiku-5-5` / `claude-fable-5-2`
+- 🇺🇸 **Gemini (Google)**：`gemini-3.8-flash` (新一代高吞吐多模态旗舰) / `gemini-3.1-pro-preview` / `gemini-3.1-flash-lite`
+- 🇨🇳 **Kimi (月之暗面)**：`kimi-k3.1-pro` (3万亿参数原生视觉旗舰) / `kimi-k3.1-pro-highspeed` / `kimi-k3` (已淘汰废弃 V1 与旧版 K2)
+- 🇨🇳 **智谱 GLM**：`glm-5.3` (智谱最新基座旗舰·1M上下文深度思考) / `glm-5.3-flash` / `glm-5.2` / `glm-5v`
+- 🇨🇳 **字节豆包 (Doubao)**：`doubao-seed-2-1-pro-260915` (火山方舟高性能旗舰) / `doubao-seed-evolving` (持续进化 Agent 编程) / `doubao-1.5-thinking-vision-pro`
+- 🇨🇳 **腾讯混元 (Hunyuan)**：`hy4` (腾讯 TokenHub 新一代生产力旗舰·原生视觉理解) / `hy4-preview` / `hy3` / `hunyuan-a13b`
+- 🏠 **本地离线模型 (Local)**：Ollama / LMStudio (`deepseek-r1:14b` / `qwq:32b` / `qwen3:14b` / `llama3.3:70b`)
+- ⚙️ **自定义中转聚合 (Custom)**：兼容 OpenAI 标准协议的中转服务 (SiliconFlow / OpenRouter / OneAPI / 任意私有反代)
+
+### 🎙️ 电影级多引擎语音合成矩阵 (`dramaxis-voice`)
+
+- 🎭 **Mossland 摩斯配音**：`moss-tts-v1` · 影视解说专属电影情绪声线 (`moss-narrator-male` 沉浸解说 / `moss-suspense-narrator` 悬疑反转)
+- 📱 **MiniMax / MiMo**：`speech-02-hd` · 商业旗舰细腻情感自然人声 (`female-shaonv` / `male-qingnian`)
+- 💎 **OpenAI TTS**：`tts-1-hd` / `tts-1` · 电影级情绪声线 (`alloy` / `onyx`)
+- 🎙️ **Edge-TTS**：48kHz 广播级高清采样，免 Key 零成本直连 (`zh-CN-YunxiNeural` 影视云希 / `zh-CN-YunjianNeural` 悬疑云健)
+- 🧬 **GPT-SoVITS**：本地部署 5 秒参考音频零样本声音克隆，100% 还原专属影视解说音色
 
 ---
 

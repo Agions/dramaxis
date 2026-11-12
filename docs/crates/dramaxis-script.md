@@ -10,17 +10,17 @@
 
 | 厂商分类 | 支持的服务商与代表模型 | 内部驱动协议 | 典型短剧创作场景 |
 | :--- | :--- | :--- | :--- |
-| **阿里旗舰** | 通义千问 (`qwen-plus`, `qwen-max`, `qwen-turbo`) | OpenAI 兼容 | 影视原生看图分镜、低延迟高爆发文案 |
-| **深度推理** | DeepSeek (`deepseek-chat`, `deepseek-reasoner`) | OpenAI 兼容 | 复杂多线剧情伏笔拆解、长篇原著脉络反转 |
-| **国际标杆** | OpenAI (`gpt-4o`, `gpt-4o-mini`, `o3-mini`) | OpenAI 原生 | 电影级第一人称叙事、细腻心理独白 |
-| **文学大师** | Anthropic (`claude-3-7-sonnet-20250219`, `claude-3-5-sonnet`) | Claude Messages 原生 | 意象化修辞手法、深度影评与情感共鸣 |
-| **超长感官** | Google (`gemini-2.5-flash`, `gemini-2.5-pro`) | Gemini GenAI 原生 | 百万帧超长剧集连续梗概、多模态关键帧联想 |
-| **长篇拆条** | Moonshot Kimi (`moonshot-v1-auto`) | OpenAI 兼容 | 百万字剧本结构化拆条、复杂人物关系索引 |
-| **清华开源** | 智谱 GLM (`glm-4-flash`, `glm-4-plus`) | OpenAI 兼容 | 本土化台词修辞、民俗与俚语剧情润色 |
-| **短剧生态** | 字节豆包 (`doubao-pro-32k`, `doubao-lite-128k`) | OpenAI 兼容 | 抖音/快手短平快高冲突节奏、爆点卡点短剧 |
-| **腾讯旗舰** | 腾讯混元 (`hunyuan-standard`, `hunyuan-pro`) | OpenAI 兼容 | 结构化分镜叙事、多角色视角切换 |
-| **私有离线** | 本地 Ollama / LMStudio (`llama3.2`, `qwen2.5`) | 本地 OpenAI 兼容 | 绝密版权素材零外泄离线创作、本地私有化部署 |
-| **前沿探索** | Qwen 实验版 (`qwen-turbo`) | 实验端点 | 前沿算子与快速原型评测 |
+| **阿里旗舰** | 通义千问 (`qwen3.8-max`, `qwen3.7-plus`, `qwen3.8-omni-flash`) | OpenAI 兼容 | 影视原生看图分镜、超大规模基座与深度推理反转 |
+| **深度推理** | DeepSeek (`deepseek-v4-pro`, `deepseek-flash`, `deepseek-chat`) | OpenAI 兼容 | 复杂多线剧情伏笔拆解、长篇原著脉络深度反转 |
+| **国际标杆** | OpenAI (`gpt-5`, `o3-mini`, `o3`, `gpt-4.5-preview`, `gpt-4o`) | OpenAI 原生 | 电影级第一人称叙事、细腻心理独白与高级思维链推理 |
+| **文学大师** | Anthropic (`claude-sonnet-5-5`, `claude-opus-5-5`, `claude-fable-5-2`) | Claude Messages 原生 | 意象化文学修辞手法、自适应混合思考与深度影评 |
+| **超长感官** | Google (`gemini-3.8-flash`, `gemini-3.1-pro-preview`, `gemini-3.1-flash-lite`) | Gemini GenAI 原生 | 原生百万帧超长剧集连续梗概、多模态关键帧全景联想 |
+| **长篇拆条** | Moonshot Kimi (`kimi-k3.1-pro`, `kimi-k3.1-pro-highspeed`, `kimi-k3`) | OpenAI 兼容 | 3万亿参数原生视觉理解、百万字剧本结构化拆条与人物索引 |
+| **清华开源** | 智谱 GLM (`glm-5.3`, `glm-5.3-flash`, `glm-5.2`, `glm-5v`) | OpenAI 兼容 | 综合基座旗舰协同创作、多模态视频分析与本土化台词精修 |
+| **短剧生态** | 字节豆包 (`doubao-seed-2-1-pro-260915`, `doubao-seed-evolving`) | OpenAI 兼容 | 抖音/快手短平快高冲突节奏、火山方舟视听多模态短剧 |
+| **腾讯旗舰** | 腾讯混元 (`hy4`, `hy4-preview`, `hy3`, `hunyuan-a13b`) | OpenAI 兼容 | 腾讯 TokenHub 主力旗舰、原生视觉理解与多视角剧情编排 |
+| **私有离线** | 本地 Ollama / LMStudio (`deepseek-r1:14b`, `qwq:32b`, `qwen3:14b`, `llama3.3:70b`) | 本地 OpenAI 兼容 | 绝密版权素材零外泄离线创作、本地私有化高算力部署 |
+| **前沿探索** | Qwen 实验版 (`qwen3.8-omni-flash`) | 实验端点 | 前沿全模态视听流算子与快速原型评测 |
 
 ---
 
