@@ -120,9 +120,9 @@ graph TD
 - 🇺🇸 **OpenAI**：`gpt-5` (新一代智能旗舰) / `o3-mini` / `o3` / `gpt-4.5-preview` / `gpt-4o`
 - 🇺🇸 **Claude (Anthropic)**：`claude-sonnet-5-5` (自适应混合思考旗舰) / `claude-opus-5-5` (终极智能编程与长程 Agent) / `claude-haiku-5-5` / `claude-fable-5-2`
 - 🇺🇸 **Gemini (Google)**：`gemini-3.8-flash` (新一代高吞吐多模态旗舰) / `gemini-3.1-pro-preview` / `gemini-3.1-flash-lite`
-- 🇨🇳 **Kimi (月之暗面)**：`kimi-k3.1-pro` (3万亿参数原生视觉旗舰) / `kimi-k3.1-pro-highspeed` / `kimi-k3` (已淘汰废弃 V1 与旧版 K2)
+- 🇨🇳 **Kimi (月之暗面)**：`kimi-k3.1-pro` (3万亿参数原生视觉旗舰) / `kimi-k3.1-pro-highspeed` / `kimi-k3` 
 - 🇨🇳 **智谱 GLM**：`glm-5.3` (智谱最新基座旗舰·1M上下文深度思考) / `glm-5.3-flash` / `glm-5.2` / `glm-5v`
-- 🇨🇳 **字节豆包 (Doubao)**：`doubao-seed-2-1-pro-260915` (火山方舟高性能旗舰) / `doubao-seed-evolving` (持续进化 Agent 编程) / `doubao-1.5-thinking-vision-pro`
+- 🇨🇳 **字节豆包 (Doubao)**：`doubao-seed-2-1-pro-260915` (火山方舟高性能旗舰) / `doubao-seed-evolving` (持续进化 Agent 编程) 
 - 🇨🇳 **腾讯混元 (Hunyuan)**：`hy4` (腾讯 TokenHub 新一代生产力旗舰·原生视觉理解) / `hy4-preview` / `hy3` / `hunyuan-a13b`
 - 🏠 **本地离线模型 (Local)**：Ollama / LMStudio (`deepseek-r1:14b` / `qwq:32b` / `qwen3:14b` / `llama3.3:70b`)
 - ⚙️ **自定义中转聚合 (Custom)**：兼容 OpenAI 标准协议的中转服务 (SiliconFlow / OpenRouter / OneAPI / 任意私有反代)
