@@ -23,6 +23,7 @@
     "tauri:build": "tauri build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "check:naming": "node scripts/check-naming.mjs",
     "format": "prettier --write \"{src,packages,docs,resources}/**/*.{ts,tsx,css,md,json,html}\" \"*.{json,mjs,ts,md,yaml,yml}\"",
     "format:check": "prettier --check \"{src,packages,docs,resources}/**/*.{ts,tsx,css,md,json,html}\" \"*.{json,mjs,ts,md,yaml,yml}\"",
     "test": "vitest run",
