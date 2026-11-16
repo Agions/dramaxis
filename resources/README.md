@@ -22,12 +22,12 @@ resources/
 ├── app_icon.svg              # 主源 SVG (无文字, 符合 text-free 设计原则)
 ├── icons/
 │   ├── app_icon.png          # 512 px Linux / 默认应用图标
-│   ├── app_icon_32.png       # 小尺寸工具栏 / 托盘 / 窗口图标
-│   ├── app_icon_64.png       # 中尺寸工具栏 / 窗口图标
-│   ├── app_icon_128.png      # 启动器图标
-│   ├── app_icon_256.png      # 高密度启动器图标
-│   ├── app_icon_512.png      # 源尺寸应用图标
-│   └── app_icon_1024.png     # 超高密度 (1024 px)
+│   ├── i32.png       # 小尺寸工具栏 / 托盘 / 窗口图标
+│   ├── i64.png       # 中尺寸工具栏 / 窗口图标
+│   ├── i128.png      # 启动器图标
+│   ├── i256.png      # 高密度启动器图标
+│   ├── i512.png      # 源尺寸应用图标
+│   └── i1024.png     # 超高密度 (1024 px)
 ```
 
 > Note: v2.4 PySide6 时代的 `light_theme.qss` / `dark_theme.qss` 已在 v1.0.0

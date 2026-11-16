@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="public/branding/logo-horizontal.svg" width="680" alt="Dramaxis 剧枢 电影级多智能体影视叙事与智能解说平台" style="border-radius: 16px; box-shadow: 0 0 32px rgba(245,200,66,0.2);" />
+<img src="public/branding/hlogo.svg" width="680" alt="Dramaxis 剧枢 电影级多智能体影视叙事与智能解说平台" style="border-radius: 16px; box-shadow: 0 0 32px rgba(245,200,66,0.2);" />
 
 # 🎬 Dramaxis (剧枢)
 
@@ -39,11 +39,11 @@
 
 | 工坊 1: 控制台仪表盘 (Home Dashboard) | 工坊 2: 素材拆条工坊 (Asset Hub) |
 | :--------------------------------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="public/branding/dramaxis_home_dashboard.jpg" width="460" alt="Dramaxis 控制台仪表盘" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/dramaxis_asset_hub.jpg" width="460" alt="Dramaxis 素材拆条工坊" style="border-radius: 8px; border: 1px solid #27272A;" /> |
+| <img src="public/branding/home.jpg" width="460" alt="Dramaxis 控制台仪表盘" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/asset.jpg" width="460" alt="Dramaxis 素材拆条工坊" style="border-radius: 8px; border: 1px solid #27272A;" /> |
 
 | 工坊 3: 剧本研磨工坊 (Script Studio) | 工坊 4: 音画剪辑工作台 (Workspace) |
 | :--------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="public/branding/dramaxis_script_studio.jpg" width="460" alt="Dramaxis 剧本研磨工坊" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/dramaxis_workspace.jpg" width="460" alt="Dramaxis 音画剪辑工作台" style="border-radius: 8px; border: 1px solid #27272A;" /> |
+| <img src="public/branding/script.jpg" width="460" alt="Dramaxis 剧本研磨工坊" style="border-radius: 8px; border: 1px solid #27272A;" /> | <img src="public/branding/work.jpg" width="460" alt="Dramaxis 音画剪辑工作台" style="border-radius: 8px; border: 1px solid #27272A;" /> |
 
 </div>
 

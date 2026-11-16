@@ -151,5 +151,5 @@ def create_manual_docx(output_path):
     print(f"[DOCX-GENERATOR] OK: 已成功构建 Word 文档 -> {output_path}")
 
 if __name__ == "__main__":
-    out = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "resources/docs/Dramaxis_使用指南与架构说明.docx")
+    out = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "resources/docs/arch.docx")
     create_manual_docx(out)

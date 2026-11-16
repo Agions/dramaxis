@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Deprecated and removed legacy/unsupported model IDs (`moonshot-v1-*`, `doubao-pro-*`, `hunyuan-standard`) to prevent 404 runtime errors.
 - **Comprehensive Documentation Suite Update**:
   - Synchronized VitePress technical docs (`docs/index.md`, `docs/guide/getting-started.md`, `docs/guide/multi-agent-studio.md`, `docs/crates/dramaxis-script.md`).
-  - Synchronized offline user manuals and printable guides (`resources/docs/manual_template.html`, `resources/docs/Dramaxis_快速上手指南.md`).
+  - Synchronized offline user manuals and printable guides (`resources/docs/tmpl.html`, `resources/docs/quick.md`).
   - Synchronized UI controls: `LlmConfigForm.tsx`, `llmOptions.ts`, `ScriptStudioPanel.tsx`, and `AgentModelMatrixCard.tsx`.
 
 ## [1.2.0] - 2026-10-21

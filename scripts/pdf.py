@@ -450,5 +450,5 @@ def build_manual_pdf(output_path):
     print(f"[PDF-GENERATOR] OK: 已成功构建专业手册 -> {output_path}")
 
 if __name__ == "__main__":
-    out = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "resources/docs/Dramaxis_用户使用手册.pdf")
+    out = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "resources/docs/manual.pdf")
     build_manual_pdf(out)
