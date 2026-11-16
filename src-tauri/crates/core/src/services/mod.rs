@@ -18,7 +18,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use super::container::ServiceContainer;
+use super::ioc::ServiceContainer;
 
 #[derive(Debug, Default)]
 pub struct ProjectService {

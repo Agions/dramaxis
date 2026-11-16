@@ -16,7 +16,7 @@ use serde::Serialize;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 
-use crate::executors::{default_executors, PipelineDeps};
+use crate::exec::{default_executors, PipelineDeps};
 use crate::{Pipeline, PipelineEvent, PipelineState, Project, DramaxisResult, StepStatus};
 
 /// IPC 友好的状态快照。

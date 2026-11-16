@@ -1,7 +1,7 @@
 //! 声乐调音师智能体 (VoiceArtistAgent)
 
 use super::Agent;
-use crate::blackboard::VoiceArtifact;
+use crate::board::VoiceArtifact;
 use crate::context::AgentContext;
 use crate::types::AgentRole;
 use async_trait::async_trait;

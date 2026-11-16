@@ -11,13 +11,14 @@
 
 pub mod audio;
 pub mod ffmpeg;
-pub mod multimodal;
+pub mod multi;
+pub use multi as multimodal;
 pub mod probe;
 pub mod scene;
 
 pub use audio::*;
 pub use ffmpeg::*;
-pub use multimodal::{SceneRagEngine, SceneVisualFeature};
+pub use multi::{SceneRagEngine, SceneVisualFeature};
 pub use probe::*;
 pub use scene::*;
 

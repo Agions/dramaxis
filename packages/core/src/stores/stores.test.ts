@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { useSettingsStore } from "./settings-store";
-import { getEffectiveTheme, useThemeStore } from "./theme-store";
-import { usePlaybackStore } from "./playback-store";
-import { useWorkshopStore } from "./workshop-store";
+import { useSettingsStore } from "./set";
+import { getEffectiveTheme, useThemeStore } from "./theme";
+import { usePlaybackStore } from "./play";
+import { useWorkshopStore } from "./shop";
 
 describe("settings-store", () => {
   it("initializes with defaults", () => {

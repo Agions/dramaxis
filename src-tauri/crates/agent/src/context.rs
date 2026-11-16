@@ -1,4 +1,4 @@
-use crate::blackboard::Blackboard;
+use crate::board::Blackboard;
 use crate::types::{AgentMessage, AgentRole, AgentStatus};
 use dramaxis_core::domain::Project;
 use serde::{Deserialize, Serialize};

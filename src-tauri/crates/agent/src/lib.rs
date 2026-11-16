@@ -5,7 +5,8 @@
 //! 组成的多智能体协同与自反思工作团队。
 
 pub mod agents;
-pub mod blackboard;
+pub mod board;
+pub use board as blackboard;
 pub mod context;
 pub mod dag;
 pub mod deps;
@@ -14,7 +15,7 @@ pub mod graph;
 pub mod types;
 
 pub use agents::*;
-pub use blackboard::*;
+pub use board::*;
 pub use context::AgentContext;
 pub use dag::*;
 pub use deps::AgentRuntimeDeps;

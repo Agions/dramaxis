@@ -1,7 +1,7 @@
 //! 终审质量守门员智能体 (QualityReviewerAgent)
 
 use super::Agent;
-use crate::blackboard::QualityReportArtifact;
+use crate::board::QualityReportArtifact;
 use crate::context::AgentContext;
 use crate::types::{AgentRole, AgentStatus, QualityReport};
 use async_trait::async_trait;

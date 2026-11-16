@@ -898,9 +898,9 @@ impl DagOrchestrator {
                                     .await
                                     .unwrap_or_default();
 
-                                let ivs: Vec<crate::blackboard::SpeechInterval> = segments
+                                let ivs: Vec<crate::board::SpeechInterval> = segments
                                     .into_iter()
-                                    .map(|s| crate::blackboard::SpeechInterval {
+                                    .map(|s| crate::board::SpeechInterval {
                                         start: s.start_ms as f64 / 1000.0,
                                         end: s.end_ms as f64 / 1000.0,
                                     })
@@ -930,7 +930,7 @@ impl DagOrchestrator {
                 {
                     let mut ctx = context.write().await;
                     ctx.blackboard
-                        .set_audio_brief(crate::blackboard::AudioBriefArtifact {
+                        .set_audio_brief(crate::board::AudioBriefArtifact {
                             has_original_speech: has_speech,
                             speech_intervals: intervals,
                             bgm_intensity_peaks: vec![3.0, 15.0, 30.0],

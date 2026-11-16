@@ -1,7 +1,7 @@
 //! 画面视觉分析师智能体 (VisualCriticAgent)
 
 use super::Agent;
-use crate::blackboard::{ShotAnnotation, VisualBriefArtifact};
+use crate::board::{ShotAnnotation, VisualBriefArtifact};
 use crate::context::AgentContext;
 use crate::types::AgentRole;
 use async_trait::async_trait;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseClock, parseCutPoint, parseTimeRange } from "./time-range";
+import { parseClock, parseCutPoint, parseTimeRange } from "./trange";
 
 describe("time-range", () => {
   it("parseClock 解析 mm:ss 且对非法输入回退为 0", () => {

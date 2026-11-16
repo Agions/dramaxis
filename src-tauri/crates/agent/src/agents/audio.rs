@@ -1,7 +1,7 @@
 //! 混音剪辑师智能体 (SoundEngineerAgent)
 
 use super::Agent;
-use crate::blackboard::TimelineArtifact;
+use crate::board::TimelineArtifact;
 use crate::context::AgentContext;
 use crate::types::AgentRole;
 use async_trait::async_trait;

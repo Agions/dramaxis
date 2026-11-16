@@ -20,7 +20,8 @@
 
 #![allow(dead_code, unused_imports)]
 
-pub mod container;
+pub mod ioc;
+pub use ioc as container;
 pub mod context;
 pub mod domain;
 pub mod error;
@@ -29,7 +30,7 @@ pub mod i18n;
 pub mod logging;
 pub mod services;
 
-pub use container::ServiceContainer;
+pub use ioc::ServiceContainer;
 pub use context::{AppContext, AppContextBuilder};
 pub use error::{DramaxisError, DramaxisResult};
 pub use help::{HelpCategory, HelpRegistry, HelpTopic, SearchHit};
