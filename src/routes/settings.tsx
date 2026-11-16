@@ -1,5 +1,8 @@
 /**
- * dramaxis v1.1.0 · 设置与模型引擎中心 (深度模块化与组件化架构)
+ * dramaxis v1.2.0 · 设置与模型引擎中心 (深度模块化与组件化架构)
+ *
+ * @author Agions
+ * @copyright (c) 2026 Dramaxis. All rights reserved.
  */
 
 import { createFileRoute } from "@tanstack/react-router";

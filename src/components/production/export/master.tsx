@@ -1,7 +1,14 @@
+/**
+ * dramaxis v1.2.0 · 多平台母带处理与规格定制组件 (MasteringOptionsCard / DedupMatrixCard)
+ *
+ * @author Agions
+ * @copyright (c) 2026 Dramaxis. All rights reserved.
+ */
+
 import { memo } from "react";
 import type { DedupIntensity } from "@dramaxis/ipc";
 
-interface DedupMatrixCardProps {
+export interface DedupMatrixCardProps {
   antiDupZoom: number;
   onAntiDupZoomChange: (val: number) => void;
   enableAmbientBlur: boolean;
@@ -39,7 +46,7 @@ interface DedupMatrixCardProps {
   onBatchFission: () => Promise<void>;
 }
 
-export const DedupMatrixCard = memo(function DedupMatrixCard({
+export const MasteringOptionsCard = memo(function MasteringOptionsCard({
   antiDupZoom,
   onAntiDupZoomChange,
   enableAmbientBlur,
@@ -105,7 +112,7 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
               key={preset.id}
               type="button"
               onClick={() => onApplyPreset(preset.id)}
-              className={`rounded border p-1 text-center transition-all ${
+              className={`rounded border p-1 text-center transition-all cursor-pointer ${
                 dedupIntensity === preset.id
                   ? "border-gold bg-gold/15 text-gold font-bold"
                   : "border-border bg-surface text-text-secondary hover:border-gold/50"
@@ -146,16 +153,16 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
             type="checkbox"
             checked={enableAmbientBlur}
             onChange={(e) => onEnableAmbientBlurChange(e.target.checked)}
-            className="accent-gold"
+            className="accent-gold cursor-pointer"
           />
         </label>
 
-        {/* 展开/收起 8 维高级消重算子 */}
+        {/* 展开/收起 8 维高级母带微调算子 */}
         <div className="pt-1">
           <button
             type="button"
             onClick={onToggleAdvancedDedup}
-            className="w-full flex items-center justify-between text-[10px] text-text-muted hover:text-gold transition-colors py-1"
+            className="w-full flex items-center justify-between text-[10px] text-text-muted hover:text-gold transition-colors py-1 cursor-pointer"
           >
             <span>8 维音画混淆算子精细调节</span>
             <span>{showAdvancedDedup ? "收起 ▲" : "展开 ▼"}</span>
@@ -171,7 +178,7 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
                       type="checkbox"
                       checked={enableSpeed}
                       onChange={(e) => onEnableSpeedChange(e.target.checked)}
-                      className="accent-gold"
+                      className="accent-gold cursor-pointer"
                     />
                     <span>帧率微变速</span>
                   </label>
@@ -197,7 +204,7 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
                   type="checkbox"
                   checked={enableMirror}
                   onChange={(e) => onEnableMirrorChange(e.target.checked)}
-                  className="accent-gold"
+                  className="accent-gold cursor-pointer"
                 />
               </label>
 
@@ -209,7 +216,7 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
                       type="checkbox"
                       checked={enableNoise}
                       onChange={(e) => onEnableNoiseChange(e.target.checked)}
-                      className="accent-gold"
+                      className="accent-gold cursor-pointer"
                     />
                     <span>胶片颗粒高斯噪点</span>
                   </label>
@@ -235,7 +242,7 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
                   type="checkbox"
                   checked={enableFpsDrift}
                   onChange={(e) => onEnableFpsDriftChange(e.target.checked)}
-                  className="accent-gold"
+                  className="accent-gold cursor-pointer"
                 />
               </label>
 
@@ -247,7 +254,7 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
                       type="checkbox"
                       checked={enablePitchShift}
                       onChange={(e) => onEnablePitchShiftChange(e.target.checked)}
-                      className="accent-gold"
+                      className="accent-gold cursor-pointer"
                     />
                     <span>人声音高微偏移 (防声纹对碰)</span>
                   </label>
@@ -275,7 +282,7 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
                   type="checkbox"
                   checked={enableBgmReverb}
                   onChange={(e) => onEnableBgmReverbChange(e.target.checked)}
-                  className="accent-gold"
+                  className="accent-gold cursor-pointer"
                 />
               </label>
 
@@ -286,7 +293,7 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
                   type="checkbox"
                   checked={enableMetadataScrub}
                   onChange={(e) => onEnableMetadataScrubChange(e.target.checked)}
-                  className="accent-gold"
+                  className="accent-gold cursor-pointer"
                 />
               </label>
             </div>
@@ -334,7 +341,7 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
                 key={num}
                 type="button"
                 onClick={() => onFissionCountChange(num)}
-                className={`rounded px-2 py-0.5 font-mono text-[10px] font-bold border transition-all ${
+                className={`rounded px-2 py-0.5 font-mono text-[10px] font-bold border transition-all cursor-pointer ${
                   fissionCount === num
                     ? "border-gold bg-gold/20 text-gold"
                     : "border-border bg-bg text-text-muted hover:border-gold/40"
@@ -348,7 +355,7 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
             type="button"
             disabled={isFissioning || isRendering}
             onClick={onBatchFission}
-            className="rounded-lg bg-gradient-to-r from-amber to-gold px-3 py-1.5 text-[11px] font-black text-zinc-950 transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
+            className="rounded-lg bg-gradient-to-r from-amber to-gold px-3 py-1.5 text-[11px] font-black text-zinc-950 transition-all hover:brightness-110 active:scale-95 disabled:opacity-50 cursor-pointer"
           >
             {isFissioning ? "母带批量压制中..." : `批量导出 ${fissionCount} 份母带`}
           </button>
@@ -357,3 +364,5 @@ export const DedupMatrixCard = memo(function DedupMatrixCard({
     </>
   );
 });
+
+export const DedupMatrixCard = MasteringOptionsCard;

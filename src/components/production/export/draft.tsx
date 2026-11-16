@@ -1,7 +1,14 @@
+/**
+ * dramaxis v1.2.0 · 剪映工程草稿直出组件 (CapcutDraftCard)
+ *
+ * @author Agions
+ * @copyright (c) 2026 Dramaxis. All rights reserved.
+ */
+
 import { memo } from "react";
 import type { CapcutDraftResult } from "@dramaxis/ipc";
 
-interface CapcutDraftCardProps {
+export interface CapcutDraftCardProps {
   isExportingDraft: boolean;
   exportedDraft: CapcutDraftResult | null;
   onExportJianying: () => Promise<void>;
@@ -94,7 +101,7 @@ export const CapcutDraftCard = memo(function CapcutDraftCard({
           <button
             type="button"
             onClick={onSelectAmbientAudio}
-            className="px-2 py-0.5 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 font-bold text-[10px] border border-cyan-500/20 transition-colors"
+            className="px-2 py-0.5 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 font-bold text-[10px] border border-cyan-500/20 transition-colors cursor-pointer"
           >
             {ambientPath ? "更换音效" : "+ 载入音效"}
           </button>
@@ -129,7 +136,7 @@ export const CapcutDraftCard = memo(function CapcutDraftCard({
           <button
             type="button"
             onClick={onSelectBgmAudio}
-            className="px-2 py-0.5 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 font-bold text-[10px] border border-purple-500/20 transition-colors"
+            className="px-2 py-0.5 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 font-bold text-[10px] border border-purple-500/20 transition-colors cursor-pointer"
           >
             {bgmPath ? "更换配乐" : "+ 载入配乐"}
           </button>
@@ -186,7 +193,7 @@ export const CapcutDraftCard = memo(function CapcutDraftCard({
                     | "minimal_white",
                 )
               }
-              className={`rounded py-1 text-[10px] font-bold transition-all border ${
+              className={`rounded py-1 text-[10px] font-bold transition-all border cursor-pointer ${
                 subtitleStyle === s.id
                   ? "border-gold bg-gold/15 text-gold"
                   : "border-border bg-bg text-text-secondary hover:border-gold/50"
@@ -232,7 +239,7 @@ export const CapcutDraftCard = memo(function CapcutDraftCard({
         type="button"
         disabled={isExportingDraft}
         onClick={onExportJianying}
-        className="w-full rounded-xl bg-gradient-to-r from-gold to-amber py-2.5 text-xs font-black text-zinc-950 shadow-[0_0_20px_var(--color-gold-glow)] transition-all hover:brightness-110 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+        className="w-full rounded-xl bg-gradient-to-r from-gold to-amber py-2.5 text-xs font-black text-zinc-950 shadow-[0_0_20px_var(--color-gold-glow)] transition-all hover:brightness-110 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
       >
         <span>🚀</span>
         <span>
@@ -256,7 +263,7 @@ export const CapcutDraftCard = memo(function CapcutDraftCard({
             <button
               type="button"
               onClick={onOpenDraftFolder}
-              className="flex items-center justify-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[11px] font-bold text-text-primary hover:border-gold hover:text-gold transition-colors"
+              className="flex items-center justify-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[11px] font-bold text-text-primary hover:border-gold hover:text-gold transition-colors cursor-pointer"
               title="在文件资源管理器中打开草稿工程文件夹"
             >
               <span>📂</span>
@@ -265,7 +272,7 @@ export const CapcutDraftCard = memo(function CapcutDraftCard({
             <button
               type="button"
               onClick={onLaunchJianying}
-              className="flex items-center justify-center gap-1 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-[11px] font-bold text-gold hover:bg-gold/20 transition-colors"
+              className="flex items-center justify-center gap-1 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-[11px] font-bold text-gold hover:bg-gold/20 transition-colors cursor-pointer"
               title="尝试唤起本机安装的剪映 PC 端"
             >
               <span>🚀</span>

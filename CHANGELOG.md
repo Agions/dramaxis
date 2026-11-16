@@ -5,6 +5,29 @@ All notable changes to the Dramaxis project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-11-13
+
+### 🚀 Production Model Matrix & Comprehensive Documentation Overhaul
+
+- **Official LLM Engine Matrix Alignment (11 Providers)**:
+  - Upgraded and strictly verified active production-level models from official developer portals across all 11 providers:
+    - **Qwen**: `qwen3.8-max` (flagship reasoning), `qwen3.7-plus`, `qwen3.8-omni-flash` (realtime native multimodal).
+    - **DeepSeek**: `deepseek-v4-pro` (V4 Pro flagship), `deepseek-flash` (V4.1 MoE multimodal).
+    - **OpenAI**: `gpt-6-astra` (flagship reasoning & agentic tasks), `gpt-6.1-sol`, `gpt-6.1-terra`, `gpt-6-luna`.
+    - **Claude**: `claude-sonnet-5-5`, `claude-opus-5-5`, `claude-haiku-5-5`, `claude-fable-5-2`.
+    - **Gemini**: `gemini-4-argon` (frontier reasoning), `gemini-3.8-flash` (multimodal throughput), `gemini-3.8-live`.
+    - **Kimi**: `kimi-k3.1-pro` (3-trillion parameter native vision), `kimi-k3.1-pro-highspeed`, `kimi-k3`.
+    - **GLM**: `glm-5.3` (1M context + deep thinking), `glm-5.3-flash`, `glm-5.2`.
+    - **Doubao**: `doubao-seed-2-1-pro-260915`, `doubao-seed-2-1-lite-260915`, `doubao-seed-2-1-turbo-260628`.
+    - **Hunyuan**: `hy4` (TokenHub 1M native vision flagship), `hy3`.
+    - **Local**: `deepseek-r1:14b`, `qwq:32b`, `qwen3:14b`, `llama3.3:70b`.
+    - **Qwen37**: `qwen3.8-omni-flash` (multimodal experimental endpoint).
+  - Deprecated and removed legacy/unsupported model IDs (`moonshot-v1-*`, `doubao-pro-*`, `hunyuan-standard`) to prevent 404 runtime errors.
+- **Comprehensive Documentation Suite Update**:
+  - Synchronized VitePress technical docs (`docs/index.md`, `docs/guide/getting-started.md`, `docs/guide/multi-agent-studio.md`, `docs/crates/dramaxis-script.md`).
+  - Synchronized offline user manuals and printable guides (`resources/docs/manual_template.html`, `resources/docs/Dramaxis_快速上手指南.md`).
+  - Synchronized UI controls: `LlmConfigForm.tsx`, `llmOptions.ts`, `ScriptStudioPanel.tsx`, and `AgentModelMatrixCard.tsx`.
+
 ## [1.2.0] - 2026-10-21
 
 ### 🚀 Major Architectural Upgrades & Highlights

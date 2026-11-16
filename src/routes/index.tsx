@@ -1,5 +1,8 @@
 /**
- * dramaxis v1.1.0 · 首页 旗舰级电影调光室 Dashboard (全景多智能体态势与工程中枢)
+ * dramaxis v1.2.0 · 首页 旗舰级电影调光室 Dashboard (全景多智能体态势与工程中枢)
+ *
+ * @author Agions
+ * @copyright (c) 2026 Dramaxis. All rights reserved.
  */
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";

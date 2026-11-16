@@ -23,9 +23,9 @@ graph TD
 
 | 智能体代号 | 角色职能 | 核心算子与驱动模型 | 输出黑板产物 (`Blackboard`) |
 | :--- | :--- | :--- | :--- |
-| **`Director` (总控导演)** | 工作流模板调度、参考样本风格解构、HITL 断点审批与靶向精修路由 | `ScriptFlywheelEngine` + 推理模型 (`deepseek-reasoner` / `qwen-max`) | `StyleProfile`, `BreakpointRequest` |
-| **`VisualCritic` (视觉分析师)** | 场景硬切检测、关键帧抽取、镜头运动与冲突度打分、单镜字数预算 | `Ffmpeg::detect_scenes` + `SceneRagEngine` | `VisualBriefArtifact` (`Vec<ShotAnnotation>`) |
-| **`Screenwriter` (金牌编剧)** | 多模态看图撰稿、黄金 3 秒 Hook 公式应用、按镜头预算生成第一人称独白 | 多模态/创作模型 (`qwen-plus` / `gpt-4o` / `claude-3-7-sonnet-20250219`) | `ScriptArtifact` 版本链 (`v1, v2...`) |
+| **`Director` (总控导演)** | 工作流模板调度、参考样本风格解构、HITL 断点审批与靶向精修路由 | `ScriptFlywheelEngine` + 推理模型 (`deepseek-v4-pro` / `qwen3.8-max` / `gpt-6-astra`) | `StyleProfile`, `BreakpointRequest` |
+| **`VisualCritic` (视觉分析师)** | 场景硬切检测、关键帧抽取、镜头运动与冲突度打分、单镜字数预算 | `Ffmpeg::detect_scenes` + `SceneRagEngine` + 多模态 (`gemini-4-argon` / `gemini-3.8-flash` / `qwen3.8-omni-flash`) | `VisualBriefArtifact` (`Vec<ShotAnnotation>`) |
+| **`Screenwriter` (金牌编剧)** | 多模态看图撰稿、黄金 3 秒 Hook 公式应用、按镜头预算生成第一人称独白 | 多模态/创作模型 (`claude-sonnet-5-5` / `gpt-6.1-terra` / `deepseek-v4-pro`) | `ScriptArtifact` 版本链 (`v1, v2...`) |
 | **`VoiceArtist` (声乐调音师)** | 角色声线匹配、SSML 语速控制、高保真语音合成与真实时长测定 | `EdgeTtsEngine` / `OpenAiTtsEngine` / `GptSovitsTtsEngine` / `MimoTtsEngine` | `VoiceArtifact` |
 | **`SoundEngineer` (混音剪辑师)** | 原片与配音 VAD 静音断句、语义+情绪双驱动声画对齐、5 轨装配与 BGM 闪避 | `dramaxis-subtitle::vad` + `DualDrivenAligner` | `AudioBriefArtifact`, `TimelineArtifact`, `Project.timeline` |
 | **`QualityReviewer` (质量守门员)** | 剧本留存张力客观评分 + LLM 主观裁判、成片 4-Gate（Hook/同步/节奏/合规）终审 | `ScriptFlywheelEngine` + `LLM-as-a-Judge` + 合规扫描器 | `QualityReportArtifact` |

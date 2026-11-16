@@ -1,8 +1,11 @@
 /**
- * dramaxis v1.1.0 · /help 路由入口
+ * dramaxis v1.2.0 · /help 路由入口
  *
  * 实际组件在 components/help/HelpPage.tsx,
  * 此处只导出 Route 供 TanStack Router 做 code-split。
+ *
+ * @author Agions
+ * @copyright (c) 2026 Dramaxis. All rights reserved.
  */
 
 import { createFileRoute } from "@tanstack/react-router";

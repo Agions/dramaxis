@@ -30,12 +30,16 @@
 
 pub mod capcut;
 pub mod dedup;
+pub mod master;
 pub mod renderer;
 pub use capcut::{
     create_capcut_draft, detect_jianying_draft_root, CapcutDraftOptions, CapcutDraftResult,
     CapcutSubtitleItem,
 };
-pub use dedup::{generate_fission_variants, DedupIntensity, DedupOptions};
+pub use master::{
+    generate_fission_variants, generate_master_variants, DedupIntensity, DedupOptions,
+    MasterIntensity, MasterOptions,
+};
 pub use renderer::*;
 
 use dramaxis_core::domain::ProjectSettings;

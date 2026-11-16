@@ -44,13 +44,12 @@ pub async fn agent_start(
     state: State<'_, AgentServiceState>,
 ) -> Result<AgentContext, DramaxisError> {
     let mut ctx = AgentContext::new(project, auto_mode);
+    let mut runtime_deps = dramaxis_agent::AgentRuntimeDeps::default();
 
-    // 自动装配当前设置中的 LLM 与 TTS 凭证至 Agent 上下文内存
+    // 自动装配当前设置中的 LLM 与 TTS 凭证至 Rust 后端私有依赖容器 (绝不透传至前端 IPC)
     if let Ok(cfg_svc) = app_ctx.service::<ConfigService>().await {
         let snap: ConfigSnapshot = cfg_svc.snapshot().await;
-        if let Some(key) = snap.llm_api_key {
-            ctx.memory.insert("llm_api_key".to_string(), key);
-        }
+        runtime_deps = dramaxis_agent::AgentRuntimeDeps::from_config(&snap);
         if let Some(model) = snap.llm_model {
             ctx.memory.insert("llm_model".to_string(), model);
         }
@@ -74,7 +73,8 @@ pub async fn agent_start(
 
     let orch = AgentOrchestrator::new(ctx.clone()).with_emitter(emitter.clone());
     let dag = DagOrchestrator::with_profile(ctx.clone(), workflow_profile.unwrap_or_default())
-        .with_emitter(emitter);
+        .with_emitter(emitter)
+        .with_deps(Arc::new(runtime_deps));
 
     {
         let mut orch_lock = state.orchestrator.write().await;

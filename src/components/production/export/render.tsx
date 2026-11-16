@@ -1,6 +1,13 @@
+/**
+ * dramaxis v1.2.0 · 平台母带直接渲染组件 (PlatformRenderCard)
+ *
+ * @author Agions
+ * @copyright (c) 2026 Dramaxis. All rights reserved.
+ */
+
 import { memo } from "react";
 
-interface PlatformRenderCardProps {
+export interface PlatformRenderCardProps {
   isRendering: boolean;
   activePreset: string | null;
   renderProgress: number;
@@ -37,7 +44,6 @@ export const PlatformRenderCard = memo(function PlatformRenderCard({
         </span>
       </div>
 
-      {/* 渲染进度条展示 */}
       {isRendering && (
         <div className="rounded-lg border border-gold/30 bg-bg p-2.5 space-y-2">
           <div className="flex items-center justify-between text-[11px]">
@@ -65,7 +71,7 @@ export const PlatformRenderCard = memo(function PlatformRenderCard({
             type="button"
             disabled={isRendering}
             onClick={() => void onRenderPreset(p.label)}
-            className={`rounded-lg border py-2 text-[11px] font-semibold transition-all ${
+            className={`rounded-lg border py-2 text-[11px] font-semibold transition-all cursor-pointer ${
               activePreset === p.label
                 ? "border-gold bg-gold/10 text-gold"
                 : "border-border bg-bg text-text-secondary hover:border-gold hover:text-gold"
@@ -76,7 +82,6 @@ export const PlatformRenderCard = memo(function PlatformRenderCard({
         ))}
       </div>
 
-      {/* 成片压制完成后的定位操作 */}
       {renderedVideoPath && (
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 truncate max-w-[200px]">
@@ -86,7 +91,7 @@ export const PlatformRenderCard = memo(function PlatformRenderCard({
           <button
             type="button"
             onClick={onOpenVideoFolder}
-            className="flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-[11px] font-bold text-text-primary hover:border-gold hover:text-gold transition-colors"
+            className="flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-[11px] font-bold text-text-primary hover:border-gold hover:text-gold transition-colors cursor-pointer"
           >
             <span>📂</span>
             <span>在文件夹中定位成片</span>

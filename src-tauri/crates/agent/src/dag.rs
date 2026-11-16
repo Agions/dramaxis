@@ -45,6 +45,7 @@ pub struct DagOrchestrator {
     pub event_emitter: Option<EventEmitter>,
     pub critique_count: u32,
     pub max_critique_rounds: u32,
+    pub deps: Arc<crate::deps::AgentRuntimeDeps>,
 }
 
 impl DagOrchestrator {
@@ -474,7 +475,13 @@ impl DagOrchestrator {
             event_emitter: None,
             critique_count: 0,
             max_critique_rounds,
+            deps: Arc::new(crate::deps::AgentRuntimeDeps::default()),
         }
+    }
+
+    pub fn with_deps(mut self, deps: Arc<crate::deps::AgentRuntimeDeps>) -> Self {
+        self.deps = deps;
+        self
     }
 
     pub fn with_emitter(mut self, emitter: EventEmitter) -> Self {

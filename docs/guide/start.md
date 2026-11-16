@@ -26,7 +26,7 @@ Dramaxis 采用操作系统级安全保险库存储鉴权凭证（macOS Keychain
 
 1. 打开应用左下角 **⚙️ 设置 (Settings)** ➔ **模型与服务 (Providers & Credentials)**。
 2. 配置 **大语言模型 (LLM Providers)**：
-   - 填入对应服务商的 API Key（如通义千问 Qwen、DeepSeek V3/R1、OpenAI GPT-4o、Claude 3.7 Sonnet、Google Gemini 2.5 等）。
+   - 填入对应服务商的 API Key（如通义千问 Qwen 3.8、DeepSeek V4 Pro、OpenAI GPT-5、Claude Sonnet 5.5、Google Gemini 3.8、Kimi K3.1 Pro、智谱 GLM-5.3 等）。
    - 如使用私有网关或中转集群，勾选「自定义 Base URL」并输入兼容端点。
    - 点击 **「⚡ 测试连通性」** 验证网络握手与端点可用性。
 3. 配置 **语音合成服务 (TTS Providers)**：

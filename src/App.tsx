@@ -1,11 +1,14 @@
 /**
- * dramaxis v1.1.0 · App 根组件 (Gate 0)
+ * dramaxis v1.2.0 · App 根组件 (Gate 0)
  *
  * 阶段：M0 Gate 0 (最小可启动骨架) + TanStack Router 6 路由占位
  * 下一步 (M2)：
  *   - 拆分 LayoutShell (TopBar / Sidebar / StatusBar)
  *   - 接入 QueryClientProvider 全局数据层
  *   - 接入 ThemeProvider + i18n Provider
+ *
+ * @author Agions
+ * @copyright (c) 2026 Dramaxis. All rights reserved.
  */
 
 import { RouterProvider, createRouter } from "@tanstack/react-router";

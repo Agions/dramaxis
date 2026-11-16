@@ -1,5 +1,8 @@
 /**
  * dramaxis v1.2.0 · 项目与资产管理中心 (领域驱动与声明式装配架构)
+ *
+ * @author Agions
+ * @copyright (c) 2026 Dramaxis. All rights reserved.
  */
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";

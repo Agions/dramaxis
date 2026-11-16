@@ -7,6 +7,9 @@
  * - W3: 毫秒级多轨精修工坊 (Timeline Studio: 5轨毫秒磁吸 / 声画对齐 / 智能避让)
  * - W4: 多平台母带定制与交付工坊 (Export Hub: 剪映草稿直出 / 多平台母带定制 / 批量导出)
  * - 纯声明式架构: 会话数据与快捷键下沉至 useProductionSession
+ *
+ * @author Agions
+ * @copyright (c) 2026 Dramaxis. All rights reserved.
  */
 
 import { createFileRoute } from "@tanstack/react-router";

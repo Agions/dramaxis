@@ -19,12 +19,12 @@ export default defineConfig({
     siteTitle: 'Dramaxis Docs',
 
     nav: [
-      { text: '📖 指南与实战', link: '/guide/getting-started', activeMatch: '/guide/' },
-      { text: '🏛️ 架构设计', link: '/architecture/overview', activeMatch: '/architecture/' },
-      { text: '🦀 Rust Crates', link: '/crates/dramaxis-core', activeMatch: '/crates/' },
+      { text: '📖 指南与实战', link: '/guide/start', activeMatch: '/guide/' },
+      { text: '🏛️ 架构设计', link: '/arch/overview', activeMatch: '/arch/' },
+      { text: '🦀 Rust Crates', link: '/crates/core', activeMatch: '/crates/' },
       { text: '📦 前端 Packages', link: '/packages/ipc', activeMatch: '/packages/' },
-      { text: '🔌 IPC 契约字典', link: '/api/commands-dictionary', activeMatch: '/api/' },
-      { text: '🛠️ DevOps 与交付', link: '/devops/local-development', activeMatch: '/devops/' },
+      { text: '🔌 IPC 契约字典', link: '/api/cmd', activeMatch: '/api/' },
+      { text: '🛠️ DevOps 与交付', link: '/devops/dev', activeMatch: '/devops/' },
       {
         text: 'v1.2.0',
         items: [
@@ -40,22 +40,22 @@ export default defineConfig({
         {
           text: '🚀 指南与实战',
           items: [
-            { text: '快速上手 (Getting Started)', link: '/guide/getting-started' },
-            { text: '6-Agent 智能体编排实战', link: '/guide/multi-agent-studio' },
-            { text: '剪映草稿 (.draft) 导出流程', link: '/guide/capcut-export' },
+            { text: '快速上手 (Getting Started)', link: '/guide/start' },
+            { text: '6-Agent 智能体编排实战', link: '/guide/studio' },
+            { text: '剪映草稿 (.draft) 导出流程', link: '/guide/capcut' },
             { text: '常见问题与避坑指南 (FAQ)', link: '/guide/faq' }
           ]
         }
       ],
-      '/architecture/': [
+      '/arch/': [
         {
           text: '🏛️ 核心架构与原理',
           items: [
-            { text: '全栈洋葱模型拓扑与分层', link: '/architecture/overview' },
-            { text: '6-Agent 协同中枢与状态机', link: '/architecture/multi-agent-engine' },
-            { text: '核心流水线契约 (Pipeline Contract)', link: '/architecture/pipeline-contract' },
-            { text: 'Monorepo 架构与双向隔离', link: '/architecture/monorepo-design' },
-            { text: '安全体系与 Keychain 凭证隔离', link: '/architecture/security-keychain' }
+            { text: '全栈洋葱模型拓扑与分层', link: '/arch/overview' },
+            { text: '6-Agent 协同中枢与状态机', link: '/arch/agent' },
+            { text: '核心流水线契约 (Pipeline Contract)', link: '/arch/flow' },
+            { text: 'Monorepo 架构与双向隔离', link: '/arch/repo' },
+            { text: '安全体系与 Keychain 凭证隔离', link: '/arch/secure' }
           ]
         }
       ],
@@ -63,17 +63,17 @@ export default defineConfig({
         {
           text: '🦀 Rust Crates 核心领域参考',
           items: [
-            { text: 'dramaxis-core (统一模型/DI/错误)', link: '/crates/dramaxis-core' },
-            { text: 'dramaxis-agent (6-Agent 智能体集群)', link: '/crates/dramaxis-agent' },
-            { text: 'dramaxis-script (11 大 LLM 矩阵适配)', link: '/crates/dramaxis-script' },
-            { text: 'dramaxis-voice (48kHz TTS/音色克隆)', link: '/crates/dramaxis-voice' },
-            { text: 'dramaxis-subtitle (VAD/动态字幕)', link: '/crates/dramaxis-subtitle' },
-            { text: 'dramaxis-detect (FFmpeg 突变打点)', link: '/crates/dramaxis-detect' },
-            { text: 'dramaxis-intake (4 大生成策略分流)', link: '/crates/dramaxis-intake' },
-            { text: 'dramaxis-compose (5 轨毫秒级磁吸)', link: '/crates/dramaxis-compose' },
-            { text: 'dramaxis-export (剪映二进制/母带压制)', link: '/crates/dramaxis-export' },
-            { text: 'dramaxis-storage (资产扫描与持久化)', link: '/crates/dramaxis-storage' },
-            { text: 'dramaxis-update (断点续传/自更新)', link: '/crates/dramaxis-update' }
+            { text: 'dramaxis-core (统一模型/DI/错误)', link: '/crates/core' },
+            { text: 'dramaxis-agent (6-Agent 智能体集群)', link: '/crates/agent' },
+            { text: 'dramaxis-script (11 大 LLM 矩阵适配)', link: '/crates/script' },
+            { text: 'dramaxis-voice (48kHz TTS/音色克隆)', link: '/crates/voice' },
+            { text: 'dramaxis-subtitle (VAD/动态字幕)', link: '/crates/sub' },
+            { text: 'dramaxis-detect (FFmpeg 突变打点)', link: '/crates/detect' },
+            { text: 'dramaxis-intake (4 大生成策略分流)', link: '/crates/intake' },
+            { text: 'dramaxis-compose (5 轨毫秒级磁吸)', link: '/crates/compose' },
+            { text: 'dramaxis-export (剪映二进制/母带压制)', link: '/crates/export' },
+            { text: 'dramaxis-storage (资产扫描与持久化)', link: '/crates/storage' },
+            { text: 'dramaxis-update (断点续传/自更新)', link: '/crates/update' }
           ]
         }
       ],
@@ -92,8 +92,8 @@ export default defineConfig({
         {
           text: '🔌 Tauri IPC 契约字典',
           items: [
-            { text: '全量 46 个 IPC 指令字典', link: '/api/commands-dictionary' },
-            { text: '实时事件监听矩阵 (Event Matrix)', link: '/api/events-matrix' }
+            { text: '全量 46 个 IPC 指令字典', link: '/api/cmd' },
+            { text: '实时事件监听矩阵 (Event Matrix)', link: '/api/event' }
           ]
         }
       ],
@@ -101,9 +101,9 @@ export default defineConfig({
         {
           text: '🛠️ 工程化与持续交付',
           items: [
-            { text: '本地开发调试与环境准备', link: '/devops/local-development' },
-            { text: 'IPC 代码自动化生成机制 (gen-ipc)', link: '/devops/ipc-codegen' },
-            { text: '跨平台打包构建与 Release 发布', link: '/devops/build-and-release' }
+            { text: '本地开发调试与环境准备', link: '/devops/dev' },
+            { text: 'IPC 代码自动化生成机制 (gen-ipc)', link: '/devops/ipc' },
+            { text: '跨平台打包构建与 Release 发布', link: '/devops/build' }
           ]
         }
       ]

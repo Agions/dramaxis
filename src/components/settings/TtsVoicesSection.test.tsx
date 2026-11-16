@@ -18,7 +18,7 @@ describe("TtsVoicesSection", () => {
     first_run: false,
     llm_api_key: "sk-test",
     llm_base_url: "https://api.deepseek.com/v1",
-    llm_model: "deepseek-chat",
+    llm_model: "deepseek-v4-pro",
     tts_provider: "edge",
     tts_voice: "zh-CN-YunxiNeural",
     tts_model: null,

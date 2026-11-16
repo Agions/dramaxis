@@ -21,6 +21,8 @@
 
 </div>
 
+> 📢 **官方声明**：本项目以 MIT 协议开源，官方唯一渠道为 [GitHub 仓库](https://github.com/Agions/dramaxis) 与 [Releases](https://github.com/Agions/dramaxis/releases)；任何第三方付费版本均与本项目无关。
+
 ---
 
 ## 🎬 核心定位与设计理念
@@ -115,15 +117,15 @@ graph TD
 
 ### 11 大主流 LLM 引擎支持 (`dramaxis-script`)
 
-- 🇨🇳 **通义千问 (Qwen)**：`qwen3.8-max` (阿里超大规模基座旗舰) / `qwen3.7-plus` / `qwen3.8-omni-flash` (原生全模态流式交互) / `qwen4-max-preview`
-- 🇨🇳 **DeepSeek**：`deepseek-v4-pro` (V4 Pro 影视文学撰稿与高难任务) / `deepseek-flash` (V4.1 全模态混合专家架构) / `deepseek-chat` / `deepseek-reasoner`
-- 🇺🇸 **OpenAI**：`gpt-5` (新一代智能旗舰) / `o3-mini` / `o3` / `gpt-4.5-preview` / `gpt-4o`
+- 🇨🇳 **通义千问 (Qwen)**：`qwen3.8-max` (阿里超大规模基座旗舰) / `qwen3.7-plus` / `qwen3.8-omni-flash` (原生全模态流式交互)
+- 🇨🇳 **DeepSeek**：`deepseek-v4-pro` (V4 Pro 影视文学撰稿与高难任务) / `deepseek-flash` (V4.1 全模态混合专家架构)
+- 🇺🇸 **OpenAI**：`gpt-6-astra` (新一代智能旗舰与复杂智能体执行) / `gpt-6.1-sol` / `gpt-6.1-terra` (视觉推理与剧本创作) / `gpt-6-luna`
 - 🇺🇸 **Claude (Anthropic)**：`claude-sonnet-5-5` (自适应混合思考旗舰) / `claude-opus-5-5` (终极智能编程与长程 Agent) / `claude-haiku-5-5` / `claude-fable-5-2`
-- 🇺🇸 **Gemini (Google)**：`gemini-3.8-flash` (新一代高吞吐多模态旗舰) / `gemini-3.1-pro-preview` / `gemini-3.1-flash-lite`
+- 🇺🇸 **Gemini (Google)**：`gemini-4-argon` (新一代前沿深度推理旗舰·1M上下文) / `gemini-3.8-flash` (多模态高通量主力) / `gemini-3.8-live` (低延迟实时交互)
 - 🇨🇳 **Kimi (月之暗面)**：`kimi-k3.1-pro` (3万亿参数原生视觉旗舰) / `kimi-k3.1-pro-highspeed` / `kimi-k3` 
-- 🇨🇳 **智谱 GLM**：`glm-5.3` (智谱最新基座旗舰·1M上下文深度思考) / `glm-5.3-flash` / `glm-5.2` / `glm-5v`
-- 🇨🇳 **字节豆包 (Doubao)**：`doubao-seed-2-1-pro-260915` (火山方舟高性能旗舰) / `doubao-seed-evolving` (持续进化 Agent 编程) 
-- 🇨🇳 **腾讯混元 (Hunyuan)**：`hy4` (腾讯 TokenHub 新一代生产力旗舰·原生视觉理解) / `hy4-preview` / `hy3` / `hunyuan-a13b`
+- 🇨🇳 **智谱 GLM**：`glm-5.3` (智谱最新基座旗舰·1M上下文深度思考) / `glm-5.3-flash` / `glm-5.2`
+- 🇨🇳 **字节豆包 (Doubao)**：`doubao-seed-2-1-pro-260915` (火山方舟高性能旗舰) / `doubao-seed-2-1-lite-260915`
+- 🇨🇳 **腾讯混元 (Hunyuan)**：`hy4` (腾讯 TokenHub 新一代生产力旗舰·原生视觉理解) / `hy3`
 - 🏠 **本地离线模型 (Local)**：Ollama / LMStudio (`deepseek-r1:14b` / `qwq:32b` / `qwen3:14b` / `llama3.3:70b`)
 - ⚙️ **自定义中转聚合 (Custom)**：兼容 OpenAI 标准协议的中转服务 (SiliconFlow / OpenRouter / OneAPI / 任意私有反代)
 
@@ -183,6 +185,16 @@ pnpm test
 
 > **💡 macOS 安装提示**：若打开下载的安装包时提示 `“已损坏，无法打开”`，系 macOS Gatekeeper 安全机制对未签名文件的隔离标记，请在终端执行：
 > `sudo xattr -rd com.apple.quarantine /Applications/Dramaxis.app` 即可正常启动。
+
+---
+
+## ⚠️ 注意事项与使用须知
+
+- 🌟 **100% 开源免费**：本项目为遵循 MIT 协议的完全开源项目，客户端下载、全部核心功能与创作工具链路**无需支付任何软件授权或订阅费用**，绝无任何隐藏商业收费或强制付费门槛。
+- 🔑 **API Key 自行配置 (BYOK)**：本项目采用本地优先与端侧隐私保护架构，客户端不内置且不代售任何第三方大模型 Token 或 API 额度。创作过程所需调用的云端 LLM 大语言模型（通义千问、DeepSeek、OpenAI、Claude、Gemini 等）及商业人声语音引擎需要您**自行前往各服务商官网申请并配置专属 API Key**。所有 Key 均保存在本地系统级安全凭证库，绝不上传至任何第三方服务器。
+  > **💡 零成本体验提示**：若暂无商业大模型 API Key，可直接选用内置的 **Edge-TTS 广播级语音引擎** 与 **本地 Ollama / LMStudio 离线大模型**，无需配置任何 Key 即可实现全程 0 成本剪辑创作。
+- 💼 **定制开发与需求合作**：如有微短剧商业剧组定制、私有化工作流适配、多智能体深度编排等专属功能定制需求，欢迎随时通过官方邮箱联系沟通：
+  - 📧 **联系邮箱**：[`agions@qq.com`](mailto:agions@qq.com)
 
 ---
 

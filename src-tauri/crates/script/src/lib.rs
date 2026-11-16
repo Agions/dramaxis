@@ -314,7 +314,7 @@ impl LlmProvider for ClaudeProvider {
             .collect::<Vec<_>>()
             .join("");
 
-        let model = api.model.unwrap_or_else(|| "claude-3-7-sonnet-20250219".into());
+        let model = api.model.unwrap_or_else(|| self.default_model().to_string());
         let tokens_used = api
             .usage
             .map(|u| u.input_tokens + u.output_tokens)
@@ -482,7 +482,7 @@ pub fn openai(api_key: impl Into<String>) -> OpenAiProvider {
         LlmProviderKind::OpenAi,
         api_key,
         "https://api.openai.com/v1/chat/completions",
-        "gpt-5",
+        "gpt-6-astra",
     )
 }
 
@@ -765,7 +765,7 @@ mod tests {
             LlmProviderKind::OpenAi,
             "k",
             "http://127.0.0.1:1/v1/chat/completions", // 1 端口不可达
-            "gpt-4o-mini",
+            "gpt-6-astra",
         );
         let mgr = LlmManager::new(vec![Box::new(bad)]);
         let r = mgr
