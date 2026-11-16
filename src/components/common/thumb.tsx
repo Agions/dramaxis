@@ -8,7 +8,7 @@ import {
   ThumbnailImage as PureThumbnailImage,
   type ThumbnailImageProps as PureProps,
 } from "@dramaxis/ui";
-import { useAssets } from "@hooks/useAssets";
+import { useAssets } from "@hooks/assets";
 
 export interface ThumbnailImageProps extends Omit<PureProps, "fetchThumbnail"> {
   fetchThumbnail?: PureProps["fetchThumbnail"];

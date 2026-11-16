@@ -33,7 +33,7 @@ export default defineConfig({
       include: ["src/**/*.{ts,tsx}"],
       exclude: [
         // TanStack Router 自动生成的路由表
-        "src/routes/-routeTree.gen.ts",
+        "src/routes/-tree.gen.ts",
         // IPC 类型生成
         "packages/ipc/src/types.gen.ts",
         // 测试工具与 mock
@@ -60,7 +60,7 @@ export default defineConfig({
     // TanStack Router 必须在 React 之前 (v1.168+ 新约束)
     tanstackRouter({
       routesDirectory: "./src/routes",
-      generatedRouteTree: "./src/routes/-routeTree.gen.ts",
+      generatedRouteTree: "./src/routes/-tree.gen.ts",
       autoCodeSplitting: true,
     }),
     react(),

@@ -9,11 +9,11 @@
 
 import { memo, useCallback } from "react";
 import type { ConfigSnapshot } from "@dramaxis/ipc";
-import { LLM_OPTIONS, type LlmMeta } from "./llm/llmOptions";
-import { useLlmConnectionTest } from "./llm/useLlmConnectionTest";
-import { LlmProviderGrid } from "./llm/LlmProviderGrid";
-import { LlmConfigForm } from "./llm/LlmConfigForm";
-import { AgentModelMatrixCard } from "./llm/AgentModelMatrixCard";
+import { LLM_OPTIONS, type LlmMeta } from "./llm/opt";
+import { useLlmConnectionTest } from "./llm/test";
+import { LlmProviderGrid } from "./llm/grid";
+import { LlmConfigForm } from "./llm/form";
+import { AgentModelMatrixCard } from "./llm/matrix";
 
 // 重新导出以便消费方保持 100% 类型与常量向后兼容
 export { LLM_OPTIONS, type LlmMeta };

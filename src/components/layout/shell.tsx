@@ -14,7 +14,7 @@ import { TopBar } from "./top";
 import { CommandPalette } from "./cmd";
 import { useThemeStore, useSettingsStore } from "@dramaxis/core";
 import { settingsIpc } from "@dramaxis/ipc";
-import { useUpdate } from "@hooks/useUpdate";
+import { useUpdate } from "@hooks/update";
 
 export function AppShell() {
   const theme = useThemeStore((s) => s.theme);

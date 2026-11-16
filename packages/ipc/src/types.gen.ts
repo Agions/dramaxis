@@ -556,7 +556,7 @@ export interface ScriptArtifact {
   pacingScore?: number | null;
   conflictScore?: number | null;
   critiqueFeedback?: string | null;
-  critiqueSuggestions?: string[];
+  critiqueSuggestions: string[];
   createdAt: number;
 }
 
@@ -566,7 +566,7 @@ export interface VisualBriefArtifact {
   sceneCutsSec: number[];
   keyframePaths: string[];
   visualSummary: string;
-  shots?: ShotAnnotation[];
+  shots: ShotAnnotation[];
 }
 
 // Rust 端 SpeechInterval (pub struct, rename_all = "camelCase")
@@ -966,6 +966,19 @@ export interface AgentModelMatrix {
   director?: AgentModelOverride | null;
 }
 
+// Rust 端 SceneVisualFeature (pub struct, rename_all = "camelCase")
+export interface SceneVisualFeature {
+  sceneId: number;
+  startTime: number;
+  endTime: number;
+  duration: number;
+  keyframePath?: string | null;
+  motionIntensity: number;
+  emotionTag: string;
+  conflictScore: number;
+  visualSummary: string;
+}
+
 // Rust 端 FfmpegProbe (pub struct, rename_all = "camelCase")
 export interface FfmpegProbe {
   durationSeconds: number;
@@ -984,19 +997,6 @@ export type HardwareAccelerationKind =
   | "amf"
   | "vaapi"
   | "none";
-
-// Rust 端 SceneVisualFeature (pub struct, rename_all = "camelCase")
-export interface SceneVisualFeature {
-  sceneId: number;
-  startTime: number;
-  endTime: number;
-  duration: number;
-  keyframePath?: string | null;
-  motionIntensity: number;
-  emotionTag: string;
-  conflictScore: number;
-  visualSummary: string;
-}
 
 // Rust 端 CapcutSubtitleItem (pub struct, rename_all = "camelCase")
 export interface CapcutSubtitleItem {
@@ -1035,32 +1035,6 @@ export interface CapcutDraftResult {
   isJianyingInstalled: boolean;
   totalDurationSeconds: number;
 }
-
-// Rust 端 DedupOptions (pub struct, rename_all = "camelCase")
-export interface DedupOptions {
-  intensity: DedupIntensity;
-  enableZoom: boolean;
-  zoomRate: number;
-  enableSpeed: boolean;
-  speedRate: number;
-  enableMirror: boolean;
-  enableNoise: boolean;
-  noiseStrength: number;
-  enableFpsDrift: boolean;
-  fpsDriftVal: number;
-  enablePitchShift: boolean;
-  pitchShiftRate: number;
-  enableBgmReverb: boolean;
-  reverbDecay: number;
-  enableMetadataScrub: boolean;
-}
-
-// Rust 端 DedupIntensity (pub enum, rename_all = "kebab-case")
-export type DedupIntensity =
-  | "mild"
-  | "standard"
-  | "aggressive"
-  | "custom";
 
 // Rust 端 ExportParams (pub struct)
 export interface ExportParams {
@@ -1106,6 +1080,32 @@ export type SubtitleFormat =
   | "srt"
   | "ass"
   | "vtt";
+
+// Rust 端 MasterOptions (pub struct, rename_all = "camelCase")
+export interface DedupOptions {
+  intensity: DedupIntensity;
+  enableZoom: boolean;
+  zoomRate: number;
+  enableSpeed: boolean;
+  speedRate: number;
+  enableMirror: boolean;
+  enableNoise: boolean;
+  noiseStrength: number;
+  enableFpsDrift: boolean;
+  fpsDriftVal: number;
+  enablePitchShift: boolean;
+  pitchShiftRate: number;
+  enableBgmReverb: boolean;
+  reverbDecay: number;
+  enableMetadataScrub: boolean;
+}
+
+// Rust 端 MasterIntensity (pub enum, rename_all = "kebab-case")
+export type DedupIntensity =
+  | "mild"
+  | "standard"
+  | "aggressive"
+  | "custom";
 
 // Rust 端 RenderVideoParams (pub struct, rename_all = "camelCase")
 export interface RenderVideoParams {

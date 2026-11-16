@@ -18,8 +18,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { toast } from "sonner";
-import { useAssets } from "@hooks/useAssets";
-import { ThumbnailImage } from "@components/common/ThumbnailImage";
+import { useAssets } from "@hooks/assets";
+import { ThumbnailImage } from "@components/common/thumb";
 import { basename, formatBytes } from "@dramaxis/utils";
 import type { AssetEntry, AssetKind, ScanResult } from "@dramaxis/ipc";
 

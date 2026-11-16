@@ -8,10 +8,10 @@
 
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useSettingsStore, useUpdateStore, t } from "@dramaxis/core";
-import { DramaxisLogo } from "@components/common/DramaxisLogo";
+import { DramaxisLogo } from "@components/common/logo";
 
 interface NavItem {
-  to: "/" | "/production" | "/assets" | "/settings" | "/help";
+  to: "/" | "/prod" | "/assets" | "/settings" | "/help";
   key: string;
   icon: string;
   hint: string;
@@ -21,7 +21,7 @@ interface NavItem {
 const TOP_NAV_ITEMS: NavItem[] = [
   { to: "/", key: "nav.home", icon: "🏠", hint: "工作台" },
   {
-    to: "/production",
+    to: "/prod",
     key: "nav.production",
     icon: "🎬",
     hint: "Agent 创作",

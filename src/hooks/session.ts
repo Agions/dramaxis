@@ -15,9 +15,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { toast } from "sonner";
 import { projectIpc, scriptIpc, type ProjectRecord } from "@dramaxis/ipc";
-import { useAssets } from "@hooks/useAssets";
-import { useAgentWorkflow } from "@hooks/useAgentWorkflow";
-import { useProject } from "@hooks/useProject";
+import { useAssets } from "@hooks/assets";
+import { useAgentWorkflow } from "@hooks/agent";
+import { useProject } from "@hooks/project";
 import {
   useProjectStore,
   usePlaybackStore,

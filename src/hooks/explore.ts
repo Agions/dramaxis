@@ -12,8 +12,8 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { projectIpc, type MediaFile, type Project } from "@dramaxis/ipc";
-import { useAssets } from "@hooks/useAssets";
-import { useProject } from "@hooks/useProject";
+import { useAssets } from "@hooks/assets";
+import { useProject } from "@hooks/project";
 import { useProjectStore } from "@dramaxis/core";
 
 export interface UseAssetExplorerReturn {

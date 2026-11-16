@@ -8,12 +8,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { projectIpc } from "@dramaxis/ipc";
-import { useProject } from "@hooks/useProject";
-import { useAssetExplorer } from "@hooks/useAssetExplorer";
+import { useProject } from "@hooks/project";
+import { useAssetExplorer } from "@hooks/explore";
 import { useSettingsStore, t } from "@dramaxis/core";
-import { BatchImportDialog } from "@components/dialogs/BatchImportDialog";
-import { AssetExplorerToolbar } from "@components/assets/AssetExplorerToolbar";
-import { AssetMediaGrid } from "@components/assets/AssetMediaGrid";
+import { BatchImportDialog } from "@components/dialogs/import";
+import { AssetExplorerToolbar } from "@components/assets/tools";
+import { AssetMediaGrid } from "@components/assets/grid";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/assets")({
@@ -45,7 +45,7 @@ function AssetsPage() {
     try {
       const rec = await createBlank();
       toast.success(`已创建空白解说工程: ${rec.project.name}`);
-      void navigate({ to: "/production" });
+      void navigate({ to: "/prod" });
     } catch (e) {
       toast.error("创建空白项目失败", {
         description: e instanceof Error ? e.message : String(e),
@@ -56,7 +56,7 @@ function AssetsPage() {
   const handleOpenRecent = async (path: string) => {
     try {
       await open(path);
-      void navigate({ to: "/production" });
+      void navigate({ to: "/prod" });
     } catch (e) {
       toast.error("加载项目失败", {
         description: e instanceof Error ? e.message : String(e),

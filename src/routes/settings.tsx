@@ -12,10 +12,10 @@ import { settingsIpc, type ConfigSnapshot } from "@dramaxis/ipc";
 import { useSettingsStore, t } from "@dramaxis/core";
 import { Tabs } from "@dramaxis/ui";
 import { toast } from "sonner";
-import { LlmProvidersSection } from "../components/settings/LlmProvidersSection";
-import { TtsVoicesSection } from "../components/settings/TtsVoicesSection";
-import { EnvironmentSection } from "../components/settings/EnvironmentSection";
-import { KeybindingsSection } from "../components/settings/KeybindingsSection";
+import { LlmProvidersSection } from "@components/settings/llm";
+import { TtsVoicesSection } from "@components/settings/tts";
+import { EnvironmentSection } from "@components/settings/env";
+import { KeybindingsSection } from "@components/settings/keys";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,

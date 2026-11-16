@@ -19,7 +19,7 @@ import {
   type Project,
   type WorkflowProfile,
 } from "@dramaxis/ipc";
-import { useTauriEvent } from "./useTauriEvent";
+import { useTauriEvent } from "./event";
 import { toast } from "sonner";
 
 function formatSec(seconds: number): string {

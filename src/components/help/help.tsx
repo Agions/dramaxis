@@ -6,9 +6,9 @@
  */
 
 import { useMemo, useState, useEffect } from "react";
-import { useTauriQuery } from "@hooks/useTauriQuery";
+import { useTauriQuery } from "@hooks/query";
 import type { HelpCategory, HelpTopic, SearchHit } from "@dramaxis/ipc";
-import { DramaxisLogo } from "@components/common/DramaxisLogo";
+import { DramaxisLogo } from "@components/common/logo";
 
 interface Shortcut {
   keys: string[];

@@ -14,7 +14,7 @@ import {
 } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
-import { AppShell } from "@components/layout/AppShell";
+import { AppShell } from "@components/layout/shell";
 import { ErrorBoundary } from "@dramaxis/ui";
 import { useThemeStore } from "@dramaxis/core";
 

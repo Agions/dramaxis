@@ -121,7 +121,7 @@ export function CommandPalette() {
       qc.setQueryData(["assets-current-project"], rec.project);
       void qc.invalidateQueries({ queryKey: ["assets-recent"] });
       toast.success(`已创建空白项目 ${rec.project.name ?? rec.path}`);
-      navigateTo("/production");
+      navigateTo("/prod");
     } catch (e) {
       toast.error("创建失败", {
         description: e instanceof Error ? e.message : String(e),
@@ -172,7 +172,7 @@ export function CommandPalette() {
         group: "pages",
         shortcut: "G P",
         keywords: "流水线 pipeline 制作 production",
-        run: () => navigateTo("/production"),
+        run: () => navigateTo("/prod"),
       },
       {
         id: "page-assets",
@@ -280,7 +280,7 @@ export function CommandPalette() {
         group: "pipeline",
         shortcut: "⌘R",
         keywords: "启动 run start 流水线 制作",
-        run: () => navigateTo("/production"),
+        run: () => navigateTo("/prod"),
       },
     ],
     [theme, navigate],
@@ -302,7 +302,7 @@ export function CommandPalette() {
               const full = await projectIpc.load(path);
               qc.setQueryData(["assets-current-project"], full.project);
               toast.success(`已加载 ${full.project.name ?? base}`);
-              navigateTo("/production");
+              navigateTo("/prod");
             } catch (e) {
               toast.error("加载失败", {
                 description: e instanceof Error ? e.message : String(e),

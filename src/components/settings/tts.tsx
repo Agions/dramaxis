@@ -6,10 +6,10 @@
  */
 
 import type { ConfigSnapshot } from "@dramaxis/ipc";
-import { TTS_OPTIONS, type TtsMeta } from "./tts/ttsOptions";
-import { useTtsPreviewTest } from "./tts/useTtsPreviewTest";
-import { TtsProviderGrid } from "./tts/TtsProviderGrid";
-import { TtsEngineConfigCard } from "./tts/TtsEngineConfigCard";
+import { TTS_OPTIONS, type TtsMeta } from "./tts/opt";
+import { useTtsPreviewTest } from "./tts/test";
+import { TtsProviderGrid } from "./tts/grid";
+import { TtsEngineConfigCard } from "./tts/config";
 
 // Re-export types & constants for backward compatibility
 export type { TtsMeta };

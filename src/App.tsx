@@ -13,7 +13,7 @@
 
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { routeTree } from "./routes/-routeTree.gen";
+import { routeTree } from "./routes/-tree.gen";
 
 // ── TanStack Query 客户端（Gate 0 占位，无缓存策略）───────────────────
 const queryClient = new QueryClient({

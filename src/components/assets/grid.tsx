@@ -7,7 +7,7 @@
 
 import type { MediaFile } from "@dramaxis/ipc";
 import { Badge, Card } from "@dramaxis/ui";
-import { ThumbnailImage } from "@components/common/ThumbnailImage";
+import { ThumbnailImage } from "@components/common/thumb";
 
 export interface AssetMediaGridProps {
   mediaList: MediaFile[];

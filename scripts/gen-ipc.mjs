@@ -79,6 +79,8 @@ const TS_ALIASES = {
   SystemInfo: "AppSystemInfo",
   StepDef: "PipelineStepDef",
   DateTime: "string",
+  MasterOptions: "DedupOptions",
+  MasterIntensity: "DedupIntensity",
 };
 
 // 跳过生成的 internal / edge-case 类型 (与 IPC 无关或 wire 格式有手动 override)
@@ -122,6 +124,11 @@ const SKIP_TYPES = new Set([
   "AgentOrchestrator",
   "DagOrchestrator",
   "DagNode",
+  "GraphNode",
+  "SyncBarrier",
+  "StateGraph",
+  "AgentRuntimeDeps",
+  "RawExecError",
 ]);
 
 // ── 字符串工具 ──────────────────────────────────────────────────────

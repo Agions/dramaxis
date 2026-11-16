@@ -8,12 +8,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { BatchImportDialog } from "@components/dialogs/BatchImportDialog";
+import { BatchImportDialog } from "@components/dialogs/import";
 import { useSettingsStore } from "@dramaxis/core";
-import { useProject } from "@hooks/useProject";
+import { useProject } from "@hooks/project";
 import { toast } from "sonner";
 import { projectIpc } from "@dramaxis/ipc";
-import { DramaxisLogo } from "@components/common/DramaxisLogo";
+import { DramaxisLogo } from "@components/common/logo";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -36,7 +36,7 @@ function HomePage() {
     setIsCreating(true);
     try {
       await createBlank();
-      void navigate({ to: "/production" });
+      void navigate({ to: "/prod" });
       toast.success(
         locale === "en-US"
           ? "New Studio Project Created"
@@ -54,7 +54,7 @@ function HomePage() {
   const handleOpenProject = async (p: string) => {
     try {
       await open(p);
-      void navigate({ to: "/production" });
+      void navigate({ to: "/prod" });
     } catch (e) {
       toast.error("加载项目失败", {
         description: e instanceof Error ? e.message : String(e),
@@ -130,7 +130,7 @@ function HomePage() {
             </div>
             <button
               type="button"
-              onClick={() => void navigate({ to: "/production" })}
+              onClick={() => void navigate({ to: "/prod" })}
               className="text-xs font-bold text-gold hover:underline flex items-center gap-1 transition-all hover:gap-1.5"
             >
               <span>进入三栏创作工作台</span>
@@ -191,7 +191,7 @@ function HomePage() {
             ].map((s) => (
               <div
                 key={s.id}
-                onClick={() => void navigate({ to: "/production" })}
+                onClick={() => void navigate({ to: "/prod" })}
                 className="group flex flex-col justify-between rounded-xl border border-border bg-surface-elevated/60 p-3.5 cursor-pointer transition-all hover:border-gold/60 hover:shadow-md hover:bg-surface-elevated"
               >
                 <div>

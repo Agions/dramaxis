@@ -10,11 +10,11 @@
  */
 
 import { Link } from "@tanstack/react-router";
-import { useTauriQuery } from "@hooks/useTauriQuery";
+import { useTauriQuery } from "@hooks/query";
 import { useUiStore, useSettingsStore, t } from "@dramaxis/core";
 import { themeIpc } from "@dramaxis/ipc";
 import { toast } from "sonner";
-import { DramaxisLogo } from "@components/common/DramaxisLogo";
+import { DramaxisLogo } from "@components/common/logo";
 
 // TopBar 应用顶栏
 export function TopBar() {
