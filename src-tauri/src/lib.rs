@@ -33,12 +33,6 @@ use dramaxis_core::Translator;
 use dramaxis_storage::AssetService;
 use dramaxis_update::UpdateService;
 
-/// 占位命令 — 保留以便兼容 Gate 0 冒烟测试
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {name}! 你正在使用 dramaxis v1.1.0")
-}
-
 /// Tauri 入口（mobile 端另开 entry point）
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -86,7 +80,6 @@ pub fn run() {
         .manage(HelpRegistry::with_defaults())
         .manage(commands::agent::AgentServiceState::new())
         .invoke_handler(tauri::generate_handler![
-            greet,
             commands::app::app_version,
             commands::app::app_started_at,
             commands::app::app_system_info,

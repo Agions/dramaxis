@@ -23,6 +23,7 @@ thiserror = { workspace = true }
 walkdir = { workspace = true }
 mime_guess = "2"
 dirs = { workspace = true }
+ring = { workspace = true }
 sha2 = "0.10"
 rusqlite = { workspace = true }
 chrono = { workspace = true }

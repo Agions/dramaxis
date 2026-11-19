@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 平台母带直接渲染组件 (PlatformRenderCard)
+ * dramaxis v1.3.0 · 平台母带直接渲染组件 (PlatformRenderCard)
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.

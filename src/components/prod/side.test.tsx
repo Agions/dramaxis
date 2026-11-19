@@ -99,4 +99,26 @@ describe("ProductionLeftSidebar", () => {
     expect(screen.getByText("HITL")).toBeInTheDocument();
     expect(screen.getByText("● 运行中")).toBeInTheDocument();
   });
+
+  it("支持在列表视图与 StateGraph 拓扑视图之间无缝切换", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    render(
+      <ProductionLeftSidebar
+        currentStepIndex={0}
+        workflowProfile="standard_drama"
+      />,
+    );
+
+    // 默认列表模式
+    expect(screen.getByText("列表")).toBeInTheDocument();
+    expect(screen.getByText("拓扑")).toBeInTheDocument();
+
+    // 切换到拓扑模式
+    fireEvent.click(screen.getByText("拓扑"));
+    expect(screen.getByText("StateGraph 拓扑")).toBeInTheDocument();
+
+    // 切回列表模式
+    fireEvent.click(screen.getByText("列表"));
+    expect(screen.queryByText("StateGraph 拓扑")).not.toBeInTheDocument();
+  });
 });

@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · script/index.tsx · 剧本创作核心工坊子组件
+ * dramaxis v1.3.0 · script/index.tsx · 剧本创作核心工坊子组件
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.

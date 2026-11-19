@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · useTimelineDerivedClips
+ * dramaxis v1.3.0 · useTimelineDerivedClips
  *
  * 领域纯计算 Hook:
  * 将 Workshop 产物 (分镜切片、配音时长、对齐规划、字幕) 转化为 5 轨磁性时间轴片段数据

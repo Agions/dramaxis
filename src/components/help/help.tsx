@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · HelpPage · 电影调光室风格 官方帮助与交互式知识库中心
+ * dramaxis v1.3.0 · HelpPage · 电影调光室风格 官方帮助与交互式知识库中心
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.
@@ -19,10 +19,13 @@ const SHORTCUTS: Shortcut[] = [
   { keys: ["⌘", "K"], desc: "命令面板" },
   { keys: ["⌘", "R"], desc: "启动流水线" },
   { keys: ["⌘", "."], desc: "取消流水线" },
+  { keys: ["Space"], desc: "播放 / 暂停" },
+  { keys: ["⌘", "Z"], desc: "撤销操作" },
+  { keys: ["⇧", "⌘", "Z"], desc: "重做操作" },
   { keys: ["⌘", "S"], desc: "保存当前创作项目" },
   { keys: ["⌘", "N"], desc: "新建空白解说工程" },
   { keys: ["⌘", ","], desc: "打开模型与引擎设置" },
-  { keys: ["Esc"], desc: "关闭当前弹窗或中断" },
+  { keys: ["Esc"], desc: "清除选区 / 关闭弹窗" },
 ];
 
 const CATEGORY_FILTERS: Array<{ value: HelpCategory | null; label: string }> = [
@@ -278,7 +281,7 @@ export function HelpPage() {
         )}
         {/* 5. 官方署名与致谢 */}
         <footer className="pt-6 border-t border-border flex items-center justify-between text-[11px] text-text-muted">
-          <span>Dramaxis 影视智能体平台 v1.2.0</span>
+          <span>Dramaxis 影视智能体平台 v1.3.0</span>
           <span>作者 (Author): <span className="text-gold font-medium">Agions</span></span>
         </footer>
       </div>

@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · useLlmConnectionTest
+ * dramaxis v1.3.0 · useLlmConnectionTest
  *
  * LLM 连通性测试与延迟探测领域 Hook
  */

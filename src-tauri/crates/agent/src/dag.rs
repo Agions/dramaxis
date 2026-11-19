@@ -45,7 +45,7 @@ pub struct DagOrchestrator {
     pub event_emitter: Option<EventEmitter>,
     pub critique_count: u32,
     pub max_critique_rounds: u32,
-    pub deps: Arc<crate::deps::AgentRuntimeDeps>,
+    pub deps: Arc<std::sync::RwLock<crate::deps::AgentRuntimeDeps>>,
 }
 
 impl DagOrchestrator {
@@ -58,51 +58,66 @@ impl DagOrchestrator {
     pub fn with_profile(context: AgentContext, profile: WorkflowProfile) -> Self {
         let max_critique_rounds = 2;
         let mut graph = StateGraph::<AgentContext>::new();
+        let deps = Arc::new(std::sync::RwLock::new(crate::deps::AgentRuntimeDeps::default()));
 
         let nodes = match profile {
             WorkflowProfile::StandardDrama => {
                 // 1. 注册图节点
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("director_plan", "🎬 总控导演 · 统筹策划与任务派发", AgentRole::Director)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "director_plan"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "director_plan", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("visual_analysis", "👁️ 视觉分析师 · 场景突变硬切与关键帧萃取", AgentRole::VisualCritic)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "visual_analysis"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "visual_analysis", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("dialogue_probe", "🎧 音频分析师 · 原片原声对白与节奏探测", AgentRole::SoundEngineer)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "dialogue_probe"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "dialogue_probe", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("screenwriter_draft", "✍️ 金牌编剧 · 第一人称爆款解说撰写", AgentRole::Screenwriter)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "screenwriter_draft"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "screenwriter_draft", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("critic_review", "🔍 剧本质检 · 节奏密度与黄金前3秒评审闭环", AgentRole::QualityReviewer)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "critic_review"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "critic_review", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("hitl_approval", "🤝 人机协同 · 剧本精修与终版确认 (HITL)", AgentRole::Director)
                         .with_hitl(true)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "hitl_approval"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "hitl_approval", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("voice_synthesis", "🎙️ 配音师 · 48kHz 影视广播级人声合成", AgentRole::VoiceArtist)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "voice_synthesis"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "voice_synthesis", current_deps))
                         }))
                         .with_fallback(Arc::new(|ctx| {
                             Box::pin(async move {
@@ -115,16 +130,20 @@ impl DagOrchestrator {
                             })
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("timeline_compose", "🎛️ 音频调音师 · 5轨毫秒级磁吸与智能避让", AgentRole::SoundEngineer)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "timeline_compose"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "timeline_compose", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("quality_gate", "🛡️ 终审守门员 · 视听合规与全案质检", AgentRole::QualityReviewer)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "quality_gate"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "quality_gate", current_deps))
                         })),
                 );
 
@@ -269,47 +288,61 @@ impl DagOrchestrator {
                 ]
             }
             WorkflowProfile::FastCommentary => {
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("director_plan", "🎬 总控导演 · 统筹策划与任务派发", AgentRole::Director)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "director_plan"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "director_plan", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("visual_analysis", "👁️ 视觉分析师 · 场景关键帧萃取", AgentRole::VisualCritic)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "visual_analysis"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "visual_analysis", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("screenwriter_draft", "✍️ 金牌编剧 · 极速解说文案撰写", AgentRole::Screenwriter)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "screenwriter_draft"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "screenwriter_draft", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("hitl_approval", "🤝 人机协同 · 文案终审确认 (HITL)", AgentRole::Director)
                         .with_hitl(true)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "hitl_approval"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "hitl_approval", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("voice_synthesis", "🎙️ 配音师 · 快速独白人声合成", AgentRole::VoiceArtist)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "voice_synthesis"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "voice_synthesis", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("timeline_compose", "🎛️ 音频调音师 · 5轨极速对齐", AgentRole::SoundEngineer)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "timeline_compose"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "timeline_compose", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("quality_gate", "🛡️ 终审守门员 · 快速成片验收", AgentRole::QualityReviewer)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "quality_gate"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "quality_gate", current_deps))
                         })),
                 );
 
@@ -394,28 +427,36 @@ impl DagOrchestrator {
                 ]
             }
             WorkflowProfile::PureBrollMontage => {
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("director_plan", "🎬 总控导演 · 混剪统筹与节奏打点", AgentRole::Director)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "director_plan"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "director_plan", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("visual_analysis", "👁️ 视觉分析师 · 镜头突变高能切点分析", AgentRole::VisualCritic)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "visual_analysis"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "visual_analysis", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("timeline_compose", "🎛️ 混剪师 · 卡点转场与 BGM 动态混流", AgentRole::SoundEngineer)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "timeline_compose"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "timeline_compose", current_deps))
                         })),
                 );
+                let d = deps.clone();
                 graph.add_node(
                     GraphNode::new("quality_gate", "🛡️ 终审守门员 · 视听连贯度终验", AgentRole::QualityReviewer)
-                        .with_handler(Arc::new(|ctx| {
-                            Box::pin(Self::execute_static_node_logic(ctx, "quality_gate"))
+                        .with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, "quality_gate", current_deps))
                         })),
                 );
 
@@ -475,12 +516,14 @@ impl DagOrchestrator {
             event_emitter: None,
             critique_count: 0,
             max_critique_rounds,
-            deps: Arc::new(crate::deps::AgentRuntimeDeps::default()),
+            deps,
         }
     }
 
-    pub fn with_deps(mut self, deps: Arc<crate::deps::AgentRuntimeDeps>) -> Self {
-        self.deps = deps;
+    pub fn with_deps(self, deps: Arc<crate::deps::AgentRuntimeDeps>) -> Self {
+        if let Ok(mut lock) = self.deps.write() {
+            *lock = (*deps).clone();
+        }
         self
     }
 
@@ -846,6 +889,7 @@ impl DagOrchestrator {
     pub async fn execute_static_node_logic(
         context: Arc<RwLock<AgentContext>>,
         node_id: &str,
+        deps: Arc<crate::deps::AgentRuntimeDeps>,
     ) -> DramaxisResult<String> {
         match node_id {
             "director_plan" => {
@@ -948,7 +992,7 @@ impl DagOrchestrator {
             "screenwriter_draft" => {
                 let mut ctx = context.write().await;
                 let agent = ScreenwriterAgent;
-                let res = agent.execute(&mut ctx).await?;
+                let res = agent.execute_with_deps(&mut ctx, &deps).await?;
                 Ok(res.unwrap_or_else(|| "第一人称叙述剧本撰写完成".into()))
             }
             "critic_review" => {
@@ -996,7 +1040,7 @@ impl DagOrchestrator {
 
                 // 2. 主观层：调用 LLM-as-a-Judge 深度文学裁判 (若已配置模型)
                 let (kind, api_key, model_override, base_url, _temp) =
-                    resolve_agent_llm(&ctx, AgentRole::QualityReviewer);
+                    deps.resolve_agent_llm(AgentRole::QualityReviewer);
 
                 if !api_key.trim().is_empty() {
                     let provider = dramaxis_script::factory_custom(kind, api_key, base_url);

@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · ScriptStudioPanel · AI 独白与剧本创作工坊 (瘦身聚合器)
+ * dramaxis v1.3.0 · ScriptStudioPanel · AI 独白与剧本创作工坊 (瘦身聚合器)
  *
  * 核心功能:
  * - 11 大主流 LLM 大模型选择 (Qwen 3.8 / GPT-5.6 / DeepSeek V4...) 与连通性极速测速
@@ -13,6 +13,7 @@
 
 import { memo, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@dramaxis/ui";
 import { settingsIpc, type Blackboard } from "@dramaxis/ipc";
 import { HookEngineCard } from "./script/hook";
 import { ReferenceDeconstructCard } from "./script/decon";
@@ -203,16 +204,18 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
       </div>
 
       {/* 7. 重建 AI 剧本按钮 */}
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        size="md"
         onClick={onGenerateScript}
         disabled={isGeneratingScript}
-        className="w-full rounded-xl bg-gradient-to-r from-gold to-amber py-2.5 text-xs font-bold text-zinc-950 shadow-[0_0_16px_var(--color-gold-glow)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
+        loading={isGeneratingScript}
+        className="w-full bg-gradient-to-r from-gold to-amber text-zinc-950 shadow-[0_0_16px_var(--color-gold-glow)]"
       >
         {isGeneratingScript
-          ? "🤖 AI 正在生成独白剧本..."
+          ? "AI 正在生成独白剧本..."
           : "⚡ 重新生成 AI 剧本"}
-      </button>
+      </Button>
     </div>
   );
 });

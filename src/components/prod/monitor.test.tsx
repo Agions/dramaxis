@@ -112,4 +112,35 @@ describe("CinemaMonitor", () => {
 
     expect(screen.getByText("三年之期已到，龙王归来！")).toBeInTheDocument();
   });
+
+  it("支持 9:16 短剧与 16:9 影视长剧一键构图切换及短剧安全区网格切换", () => {
+    render(
+      <CinemaMonitor
+        hasUploadedVideo={true}
+        mediaPath="/videos/short_drama.mp4"
+        isPlaying={false}
+        currentTime={0}
+        duration={60}
+        onTogglePlay={vi.fn()}
+        onImportVideo={vi.fn()}
+      />,
+    );
+
+    // 默认展示 9:16 短剧
+    expect(screen.getByText(/9:16 \(1080×1920\)/)).toBeInTheDocument();
+
+    // 切换到 16:9 影视
+    const wideBtn = screen.getByText("16:9 影视");
+    fireEvent.click(wideBtn);
+    expect(screen.getByText(/16:9 \(1920×1080\)/)).toBeInTheDocument();
+
+    // 切回 9:16 并打开安全区
+    const vertBtn = screen.getByText("9:16 短剧");
+    fireEvent.click(vertBtn);
+    expect(screen.getByText(/9:16 \(1080×1920\)/)).toBeInTheDocument();
+
+    const safeZoneBtn = screen.getByText("安全区");
+    fireEvent.click(safeZoneBtn);
+    expect(screen.getByText(/黄金字幕区/)).toBeInTheDocument();
+  });
 });

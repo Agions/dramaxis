@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · AgentModelMatrixCard
+ * dramaxis v1.3.0 · AgentModelMatrixCard
  *
  * 异构智能体专精模型矩阵配置卡片 (可折叠)
  */

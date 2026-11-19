@@ -567,38 +567,34 @@ pub fn save_checkpoint(
     Ok(insert_id)
 }
 
-/// 执行 Undo：回退一步操作
+/// 执行 Undo：回退一步操作 (至少保留初始基准快照)
 pub fn undo(conn: &mut Connection, project_id: &str) -> SqlResult<Option<Project>> {
     let prev_snapshot = {
         let tx = conn.transaction()?;
 
-        // 找到最近的一个未撤销快照并将其标记为已撤销
-        let latest_active_id: Option<i64> = tx
-            .query_row(
-                "SELECT id FROM undo_redo_log WHERE project_id = ?1 AND is_undone = 0 ORDER BY id DESC LIMIT 1",
-                params![project_id],
-                |row| row.get(0),
-            )
-            .ok();
+        // 查找当前活动的两个最新快照
+        let checkpoints: Vec<(i64, String)> = {
+            let mut stmt = tx.prepare(
+                "SELECT id, snapshot_json FROM undo_redo_log WHERE project_id = ?1 AND is_undone = 0 ORDER BY id DESC LIMIT 2",
+            )?;
+            let rows = stmt.query_map(params![project_id], |row| {
+                Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
+            })?;
+            rows.filter_map(|r| r.ok()).collect()
+        };
 
-        if let Some(active_id) = latest_active_id {
+        if checkpoints.len() >= 2 {
+            let active_id = checkpoints[0].0;
+            let target_snapshot = checkpoints[1].1.clone();
+
             tx.execute(
                 "UPDATE undo_redo_log SET is_undone = 1 WHERE id = ?1",
                 params![active_id],
             )?;
-
-            // 查找上一个快照
-            let snapshot: Option<String> = tx
-                .query_row(
-                    "SELECT snapshot_json FROM undo_redo_log WHERE project_id = ?1 AND is_undone = 0 ORDER BY id DESC LIMIT 1",
-                    params![project_id],
-                    |row| row.get(0),
-                )
-                .ok();
-
             tx.commit()?;
-            snapshot
+            Some(target_snapshot)
         } else {
+            // 只有一个或零个快照，已达最早期基准状态，不可继续回退
             tx.commit()?;
             None
         }

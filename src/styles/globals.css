@@ -1,9 +1,8 @@
-/** dramaxis v1.1.0 · 剧枢 · 设计系统
+/** dramaxis v1.3.0 · 剧枢 · 设计系统
  * 主题系统：支持 Cinematic Darkroom (黑金调光室) 与 Light Mode (极简浅色模式)
  * 完美消除跨主题样式穿透与重叠冲突
  */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -11,6 +10,7 @@
   --color-surface: var(--color-surface);
   --color-surface-elevated: var(--color-surface-elevated);
   --color-surface-overlay: var(--color-surface-overlay);
+  --color-surface-muted: var(--color-surface-muted);
   --color-border: var(--color-border);
   --color-border-focus: var(--color-border-focus);
 
@@ -34,6 +34,7 @@
   --color-surface: #161619; /* 卡片/面板 */
   --color-surface-elevated: #1e1e22; /* 悬浮/激活态 */
   --color-surface-overlay: #252529; /* 下拉/弹窗 */
+  --color-surface-muted: rgba(255, 255, 255, 0.04);
   --color-border: #2a2a2f; /* 分割线 */
   --color-border-focus: rgba(245, 200, 66, 0.5);
 
@@ -62,6 +63,7 @@ html[data-theme="light"] {
   --color-surface: #ffffff; /* 纯白卡片 */
   --color-surface-elevated: #f0f0f6; /* 悬浮浅灰 */
   --color-surface-overlay: #ffffff;
+  --color-surface-muted: rgba(0, 0, 0, 0.03);
   --color-border: #e2e2e8; /* 纤细浅灰色边框 */
   --color-border-focus: rgba(217, 119, 6, 0.5);
 
@@ -269,4 +271,19 @@ html[data-theme="light"] .glass-card:hover {
   background: linear-gradient(to right, var(--color-gold), var(--color-amber));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

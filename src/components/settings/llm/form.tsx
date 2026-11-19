@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · LlmConfigForm
+ * dramaxis v1.3.0 · LlmConfigForm
  *
  * 模型详细参数配置卡片 (API Key / Model / Base URL / 连通性测试)
  */

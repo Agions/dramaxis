@@ -85,19 +85,24 @@ pub fn parse_probe_json(json: &str) -> DramaxisResult<FfmpegProbe> {
         .iter()
         .find(|s| s["codec_type"].as_str() == Some("audio"));
 
-    let video = video_stream.ok_or_else(|| DramaxisError::Ffmpeg("未找到视频流".into()))?;
+    if video_stream.is_none() && audio_stream.is_none() {
+        return Err(DramaxisError::Ffmpeg("未找到可用的音视频流".into()));
+    }
 
-    let width = video["width"]
-        .as_u64()
-        .ok_or_else(|| DramaxisError::Ffmpeg("视频流缺少 width".into()))? as u32;
-    let height = video["height"]
-        .as_u64()
-        .ok_or_else(|| DramaxisError::Ffmpeg("视频流缺少 height".into()))? as u32;
+    let (width, height, video_codec) = if let Some(video) = video_stream {
+        let w = video["width"].as_u64().unwrap_or(0) as u32;
+        let h = video["height"].as_u64().unwrap_or(0) as u32;
+        let codec = video["codec_name"].as_str().map(|s| s.to_string());
+        (w, h, codec)
+    } else {
+        (0, 0, None)
+    };
 
     let format = &parsed["format"];
     let duration_str = format["duration"]
         .as_str()
-        .or_else(|| video["duration"].as_str());
+        .or_else(|| video_stream.and_then(|v| v["duration"].as_str()))
+        .or_else(|| audio_stream.and_then(|a| a["duration"].as_str()));
 
     let duration_seconds = duration_str
         .and_then(|s| s.parse::<f64>().ok())
@@ -108,7 +113,6 @@ pub fn parse_probe_json(json: &str) -> DramaxisResult<FfmpegProbe> {
         .and_then(|s| s.parse::<u64>().ok())
         .unwrap_or(0);
 
-    let video_codec = video["codec_name"].as_str().map(|s| s.to_string());
     let audio_codec = audio_stream
         .and_then(|a| a["codec_name"].as_str())
         .map(|s| s.to_string());
@@ -121,4 +125,31 @@ pub fn parse_probe_json(json: &str) -> DramaxisResult<FfmpegProbe> {
         audio_codec,
         size_bytes,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_audio_only_probe() {
+        let json = r#"{
+            "streams": [
+                {
+                    "codec_type": "audio",
+                    "codec_name": "mp3",
+                    "duration": "12.34"
+                }
+            ],
+            "format": {
+                "size": "102400"
+            }
+        }"#;
+        let probe = parse_probe_json(json).expect("parse audio probe");
+        assert_eq!(probe.width, 0);
+        assert_eq!(probe.height, 0);
+        assert_eq!(probe.audio_codec.as_deref(), Some("mp3"));
+        assert_eq!(probe.video_codec, None);
+        assert!((probe.duration_seconds - 12.34).abs() < 1e-4);
+    }
 }

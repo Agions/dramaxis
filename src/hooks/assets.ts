@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 素材资产管理 Hook
+ * dramaxis v1.3.0 · 素材资产管理 Hook
  *
  * 数据源:
  * - 单一真相源 = project.media_files (从 useProjectStore.current 派生)

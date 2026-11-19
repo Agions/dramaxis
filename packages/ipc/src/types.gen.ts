@@ -966,6 +966,12 @@ export interface AgentModelMatrix {
   director?: AgentModelOverride | null;
 }
 
+// Rust 端 RawExecOutput (pub struct)
+export interface RawExecOutput {
+  stdout: string;
+  stderr: string;
+}
+
 // Rust 端 SceneVisualFeature (pub struct, rename_all = "camelCase")
 export interface SceneVisualFeature {
   sceneId: number;

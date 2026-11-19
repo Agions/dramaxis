@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 轨道控制头组件 (TrackHeader)
+ * dramaxis v1.3.0 · 轨道控制头组件 (TrackHeader)
  */
 
 export type TrackId = "V1" | "HK" | "A1" | "SUB" | "BGM";

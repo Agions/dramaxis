@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 应用顶栏 — 电影调光室主题
+ * dramaxis v1.3.0 · 应用顶栏 — 电影调光室主题
  * - Logo（钢笔+播放键图标）+ 品牌名 + 版本
  * - 项目名称选择器（居中）
  * - Tauri 连接状态 + 设置入口
@@ -44,7 +44,7 @@ export function TopBar() {
               Dramaxis
             </div>
             <div className="text-[10px] tracking-widest uppercase text-text-muted">
-              剧枢 · v{version ?? "1.2.0"}
+              剧枢 · v{version ?? "1.3.0"}
             </div>
           </div>
         </Link>

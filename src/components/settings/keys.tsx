@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 设置中心 · 全局与工作台快捷键表 (KeybindingsSection)
+ * dramaxis v1.3.0 · 设置中心 · 全局与工作台快捷键表 (KeybindingsSection)
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.
@@ -9,21 +9,28 @@ import { Card } from "@dramaxis/ui";
 
 export function KeybindingsSection() {
   const SHORTCUTS = [
-    { key: "Space", desc: "时间轴播放 / 暂停切换", scope: "全局 / 制作台" },
+    { key: "Space", desc: "时间轴播放 / 暂停切换", scope: "制作台 / 监看台" },
+    { key: "⌘ / Ctrl + Z", desc: "事务级撤销 (Undo)", scope: "全局" },
+    { key: "⇧ + ⌘ / Ctrl + Z", desc: "事务级重做 (Redo)", scope: "全局" },
     {
       key: "⌘ / Ctrl + S",
       desc: "保存当前工程快照至本地 SQLite",
       scope: "全局",
     },
     { key: "⌘ / Ctrl + K", desc: "唤起全局智能命令面板", scope: "全局" },
-    { key: "← / →", desc: "时间轴前后步进 1 帧", scope: "制作台" },
-    { key: "Shift + ← / →", desc: "时间轴快速跳转 1 秒", scope: "制作台" },
+    { key: "← / →", desc: "时间轴微调步进 0.2 秒", scope: "制作台" },
+    { key: "Shift + ← / →", desc: "时间轴快进/快退 1.0 秒", scope: "制作台" },
+    { key: "Home / End", desc: "直接定位到时间轴头/尾", scope: "制作台" },
+    { key: "I", desc: "设定选区入点 (Mark In)", scope: "制作台" },
+    { key: "O", desc: "设定选区出点 (Mark Out)", scope: "制作台" },
     {
-      key: "Delete / Backspace",
-      desc: "删除当前选中的时间轴片段",
-      scope: "制作台",
+      key: "Esc",
+      desc: "清除 Mark 选区 / 取消片段选中 / 关闭模态弹窗",
+      scope: "全局",
     },
-    { key: "Esc", desc: "关闭当前打开的模态弹窗或退出全屏", scope: "全局" },
+    { key: "M", desc: "静音/显示所选轨道", scope: "制作台" },
+    { key: "S", desc: "独奏/独显所选轨道", scope: "制作台" },
+    { key: "L", desc: "锁定/解锁轨道", scope: "制作台" },
   ];
 
   return (

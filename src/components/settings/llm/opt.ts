@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 大语言模型厂商元数据定义 (SSOT)
+ * dramaxis v1.3.0 · 大语言模型厂商元数据定义 (SSOT)
  */
 
 export interface LlmMeta {

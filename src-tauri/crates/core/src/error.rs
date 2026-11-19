@@ -90,6 +90,46 @@ pub enum LlmProviderKind {
     Qwen37,
 }
 
+impl std::str::FromStr for LlmProviderKind {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let normalized = s.trim().to_lowercase().replace('_', "-");
+        Ok(match normalized.as_str() {
+            "openai" | "open-ai" | "custom" => Self::OpenAi,
+            "claude" | "anthropic" => Self::Claude,
+            "gemini" | "google" => Self::Gemini,
+            "qwen" => Self::Qwen,
+            "qwen37" | "qwen-37" => Self::Qwen37,
+            "kimi" | "moonshot" => Self::Kimi,
+            "glm" | "glm5" | "glm-5" | "zhipu" => Self::Glm5,
+            "doubao" | "bytedance" => Self::Doubao,
+            "hunyuan" | "tencent" => Self::Hunyuan,
+            "local" | "ollama" | "vllm" => Self::Local,
+            _ => Self::DeepSeek,
+        })
+    }
+}
+
+impl std::fmt::Display for LlmProviderKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = match self {
+            Self::Qwen => "qwen",
+            Self::Kimi => "kimi",
+            Self::Glm5 => "glm5",
+            Self::Claude => "claude",
+            Self::Gemini => "gemini",
+            Self::DeepSeek => "deepseek",
+            Self::Doubao => "doubao",
+            Self::Hunyuan => "hunyuan",
+            Self::Local => "local",
+            Self::OpenAi => "openai",
+            Self::Qwen37 => "qwen37",
+        };
+        write!(f, "{name}")
+    }
+}
+
 /// TTS 引擎标识
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]

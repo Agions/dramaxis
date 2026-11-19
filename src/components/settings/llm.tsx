@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · LlmProvidersSection
+ * dramaxis v1.3.0 · LlmProvidersSection
  *
  * 设置中心 · 大语言模型配置总控区 (分层模块化架构)
  *

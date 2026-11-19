@@ -104,6 +104,7 @@ export interface WorkshopState {
   setDirtyState: (updater: (prev: DirtyState) => DirtyState) => void;
   markDirty: (key: keyof DirtyState, value?: boolean) => void;
   resetAllDirty: () => void;
+  resetProjectState: () => void;
 }
 
 const initialDirtyState: DirtyState = {
@@ -171,4 +172,18 @@ export const useWorkshopStore = create<WorkshopState>((set) => ({
       dirtyState: { ...state.dirtyState, [key]: value },
     })),
   resetAllDirty: () => set({ dirtyState: initialDirtyState }),
+  resetProjectState: () =>
+    set({
+      sceneCuts: [],
+      subtitleSegments: [],
+      userPrompt: "",
+      scriptText: "",
+      isGeneratingScript: false,
+      voiceAudioPath: null,
+      voiceDuration: 0,
+      bgmPath: null,
+      alignmentPlan: null,
+      isAligning: false,
+      dirtyState: initialDirtyState,
+    }),
 }));

@@ -12,10 +12,12 @@ use std::sync::Arc;
 use tauri::{Emitter, State};
 use tokio::sync::RwLock;
 
-// 内部状态管理器 (同时支持传统分步编排与 DAG 状态机)
+// 内部状态管理器 (同时支持传统分步编排与非阻塞 DAG 状态机)
 pub struct AgentServiceState {
     pub orchestrator: Arc<RwLock<Option<AgentOrchestrator>>>,
-    pub dag: Arc<RwLock<Option<DagOrchestrator>>>,
+    pub dag: Arc<tokio::sync::Mutex<Option<DagOrchestrator>>>,
+    pub active_context: Arc<RwLock<Option<Arc<RwLock<AgentContext>>>>>,
+    pub latest_snapshot: Arc<RwLock<Option<DagSnapshot>>>,
 }
 
 impl Default for AgentServiceState {
@@ -28,7 +30,9 @@ impl AgentServiceState {
     pub fn new() -> Self {
         Self {
             orchestrator: Arc::new(RwLock::new(None)),
-            dag: Arc::new(RwLock::new(None)),
+            dag: Arc::new(tokio::sync::Mutex::new(None)),
+            active_context: Arc::new(RwLock::new(None)),
+            latest_snapshot: Arc::new(RwLock::new(None)),
         }
     }
 }
@@ -57,7 +61,21 @@ pub async fn agent_start(
             ctx.memory.insert("llm_base_url".to_string(), base_url);
         }
         if let Some(matrix) = snap.agent_model_matrix {
-            if let Ok(matrix_json) = serde_json::to_string(&matrix) {
+            let mut sanitized_matrix = matrix.clone();
+            if let Some(ref mut vc) = sanitized_matrix.visual_critic {
+                vc.api_key = None;
+            }
+            if let Some(ref mut sw) = sanitized_matrix.screenwriter {
+                sw.api_key = None;
+            }
+            if let Some(ref mut qr) = sanitized_matrix.quality_reviewer {
+                qr.api_key = None;
+            }
+            if let Some(ref mut dir) = sanitized_matrix.director {
+                dir.api_key = None;
+            }
+
+            if let Ok(matrix_json) = serde_json::to_string(&sanitized_matrix) {
                 ctx.memory
                     .insert("agent_model_matrix_json".to_string(), matrix_json);
             }
@@ -67,7 +85,15 @@ pub async fn agent_start(
     }
 
     let handle_clone = app_handle.clone();
+    let snapshot_cell = state.latest_snapshot.clone();
     let emitter = Arc::new(move |payload: AgentEventPayload| {
+        if let AgentEventPayload::DagProgress { ref snapshot } = payload {
+            let snap = snapshot.clone();
+            let sc = snapshot_cell.clone();
+            tokio::spawn(async move {
+                *sc.write().await = Some(snap);
+            });
+        }
         let _ = handle_clone.emit("agent://event", payload);
     });
 
@@ -76,12 +102,16 @@ pub async fn agent_start(
         .with_emitter(emitter)
         .with_deps(Arc::new(runtime_deps));
 
+    let initial_snapshot = dag.snapshot().await;
+    *state.latest_snapshot.write().await = Some(initial_snapshot);
+    *state.active_context.write().await = Some(dag.context.clone());
+
     {
         let mut orch_lock = state.orchestrator.write().await;
         *orch_lock = Some(orch);
     }
     {
-        let mut dag_lock = state.dag.write().await;
+        let mut dag_lock = state.dag.lock().await;
         *dag_lock = Some(dag);
     }
 
@@ -93,7 +123,7 @@ pub async fn agent_start(
 pub async fn agent_run_dag(
     state: State<'_, AgentServiceState>,
 ) -> Result<Option<BreakpointRequest>, DramaxisError> {
-    let mut lock = state.dag.write().await;
+    let mut lock = state.dag.lock().await;
     if let Some(dag) = lock.as_mut() {
         dag.run_dag()
             .await
@@ -112,7 +142,7 @@ pub async fn agent_resume_breakpoint(
     feedback: Option<String>,
     state: State<'_, AgentServiceState>,
 ) -> Result<Option<BreakpointRequest>, DramaxisError> {
-    let mut lock = state.dag.write().await;
+    let mut lock = state.dag.lock().await;
     if let Some(dag) = lock.as_mut() {
         dag.resume_breakpoint(&action, feedback)
             .await
@@ -129,7 +159,11 @@ pub async fn agent_resume_breakpoint(
 pub async fn agent_get_dag_snapshot(
     state: State<'_, AgentServiceState>,
 ) -> Result<Option<DagSnapshot>, DramaxisError> {
-    let lock = state.dag.read().await;
+    // 优先读取无锁实时快照缓存，彻底消除长耗时 DAG 执行过程中的读锁饥饿
+    if let Some(snap) = state.latest_snapshot.read().await.clone() {
+        return Ok(Some(snap));
+    }
+    let lock = state.dag.lock().await;
     if let Some(dag) = lock.as_ref() {
         let snap = dag.snapshot().await;
         Ok(Some(snap))
@@ -159,9 +193,8 @@ pub async fn agent_step(
 pub async fn agent_get_context(
     state: State<'_, AgentServiceState>,
 ) -> Result<Option<AgentContext>, DramaxisError> {
-    let dag_lock = state.dag.read().await;
-    if let Some(dag) = dag_lock.as_ref() {
-        let ctx = dag.context.read().await;
+    if let Some(ctx_arc) = state.active_context.read().await.clone() {
+        let ctx = ctx_arc.read().await;
         return Ok(Some(ctx.sanitized_for_ipc()));
     }
     let lock = state.orchestrator.read().await;
@@ -179,9 +212,8 @@ pub async fn agent_get_context(
 pub async fn agent_get_blackboard(
     state: State<'_, AgentServiceState>,
 ) -> Result<Option<Blackboard>, DramaxisError> {
-    let dag_lock = state.dag.read().await;
-    if let Some(dag) = dag_lock.as_ref() {
-        let ctx = dag.context.read().await;
+    if let Some(ctx_arc) = state.active_context.read().await.clone() {
+        let ctx = ctx_arc.read().await;
         return Ok(Some(ctx.blackboard.clone()));
     }
     let orch_lock = state.orchestrator.read().await;
@@ -199,9 +231,8 @@ pub async fn agent_rollback_script(
     version: u32,
     state: State<'_, AgentServiceState>,
 ) -> Result<bool, DramaxisError> {
-    let dag_lock = state.dag.read().await;
-    if let Some(dag) = dag_lock.as_ref() {
-        let mut ctx = dag.context.write().await;
+    if let Some(ctx_arc) = state.active_context.read().await.clone() {
+        let mut ctx = ctx_arc.write().await;
         let success = ctx.blackboard.rollback_script_to_version(version);
         if success {
             let active_text = ctx.blackboard.active_script().map(|s| s.text.clone());

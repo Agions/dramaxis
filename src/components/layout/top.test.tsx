@@ -12,7 +12,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 vi.mock("@hooks/query", () => ({
   useTauriQuery: () => ({
-    data: "1.2.0",
+    data: "1.3.0",
     isError: false,
     isLoading: false,
   }),
@@ -29,7 +29,7 @@ describe("TopBar", () => {
     render(<TopBar />);
 
     expect(screen.getByText("Dramaxis")).toBeInTheDocument();
-    expect(screen.getByText(/v1\.2\.0/)).toBeInTheDocument();
+    expect(screen.getByText(/v1\.3\.0/)).toBeInTheDocument();
     expect(screen.getByText("已连接")).toBeInTheDocument();
   });
 

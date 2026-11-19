@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * @file check-naming.mjs
+ * @file check.mjs
  * @description 检查项目中所有文件与目录名是否严格受控在 8 个单词以内 (Word Count <= 8)
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.
  */
 
-import { readdirSync, statSync } from 'node:fs';
-import { join, basename, relative } from 'node:path';
+import { readdirSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,8 +21,10 @@ const EXCLUDE_DIRS = new Set([
   'node_modules',
   'target',
   'dist',
+  'coverage',
   'cache',
   '.temp',
+  '.tanstack',
   '.vitepress'
 ]);
 

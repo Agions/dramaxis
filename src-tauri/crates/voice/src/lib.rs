@@ -6,8 +6,6 @@
 //! - `sovits`: GPT-SoVITS 本地推理 API (sovits.rs)
 //! - `mimo`: MiniMax / MiMo TTS 引擎 (mimo.rs)
 
-#![allow(dead_code)]
-
 pub mod edge;
 pub mod mimo;
 pub mod openai;

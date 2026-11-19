@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · ⌘K 全局命令面板 (M4)
+ * dramaxis v1.3.0 · ⌘K 全局命令面板 (M4)
  *
  * - 使用 cmdk 作为命令面板核心 (已在 deps)
  * - 4 个分类:
@@ -21,7 +21,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useUiStore, useThemeStore } from "@dramaxis/core";
-import { projectIpc, pipelineIpc, type MediaFile } from "@dramaxis/ipc";
+import { updateIpc, projectIpc, pipelineIpc, type MediaFile } from "@dramaxis/ipc";
+import { useProjectStore, useWorkshopStore } from "@dramaxis/core";
 
 interface ActionItem {
   id: string;
@@ -43,6 +44,8 @@ export function CommandPalette() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const setCurrentRecord = useProjectStore((s) => s.setCurrentRecord);
+  const resetProjectState = useWorkshopStore((s) => s.resetProjectState);
 
   // recent projects (for dynamic group)
   const { data: recents } = useQuery<string[]>({
@@ -54,14 +57,9 @@ export function CommandPalette() {
   const checkUpdateRemote = async () => {
     const id = toast.loading("正在检查更新...");
     try {
-      const r = await fetch(
-        "https://api.github.com/repos/Agions/dramaxis/releases/latest",
-      );
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const data = (await r.json()) as { tag_name?: string };
-      const remote = (data.tag_name ?? "").replace(/^v/, "");
-      if (remote) {
-        toast.success(`最新版本 v${remote}`, { id });
+      const info = await updateIpc.check();
+      if (info?.version) {
+        toast.success(`最新版本 v${info.version}`, { id });
       } else {
         toast.success("已是最新版本", { id });
       }
@@ -118,7 +116,9 @@ export function CommandPalette() {
     close();
     try {
       const rec = await projectIpc.createBlank();
-      qc.setQueryData(["assets-current-project"], rec.project);
+      qc.setQueryData(["current-project"], rec);
+      setCurrentRecord(rec.path, rec.project);
+      resetProjectState();
       void qc.invalidateQueries({ queryKey: ["assets-recent"] });
       toast.success(`已创建空白项目 ${rec.project.name ?? rec.path}`);
       navigateTo("/prod");
@@ -300,7 +300,9 @@ export function CommandPalette() {
             close();
             try {
               const full = await projectIpc.load(path);
-              qc.setQueryData(["assets-current-project"], full.project);
+              qc.setQueryData(["current-project"], full);
+              setCurrentRecord(full.path, full.project);
+              resetProjectState();
               toast.success(`已加载 ${full.project.name ?? base}`);
               navigateTo("/prod");
             } catch (e) {
@@ -482,7 +484,6 @@ function PaletteItem({ item }: { item: ActionItem }) {
     <Command.Item
       value={`${item.label} ${item.keywords ?? ""}`}
       onSelect={() => void item.run()}
-      onClick={() => void item.run()}
       className="flex cursor-pointer items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-xs text-text-primary transition-colors aria-selected:bg-gold-muted aria-selected:border aria-selected:border-gold/40 aria-selected:text-gold data-[selected=true]:bg-gold-muted data-[selected=true]:border data-[selected=true]:border-gold/40 data-[selected=true]:text-gold"
     >
       <div className="flex items-center gap-3 truncate">

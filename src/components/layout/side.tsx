@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 电影调光室左侧导航栏 (完美响应多主题切换)
+ * dramaxis v1.3.0 · 电影调光室左侧导航栏 (完美响应多主题切换)
  * 采用 useNavigate 与 useRouterState 确保点击 100% 页面即时响应与高亮
  *
  * @author Agions

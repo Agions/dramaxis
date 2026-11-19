@@ -56,8 +56,12 @@ jobs:
           cache: pnpm
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
-      - name: Generate IPC Types
-        run: pnpm gen:ipc
+      - name: Check IPC Types Sync
+        run: pnpm gen:ipc:check
+      - name: ESLint Check
+        run: pnpm lint
+      - name: Naming Check
+        run: pnpm check:naming
       - name: TypeScript Check
         run: pnpm exec tsc --noEmit
       - name: Vitest Run
@@ -75,6 +79,6 @@ jobs:
         with:
           node-version: '22'
       - name: Docs Format Check
-        run: node scripts/docs-check-format.mjs
+        run: node scripts/fmt.mjs
       - name: Docs Links Check
-        run: node scripts/docs-check-links.mjs
+        run: node scripts/link.mjs

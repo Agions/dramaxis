@@ -892,7 +892,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -923,15 +923,13 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-agent"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
  "chrono",
- "dramaxis-compose",
  "dramaxis-core",
  "dramaxis-detect",
- "dramaxis-export",
  "dramaxis-script",
  "dramaxis-subtitle",
  "dramaxis-voice",
@@ -945,7 +943,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-compose"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -963,7 +961,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-core"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -980,7 +978,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-detect"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "dramaxis-core",
  "dramaxis-subtitle",
@@ -993,7 +991,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-export"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "chrono",
  "dirs 5.0.1",
@@ -1010,7 +1008,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-intake"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "dramaxis-core",
  "serde",
@@ -1020,7 +1018,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-script"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "async-trait",
  "dramaxis-core",
@@ -1035,13 +1033,14 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-storage"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "chrono",
  "dirs 5.0.1",
  "dramaxis-core",
  "dramaxis-detect",
  "mime_guess",
+ "ring",
  "rusqlite",
  "semver",
  "serde",
@@ -1055,7 +1054,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-subtitle"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1071,7 +1070,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-update"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "anyhow",
  "dramaxis-core",
@@ -1081,7 +1080,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "tauri",
  "thiserror 2.0.20",
  "tokio",
  "tracing",
@@ -1089,7 +1087,7 @@ dependencies = [
 
 [[package]]
 name = "dramaxis-voice"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "async-trait",
  "chrono",

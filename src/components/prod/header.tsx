@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 生产工作台顶栏总控组件 (ProductionHeader)
+ * dramaxis v1.3.0 · 生产工作台顶栏总控组件 (ProductionHeader)
  *
  * 核心功能:
  * - 工程标题展示与 SQLite 事务级撤销/重做 (Undo / Redo)
@@ -11,6 +11,7 @@
  */
 
 import { memo } from "react";
+import { Button } from "@dramaxis/ui";
 import { useWorkshopStore, type WorkshopKind } from "@dramaxis/core";
 import type { WorkflowProfile } from "@dramaxis/ipc";
 
@@ -195,17 +196,16 @@ export const ProductionHeader = memo(function ProductionHeader({
           ))}
         </select>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="sm"
           onClick={onStartAgent}
           disabled={isAgentRunning}
-          className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-gold to-amber px-3.5 py-1.5 text-xs font-black text-zinc-950 shadow-[0_0_16px_var(--color-gold-glow)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
+          loading={isAgentRunning}
+          className="bg-gradient-to-r from-gold to-amber text-zinc-950 shadow-[0_0_16px_var(--color-gold-glow)]"
         >
-          <span>{isAgentRunning ? "⏳" : "⚡"}</span>
-          <span>
-            {isAgentRunning ? "智能体协同中..." : "启动 Multi-Agent 流水线"}
-          </span>
-        </button>
+          {isAgentRunning ? "智能体协同中..." : "启动 Multi-Agent 流水线"}
+        </Button>
       </div>
     </header>
   );

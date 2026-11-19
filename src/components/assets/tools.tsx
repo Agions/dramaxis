@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 资产管理器工具栏 (AssetExplorerToolbar)
+ * dramaxis v1.3.0 · 资产管理器工具栏 (AssetExplorerToolbar)
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.

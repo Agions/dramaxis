@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 时间轴顶部控制栏组件 (TimelineToolbar)
+ * dramaxis v1.3.0 · 时间轴顶部控制栏组件 (TimelineToolbar)
  */
 
 import type { AlignmentPlan } from "@dramaxis/ipc";

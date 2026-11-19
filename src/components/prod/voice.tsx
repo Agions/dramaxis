@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · VoiceStudioPanel · 48kHz 配音与零样本人声克隆工坊
+ * dramaxis v1.3.0 · VoiceStudioPanel · 48kHz 配音与零样本人声克隆工坊
  *
  * 核心功能:
  * - 6 大主流 TTS 引擎切换 (Edge-TTS / Mossland / OpenAI / MiniMax / GPT-SoVITS / Custom)
@@ -14,6 +14,7 @@
 
 import { memo, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@dramaxis/ui";
 import { voiceIpc } from "@dramaxis/ipc";
 import { CloneReferenceCard } from "./voice/clone";
 
@@ -311,14 +312,16 @@ export const VoiceStudioPanel = memo(function VoiceStudioPanel({
       </div>
 
       {/* 6. 生成配音按钮 */}
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        size="md"
         disabled={isSynthesizing}
+        loading={isSynthesizing}
         onClick={handleSynthesizeVoice}
-        className="w-full rounded-xl bg-gradient-to-r from-gold to-amber py-2.5 text-xs font-bold text-zinc-950 shadow-[0_0_16px_var(--color-gold-glow)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
+        className="w-full bg-gradient-to-r from-gold to-amber text-zinc-950 shadow-[0_0_16px_var(--color-gold-glow)]"
       >
-        {isSynthesizing ? "⏳ 正在合成配音..." : "🎙️ 生成 48kHz 高清解说配音"}
-      </button>
+        {isSynthesizing ? "正在合成配音..." : "🎙️ 生成 48kHz 高清解说配音"}
+      </Button>
     </div>
   );
 });

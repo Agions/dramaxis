@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · useProductionSession
+ * dramaxis v1.3.0 · useProductionSession
  *
  * 核心生产工作台会话领域 Hook (胖路由下沉):
  * - 工程生命周期自动管理 (最近打开工程 / 空白工程自初始化)
@@ -20,7 +20,6 @@ import { useAgentWorkflow } from "@hooks/agent";
 import { useProject } from "@hooks/project";
 import {
   useProjectStore,
-  usePlaybackStore,
   useWorkshopStore,
   deriveStandardTimeline,
   type WorkshopSceneCut,
@@ -36,10 +35,7 @@ export function useProductionSession() {
 
   const [showImport, setShowImport] = useState(false);
 
-  // 1. 播放控制与时钟 Store
-  const togglePlay = usePlaybackStore((s) => s.togglePlay);
-
-  // 2. 工坊领域 Store
+  // 工坊领域 Store
   const setActiveWorkshop = useWorkshopStore((s) => s.setActiveWorkshop);
   const setActiveTab = useWorkshopStore((s) => s.setActiveTab);
   const sceneCuts = useWorkshopStore((s) => s.sceneCuts);
@@ -288,13 +284,11 @@ export function useProductionSession() {
       toast.success(
         `ScreenwriterAgent: AI 独白脚本生成完成（精准适配 ${videoDuration.toFixed(1)}s 画面，约 ${resp.wordCount} 字）！`,
       );
-    } catch {
-      setScriptText(
-        "【第一人称沉浸独白】\n我叫林渊。所有人都以为三年前那场大火彻底烧死了我，直到今天我以千亿总裁的身份再次站在这里。那个曾经背叛我的人，现在正颤抖着跪在我的脚下求饶...但我知道，真正的幕后黑手，还藏在那扇紧闭的铁门后面！",
-      );
-      markDirty("voiceDirty", true);
-      markDirty("exportDirty", true);
-      toast.success("ScreenwriterAgent: 剧本文案已生成就绪！");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`剧本文案生成失败: ${msg}`, {
+        description: "请在设置中心检查大模型 API 密钥或网络连通性",
+      });
     } finally {
       setIsGeneratingScript(false);
     }
@@ -309,7 +303,7 @@ export function useProductionSession() {
     markDirty,
   ]);
 
-  // 全局键盘快捷键: 播控 (Space) + Undo (⌘Z) + Redo (⇧⌘Z)
+  // 全局键盘快捷键: Undo (⌘Z) + Redo (⇧⌘Z)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
@@ -327,17 +321,11 @@ export function useProductionSession() {
             void undoProject().then(() => toast.info("已撤销 (Undo)"));
           }
         }
-        return;
-      }
-
-      if (e.code === "Space" && !isInput) {
-        e.preventDefault();
-        togglePlay();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undoProject, redoProject, togglePlay]);
+  }, [undoProject, redoProject]);
 
   return {
     currentProject,

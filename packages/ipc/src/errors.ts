@@ -80,8 +80,23 @@ export function formatError(err: DramaxisError): string {
   return `[${cat}] ${safeMessage(err)}`;
 }
 
+/** 强类型客户端 Error 类，确保所有 UI 抛错均具备可读的 .message 与可靠的 String() 表现 */
+export class DramaxisClientError extends Error {
+  readonly kind: DramaxisError["kind"];
+
+  constructor(err: DramaxisError) {
+    super(err.message);
+    this.name = "DramaxisError";
+    this.kind = err.kind;
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 /** 类型守卫:把任意 thrown 值还原成 DramaxisError */
 export function asDramaxisError(err: unknown): DramaxisError {
+  if (err instanceof DramaxisClientError) {
+    return { kind: err.kind, message: err.message };
+  }
   if (
     err &&
     typeof err === "object" &&

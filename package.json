@@ -1,7 +1,7 @@
 {
   "name": "dramaxis",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.3.0",
   "type": "module",
   "description": "Dramaxis (剧枢) · 电影级多智能体影视叙事与智能解说创作平台 (Tauri 2 + Rust + React 19)",
   "scripts": {
@@ -15,9 +15,7 @@
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
-    "docs:pdf": "python3 scripts/pdf.py",
-    "docs:docx": "python3 scripts/docx.py",
-    "docs:all": "python3 scripts/pdf.py && python3 scripts/docx.py",
+    "docs:check": "node scripts/fmt.mjs && node scripts/link.mjs",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",

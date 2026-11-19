@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 多平台母带处理与规格定制组件 (MasteringOptionsCard / DedupMatrixCard)
+ * dramaxis v1.3.0 · 多平台母带处理与规格定制组件 (MasteringOptionsCard / DedupMatrixCard)
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.

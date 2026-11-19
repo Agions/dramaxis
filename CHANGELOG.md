@@ -5,6 +5,30 @@ All notable changes to the Dramaxis project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-11-19
+
+### 🏗️ Systemic Architectural Refactoring & Robustness Hardening
+
+- **Core P0 Bug & Security Fixes**:
+  - **FFmpeg Scene Detection**: Fixed stdout/stderr stream reading in `Ffmpeg::detect_scenes()` to accurately parse scene cut points and eliminated multi-byte UTF-8 boundary panic hazards.
+  - **Multi-Agent Runtime Wiring**: Connected `AgentRuntimeDeps` into `DagOrchestrator` execution, ensuring real LLM models and API credentials from settings are dispatched to agents.
+  - **Zero-Dependency AEAD Credential Vault**: Upgraded `CredentialVault` to standard AES-256-GCM authenticated encryption with automatic migration for legacy credentials. Full isolation for all agent model matrix keys.
+  - **Concurrency & Deadlock Prevention**: Reduced `RwLock` write-lock duration during `agent_run_dag`推演, preventing frontend polling starvation on blackboard and context queries.
+  - **Pipeline Memory & Event Leaks**: Eliminated permanent tokio broadcast subscriber tasks in `commands/pipeline.rs` and aligned parameter mappings.
+- **Architectural Crate Reorganization & Thin-IPC**:
+  - Re-aligned crate boundaries: moved media intake and thumbnail generation to `dramaxis-intake`, moved export planning to `dramaxis-export`, and unified subtitle data models in `dramaxis-subtitle`.
+  - Streamlined `src-tauri/src/commands/` into a thin dispatch adapter, eliminating duplicated LLM/TTS factory parsing.
+- **Frontend State Flow Harmonization**:
+  - Consolidated Project state into a single source of truth, resolving query-key type conflicts.
+  - Resolved double Space keypress conflict on timeline playback.
+  - Linked Voice synthesis outputs directly to multi-track timeline Track A1.
+  - Harmonized global shortcuts across Command Palette, Settings, and Help dialogs.
+- **Repository Hygiene & Single Source of Truth Documentation**:
+  - Purged 8.2 GB of stale root build targets and committed binaries.
+  - Extracted 2.5 MB README screenshots out of bundled `public/` assets into documentation assets.
+  - Fixed CI workflow paths and restored strict IPC type-check and naming verification.
+  - Unified all workspace packages and configs to v1.3.0.
+
 ## [1.2.1] - 2026-11-13
 
 ### 🚀 Production Model Matrix & Comprehensive Documentation Overhaul

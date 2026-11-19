@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 设置中心 · 系统环境与硬件加速配置区 (EnvironmentSection)
+ * dramaxis v1.3.0 · 设置中心 · 系统环境与硬件加速配置区 (EnvironmentSection)
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.
@@ -61,9 +61,12 @@ export function EnvironmentSection({ form, setForm }: EnvironmentSectionProps) {
                 <button
                   key={th.id}
                   type="button"
-                  onClick={() => setTheme(th.id as Theme)}
+                  onClick={() => {
+                    setTheme(th.id as Theme);
+                    setForm((f) => ({ ...f, theme: th.id }));
+                  }}
                   className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-xs font-bold transition ${
-                    currentTheme === th.id
+                    (form.theme || currentTheme) === th.id
                       ? "border-gold bg-gold-muted text-gold"
                       : "border-border bg-surface-elevated text-text-secondary hover:border-zinc-700"
                   }`}
@@ -88,9 +91,12 @@ export function EnvironmentSection({ form, setForm }: EnvironmentSectionProps) {
                 <button
                   key={lang.id}
                   type="button"
-                  onClick={() => setLocale(lang.id as "zh-CN" | "en-US")}
+                  onClick={() => {
+                    setLocale(lang.id as "zh-CN" | "en-US");
+                    setForm((f) => ({ ...f, language: lang.id }));
+                  }}
                   className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold transition ${
-                    locale === lang.id
+                    (form.language || locale) === lang.id
                       ? "border-gold bg-gold-muted text-gold"
                       : "border-border bg-surface-elevated text-text-secondary hover:border-zinc-700"
                   }`}

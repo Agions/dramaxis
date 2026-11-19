@@ -13,7 +13,6 @@ description = "tauri-plugin-updater + GitHub Releases"
 workspace = true
 
 [dependencies]
-tauri = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }

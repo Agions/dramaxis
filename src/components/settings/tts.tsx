@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 设置中心 · TTS 语音合成引擎配置区 (TtsVoicesSection)
+ * dramaxis v1.3.0 · 设置中心 · TTS 语音合成引擎配置区 (TtsVoicesSection)
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.

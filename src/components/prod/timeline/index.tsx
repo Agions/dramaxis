@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 全景多轨生产时间轴组件 (MultiTrackTimeline Facade)
+ * dramaxis v1.3.0 · 全景多轨生产时间轴组件 (MultiTrackTimeline Facade)
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.
@@ -7,6 +7,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { AlignmentPlan } from "@dramaxis/ipc";
+import { EmptyState } from "@dramaxis/ui";
 import { TrackHeader, type TrackId, type TrackControlState } from "./header";
 import { TimelineRuler } from "./ruler";
 import { PlayheadCursor, MarkRangeMask } from "./cursor";
@@ -320,15 +321,12 @@ export function MultiTrackTimeline({
             )}
 
             {isEmpty ? (
-              <div className="flex h-full flex-col items-center justify-center text-center text-text-muted text-xs gap-1.5 my-auto">
-                <span className="text-2xl">⏱️</span>
-                <span className="font-bold text-text-secondary">
-                  多轨时间轴待命
-                </span>
-                <span className="text-[10px]">
-                  导入素材或启动 Multi-Agent 智能体将实时排布 5 轨视听流
-                </span>
-              </div>
+              <EmptyState
+                icon="⏱️"
+                title="多轨时间轴待命"
+                description="导入素材或启动 Multi-Agent 智能体将实时排布 5 轨视听流"
+                className="my-auto border-none bg-transparent p-4"
+              />
             ) : (
               <>
                 {/* Track 1: 视频分镜切片 (V1) */}

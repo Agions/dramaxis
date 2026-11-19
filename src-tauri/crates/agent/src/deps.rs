@@ -30,6 +30,7 @@ impl AgentRuntimeDeps {
     }
 
     /// 解析指定智能体角色的专精大模型参数 (带 Matrix 动态重载支持)
+    /// 返回: (LlmProviderKind, api_key, model_override, base_url, temperature)
     pub fn resolve_agent_llm(
         &self,
         role: AgentRole,
@@ -50,39 +51,26 @@ impl AgentRuntimeDeps {
         let default_base_url = self.base_url.clone();
         let default_model = self.model.clone();
 
-        let (prov_str, api_key, base_url, model, temp) = if let Some(ov) = role_override {
+        let (prov_str, api_key, model, base_url, temp) = if let Some(ov) = role_override {
             (
                 ov.provider.unwrap_or(default_provider_str),
                 ov.api_key.unwrap_or(default_api_key),
-                ov.base_url.or(default_base_url),
                 ov.model.or(default_model),
+                ov.base_url.or(default_base_url),
                 ov.temperature.unwrap_or(0.75),
             )
         } else {
             (
                 default_provider_str,
                 default_api_key,
-                default_base_url,
                 default_model,
+                default_base_url,
                 0.75,
             )
         };
 
-        let kind = match prov_str.as_str() {
-            "openai" | "open-ai" => LlmProviderKind::OpenAi,
-            "claude" => LlmProviderKind::Claude,
-            "gemini" => LlmProviderKind::Gemini,
-            "kimi" => LlmProviderKind::Kimi,
-            "glm5" => LlmProviderKind::Glm5,
-            "deepseek" => LlmProviderKind::DeepSeek,
-            "doubao" => LlmProviderKind::Doubao,
-            "hunyuan" => LlmProviderKind::Hunyuan,
-            "local" => LlmProviderKind::Local,
-            "qwen37" => LlmProviderKind::Qwen37,
-            "custom" => LlmProviderKind::OpenAi,
-            _ => LlmProviderKind::Qwen,
-        };
+        let kind: LlmProviderKind = prov_str.parse().unwrap_or(LlmProviderKind::Qwen);
 
-        (kind, api_key, base_url, model, temp)
+        (kind, api_key, model, base_url, temp)
     }
 }

@@ -1,4 +1,4 @@
-# dramaxis v1.2.0 Makefile
+# dramaxis v1.3.0 Makefile
 # Rust + Tauri 2 + React 主线构建系统
 #
 # 使用方法:
@@ -17,7 +17,7 @@
 # ── 版本号（单一真相来源：package.json）──────────────────
 VERSION := $(shell node -p "require('./package.json').version" 2>/dev/null)
 ifeq ($(VERSION),)
-  VERSION := 1.2.0
+  VERSION := 1.3.0
 endif
 
 # ── 颜色输出 ───────────────────────────────────────────────────────
@@ -106,12 +106,11 @@ docs:
 
 # ── 清理 ────────────────────────────────────────────────────────────
 clean:
-	rm -rf target/coverage/
+	rm -rf target/
+	rm -rf src-tauri/target/coverage/
 	rm -rf coverage/
 	rm -rf dist/
-	rm -rf .tanstack/tmp/
+	rm -rf .tanstack/
 	rm -rf docs/.vitepress/dist/
 	rm -rf docs/.vitepress/cache/
 	rm -rf docs/.vitepress/.temp/
-	rm -rf node_modules/
-	rm -rf docs/node_modules/

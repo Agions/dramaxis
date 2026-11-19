@@ -9,17 +9,28 @@ use dramaxis_script::LlmRequest;
 
 pub struct ScreenwriterAgent;
 
-#[async_trait]
-impl Agent for ScreenwriterAgent {
-    fn role(&self) -> AgentRole {
-        AgentRole::Screenwriter
+impl ScreenwriterAgent {
+    /// 使用注入的运行时依赖 (API Key、模型参数) 执行解说撰写
+    pub async fn execute_with_deps(
+        &self,
+        ctx: &mut AgentContext,
+        deps: &crate::deps::AgentRuntimeDeps,
+    ) -> DramaxisResult<Option<String>> {
+        let (kind, api_key, model_override, base_url, temperature) =
+            deps.resolve_agent_llm(self.role());
+        self.execute_internal(ctx, kind, api_key, model_override, base_url, temperature)
+            .await
     }
 
-    fn name(&self) -> &str {
-        "✍️ 金牌编剧 (Screenwriter)"
-    }
-
-    async fn execute(&self, ctx: &mut AgentContext) -> DramaxisResult<Option<String>> {
+    async fn execute_internal(
+        &self,
+        ctx: &mut AgentContext,
+        kind: dramaxis_core::error::LlmProviderKind,
+        api_key: String,
+        model_override: Option<String>,
+        base_url: Option<String>,
+        temperature: f32,
+    ) -> DramaxisResult<Option<String>> {
         let cuts = ctx
             .memory
             .get("scene_count")
@@ -67,9 +78,6 @@ impl Agent for ScreenwriterAgent {
             "我万万没想到，在【{}】的背后竟然隐藏着这么大一个局。那天深夜，当我推开这扇门时，才发现所有线索早已被调包。在这关键的几分钟里，真相即将浮出水面...",
             project_name
         );
-
-        let (kind, api_key, model_override, base_url, temperature) =
-            resolve_agent_llm(ctx, self.role());
 
         let final_script = if !api_key.trim().is_empty() {
             let provider = dramaxis_script::factory_custom(kind, api_key.clone(), base_url);
@@ -194,5 +202,23 @@ impl Agent for ScreenwriterAgent {
             ),
         );
         Ok(Some(final_script))
+    }
+}
+
+#[async_trait]
+impl Agent for ScreenwriterAgent {
+    fn role(&self) -> AgentRole {
+        AgentRole::Screenwriter
+    }
+
+    fn name(&self) -> &str {
+        "✍️ 金牌编剧 (Screenwriter)"
+    }
+
+    async fn execute(&self, ctx: &mut AgentContext) -> DramaxisResult<Option<String>> {
+        let (kind, api_key, model_override, base_url, temperature) =
+            resolve_agent_llm(ctx, self.role());
+        self.execute_internal(ctx, kind, api_key, model_override, base_url, temperature)
+            .await
     }
 }

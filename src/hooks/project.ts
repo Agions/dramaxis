@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 当前项目生命周期 Hook
+ * dramaxis v1.3.0 · 当前项目生命周期 Hook
  *
  * 后端命令:
  * - open(path)    → projectIpc.load(path)      → ProjectRecord

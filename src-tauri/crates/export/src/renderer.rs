@@ -236,11 +236,11 @@ pub async fn render_video_pipeline(
     let probe = ffmpeg.probe(video_p).await?;
     let total_duration = probe.duration_seconds.max(1.0);
 
-    // 1. 目标分辨率与版式判断
+    // 1. 目标分辨率与版式判断 (youtube-shorts 强制 9:16 竖屏)
     let preset = platform_preset.unwrap_or("douyin");
     let is_landscape = preset.to_lowercase().contains("bilibili")
         || preset.to_lowercase().contains("16:9")
-        || preset.to_lowercase().contains("youtube");
+        || (preset.to_lowercase().contains("youtube") && !preset.to_lowercase().contains("shorts"));
 
     let (tw, th): (u32, u32) = if is_landscape {
         (1920, 1080)
@@ -311,6 +311,8 @@ pub async fn render_video_pipeline(
                 let joined = seg_tags.join("");
                 filter_complex.push_str(&format!("{joined}concat=n={count}:v=1:a=0[vcut];"));
                 "[vcut]"
+            } else if seg_tags.len() == 1 {
+                "[vseg_0]"
             } else {
                 "[0:v]"
             }
@@ -485,8 +487,9 @@ pub async fn render_video_pipeline(
         args.push("-map".into());
         args.push(v_final_tag.into());
         if !a_final_tag.is_empty() {
+            let map_tag = if a_final_tag == "[0:a]" { "0:a" } else { a_final_tag };
             args.push("-map".into());
-            args.push(a_final_tag.into());
+            args.push(map_tag.into());
         }
     }
 

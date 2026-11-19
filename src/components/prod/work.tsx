@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 生产工作台中央监视器与时间轴工作区 (ProductionWorkspace)
+ * dramaxis v1.3.0 · 生产工作台中央监视器与时间轴工作区 (ProductionWorkspace)
  *
  * 核心升级:
  * - 采用 useTimelineDerivedClips 专属纯计算 Hook，消除重复繁重的分镜切片转换

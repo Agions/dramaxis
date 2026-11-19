@@ -120,6 +120,17 @@ pub async fn export_render_video(
     let enable_blur = params.enable_ambient_blur.unwrap_or(true);
     let app_clone = app_handle.clone();
 
+    // 动态探测素材预估真实时长，避免进度百分比在非 60 秒视频时断层失真
+    let total_expected_dur = if let Ok(ff) = dramaxis_detect::Ffmpeg::discover() {
+        ff.probe(std::path::Path::new(&params.video_path))
+            .await
+            .map(|p| p.duration_seconds)
+            .unwrap_or(60.0)
+            .max(1.0)
+    } else {
+        60.0
+    };
+
     let (total_duration, size_bytes) = render_video_pipeline(
         &params.video_path,
         params.voice_path.as_deref(),
@@ -134,7 +145,7 @@ pub async fn export_render_video(
         params.subtitle_style.as_deref(),
         &output_file,
         Some(Box::new(move |secs: f64| {
-            let pct = (secs / 60.0 * 100.0).clamp(0.0, 99.0);
+            let pct = (secs / total_expected_dur * 100.0).clamp(0.0, 99.0);
             let _ = app_clone.emit(
                 "export://progress",
                 RenderProgressPayload {

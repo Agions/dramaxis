@@ -63,7 +63,7 @@ sequenceDiagram
     participant Release as GitHub Releases 分发中心
     participant Client as 终端客户端 (dramaxis-update)
 
-    Developer->>Git: git tag v1.2.0 && git push origin v1.2.0
+    Developer->>Git: git tag v1.3.0 && git push origin v1.3.0
     Git->>CI: 触发 release.yml 流水线
     CI->>CI: 跨架构交叉编译 + 签名公钥加签 (Ed25519)
     CI->>Release: 上传 .dmg, .msi, latest.json 与 SHA-256 校验和

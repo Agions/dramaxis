@@ -8,11 +8,11 @@
  */
 
 import { invoke } from "@tauri-apps/api/core";
+import { asDramaxisError, DramaxisClientError } from "./errors";
 import type {
   CommandArgs,
   CommandResultOf,
   IpcCommand,
-  DramaxisError,
 } from "./types.gen";
 
 /** 强类型 callIpc,穿透到 Rust 端 command */
@@ -27,19 +27,7 @@ export async function callIpc<C extends IpcCommand>(
       payload as Record<string, unknown>,
     );
   } catch (err) {
-    // Rust 端返回 Result<T, DramaxisError> 时,Err 序列化为 { kind, message }
-    if (
-      err &&
-      typeof err === "object" &&
-      "kind" in err &&
-      "message" in err &&
-      typeof (err as { kind: unknown }).kind === "string"
-    ) {
-      throw err as DramaxisError;
-    }
-    throw {
-      kind: "other",
-      message: err instanceof Error ? err.message : String(err),
-    } satisfies DramaxisError;
+    const dramaxisErr = asDramaxisError(err);
+    throw new DramaxisClientError(dramaxisErr);
   }
 }

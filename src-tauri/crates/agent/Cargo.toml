@@ -12,8 +12,6 @@ dramaxis-detect = { path = "../detect" }
 dramaxis-script = { path = "../script" }
 dramaxis-voice = { path = "../voice" }
 dramaxis-subtitle = { path = "../subtitle" }
-dramaxis-compose = { path = "../compose" }
-dramaxis-export = { path = "../export" }
 
 async-trait = "0.1"
 serde = { version = "1.0", features = ["derive"] }

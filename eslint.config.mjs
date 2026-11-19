@@ -10,7 +10,7 @@ export default [
       "**/src-tauri/**",
       "**/.tanstack/**",
       "**/docs/**",
-      "src/routes/-routeTree.gen.ts",
+      "src/routes/-tree.gen.ts",
       "packages/ipc/src/types.gen.ts",
     ],
   },

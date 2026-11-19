@@ -171,12 +171,12 @@ impl MasterOptions {
     pub fn build_audio_filters(&self) -> Vec<String> {
         let mut filters = Vec::new();
 
-        // 1. 微调音高 (asetrate 改变重采样基准频率 + atempo 补偿回原播放速度，改变共振峰与音高)
+        // 1. 微调音高 (asetrate 改变重采样基准频率 + atempo 补偿回原播放速度 + aresample 恢复 48kHz 广播级标称采样率)
         if self.enable_pitch_shift && (self.pitch_shift_rate - 1.0).abs() > 0.001 {
-            let target_rate = (44100.0 * self.pitch_shift_rate).round() as u32;
+            let target_rate = (48000.0 * self.pitch_shift_rate).round() as u32;
             let tempo_compensate = 1.0 / self.pitch_shift_rate;
             filters.push(format!(
-                "asetrate={target_rate},atempo={tempo_compensate:.4}"
+                "asetrate={target_rate},atempo={tempo_compensate:.4},aresample=48000"
             ));
         }
 

@@ -35,6 +35,28 @@ pub async fn settings_get(
         if let Some(key) = vault.get("tts_api_key") {
             snap.tts_api_key = Some(key.clone());
         }
+        if let Some(ref mut matrix) = snap.agent_model_matrix {
+            if let Some(ref mut vc) = matrix.visual_critic {
+                if let Some(k) = vault.get("matrix_visual_critic_key") {
+                    vc.api_key = Some(k.clone());
+                }
+            }
+            if let Some(ref mut sw) = matrix.screenwriter {
+                if let Some(k) = vault.get("matrix_screenwriter_key") {
+                    sw.api_key = Some(k.clone());
+                }
+            }
+            if let Some(ref mut qr) = matrix.quality_reviewer {
+                if let Some(k) = vault.get("matrix_quality_reviewer_key") {
+                    qr.api_key = Some(k.clone());
+                }
+            }
+            if let Some(ref mut dir) = matrix.director {
+                if let Some(k) = vault.get("matrix_director_key") {
+                    dir.api_key = Some(k.clone());
+                }
+            }
+        }
     }
 
     // 同步到内存 service
@@ -59,25 +81,78 @@ pub async fn settings_set(
             .map_err(|e| DramaxisError::Io(e.to_string()))?;
     }
 
+    let mut real_snapshot = snapshot.clone();
+
     // 1. 凭证隔离持久化至受保护金库 (credentials.vault)
     if let Ok(vp) = vault_path(&app) {
         let mut vault = CredentialVault::load(&vp).await;
-        if let Some(ref key) = snapshot.llm_api_key {
-            vault.set("llm_api_key", key);
+
+        let sync_vault_key = |v: &mut CredentialVault, key_name: &str, field: &mut Option<String>| {
+            match field.as_deref() {
+                Some("********") => {
+                    *field = v.get(key_name).cloned();
+                }
+                Some(val) if !val.trim().is_empty() => {
+                    v.set(key_name, val.trim());
+                    *field = Some(val.trim().to_string());
+                }
+                _ => {
+                    v.remove(key_name);
+                    *field = None;
+                }
+            }
+        };
+
+        sync_vault_key(&mut vault, "llm_api_key", &mut real_snapshot.llm_api_key);
+        sync_vault_key(&mut vault, "tts_api_key", &mut real_snapshot.tts_api_key);
+
+        if let Some(ref mut matrix) = real_snapshot.agent_model_matrix {
+            if let Some(ref mut vc) = matrix.visual_critic {
+                sync_vault_key(&mut vault, "matrix_visual_critic_key", &mut vc.api_key);
+            }
+            if let Some(ref mut sw) = matrix.screenwriter {
+                sync_vault_key(&mut vault, "matrix_screenwriter_key", &mut sw.api_key);
+            }
+            if let Some(ref mut qr) = matrix.quality_reviewer {
+                sync_vault_key(&mut vault, "matrix_quality_reviewer_key", &mut qr.api_key);
+            }
+            if let Some(ref mut dir) = matrix.director {
+                sync_vault_key(&mut vault, "matrix_director_key", &mut dir.api_key);
+            }
         }
-        if let Some(ref key) = snapshot.tts_api_key {
-            vault.set("tts_api_key", key);
-        }
+
         let _ = vault.save(&vp).await;
     }
 
     // 2. config.json 落盘时遮罩脱敏，杜绝明文密钥暴露
-    let mut sanitized = snapshot.clone();
+    let mut sanitized = real_snapshot.clone();
     if sanitized.llm_api_key.is_some() {
         sanitized.llm_api_key = Some("********".into());
     }
     if sanitized.tts_api_key.is_some() {
         sanitized.tts_api_key = Some("********".into());
+    }
+    if let Some(ref mut matrix) = sanitized.agent_model_matrix {
+        if let Some(ref mut vc) = matrix.visual_critic {
+            if vc.api_key.is_some() {
+                vc.api_key = Some("********".into());
+            }
+        }
+        if let Some(ref mut sw) = matrix.screenwriter {
+            if sw.api_key.is_some() {
+                sw.api_key = Some("********".into());
+            }
+        }
+        if let Some(ref mut qr) = matrix.quality_reviewer {
+            if qr.api_key.is_some() {
+                qr.api_key = Some("********".into());
+            }
+        }
+        if let Some(ref mut dir) = matrix.director {
+            if dir.api_key.is_some() {
+                dir.api_key = Some("********".into());
+            }
+        }
     }
 
     let bytes =
@@ -91,7 +166,7 @@ pub async fn settings_set(
         .service::<ConfigService>()
         .await
         .map_err(|e| DramaxisError::Config(e.to_string()))?;
-    svc.set_snapshot(snapshot).await;
+    svc.set_snapshot(real_snapshot).await;
     Ok(())
 }
 
@@ -115,20 +190,7 @@ pub async fn settings_test_llm(
 ) -> Result<LlmTestResult, DramaxisError> {
     use dramaxis_core::error::LlmProviderKind;
 
-    let kind = match provider.to_lowercase().as_str() {
-        "deepseek" => LlmProviderKind::DeepSeek,
-        "openai" | "open-ai" => LlmProviderKind::OpenAi,
-        "qwen" => LlmProviderKind::Qwen,
-        "kimi" => LlmProviderKind::Kimi,
-        "glm" | "glm5" => LlmProviderKind::Glm5,
-        "doubao" => LlmProviderKind::Doubao,
-        "hunyuan" => LlmProviderKind::Hunyuan,
-        "claude" => LlmProviderKind::Claude,
-        "gemini" => LlmProviderKind::Gemini,
-        "local" => LlmProviderKind::Local,
-        "custom" => LlmProviderKind::OpenAi,
-        _ => LlmProviderKind::DeepSeek,
-    };
+    let kind: LlmProviderKind = provider.parse().unwrap_or(LlmProviderKind::DeepSeek);
 
     let start = std::time::Instant::now();
     let p = dramaxis_script::factory_custom(kind, api_key, base_url);

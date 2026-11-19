@@ -26,7 +26,7 @@ export default defineConfig({
       { text: '🔌 IPC 契约字典', link: '/api/cmd', activeMatch: '/api/' },
       { text: '🛠️ DevOps 与交付', link: '/devops/dev', activeMatch: '/devops/' },
       {
-        text: 'v1.2.0',
+        text: 'v1.3.0',
         items: [
           { text: 'Changelog 更新日志', link: 'https://github.com/Agions/dramaxis/releases' },
           { text: 'GitHub 源码仓库', link: 'https://github.com/Agions/dramaxis' },

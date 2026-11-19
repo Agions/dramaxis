@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 播放头与选区遮罩组件 (PlayheadCursor & MarkRangeMask)
+ * dramaxis v1.3.0 · 播放头与选区遮罩组件 (PlayheadCursor & MarkRangeMask)
  */
 
 interface PlayheadCursorProps {

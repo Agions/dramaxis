@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · LlmProviderGrid
+ * dramaxis v1.3.0 · LlmProviderGrid
  *
  * 模型厂商卡片矩阵选择器
  */

@@ -1,20 +1,22 @@
 /**
- * dramaxis v1.2.0 · CinemaMonitor · 居中专业视听监看台 (全景虚拟时钟与叠层播放引擎)
+ * dramaxis v1.3.0 · CinemaMonitor · 居中专业视听监看台 (全景虚拟时钟与叠层播放引擎)
  *
  * 核心升级:
- * - 9:16 短剧竖屏与画幅居中自适应
+ * - 9:16 短剧竖屏 / 16:9 影视长剧 / 1:1 社交方形 一键构图切换 (Aspect Ratio Switcher)
+ * - 抖音 / TikTok 微短剧防遮挡交互安全区网格 (Title & Interaction Safe Zone Grid)
  * - 原生 <video> 真实播放/暂停控制与虚拟时间线无缝 seek 同步
+ * - 倍速播放支持 (0.75x / 1.0x / 1.25x / 1.5x / 2.0x) 与音画锁步
  * - 分镜切片区间指示与跨片段平滑切镜
  * - 60fps 实时 CSS 花字字幕叠层 (4 套短剧专业花字预设所见即所得)
  * - 旁白与 BGM 动态闪避混音 (AI 旁白播音时 BGM 自动下压 -15dB)
- * - 浮动状态徽章 (Timecode, FPS, 1080×1920)
+ * - 悬浮时间码、帧分辨率与场景切片胶囊
  * - 电影级内嵌音频频谱仪 (AudioVisualizerCanvas)
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.
  */
 
-import { memo, useRef, useEffect, useMemo } from "react";
+import { memo, useRef, useEffect, useMemo, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { AudioVisualizerCanvas } from "./visual";
 
@@ -23,6 +25,8 @@ export type SubtitleStylePreset =
   | "yellow_black"
   | "retro_red"
   | "minimal_white";
+
+export type AspectRatioKind = "9:16" | "16:9" | "1:1";
 
 interface CinemaMonitorProps {
   hasUploadedVideo: boolean;
@@ -60,6 +64,8 @@ function getSubtitleClass(style?: SubtitleStylePreset): string {
   }
 }
 
+const SPEED_OPTIONS = [0.75, 1.0, 1.25, 1.5, 2.0];
+
 export const CinemaMonitor = memo(function CinemaMonitor({
   hasUploadedVideo,
   mediaPath,
@@ -84,6 +90,11 @@ export const CinemaMonitor = memo(function CinemaMonitor({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const voiceRef = useRef<HTMLAudioElement | null>(null);
   const bgmRef = useRef<HTMLAudioElement | null>(null);
+
+  // 构图比例与短剧安全区状态
+  const [aspectRatio, setAspectRatio] = useState<AspectRatioKind>("9:16");
+  const [showSafeZone, setShowSafeZone] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState<number>(1.0);
 
   const videoSrc = mediaPath ? convertFileSrc(mediaPath) : undefined;
   const voiceSrc = voiceAudioPath ? convertFileSrc(voiceAudioPath) : undefined;
@@ -123,14 +134,22 @@ export const CinemaMonitor = memo(function CinemaMonitor({
     }
   }, [currentTime]);
 
-  // 3. 动态音频避让 (Audio Ducking)
+  // 3. 动态倍速调节
   useEffect(() => {
-    // 原视频声音在有 AI 旁白时压制至 20%
+    if (videoRef.current) {
+      videoRef.current.playbackRate = playbackRate;
+    }
+    if (voiceRef.current) {
+      voiceRef.current.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
+
+  // 4. 动态音频避让 (Audio Ducking)
+  useEffect(() => {
     if (videoRef.current) {
       videoRef.current.volume = voiceSrc ? 0.2 : 1.0;
     }
 
-    // BGM 音轨避让: 旁白发声区间动态压制至 duckingLevel (-15dB)
     if (bgmRef.current) {
       const isVoiceSpeaking = Boolean(
         voiceSrc && currentTime < (voiceDuration || duration),
@@ -151,7 +170,7 @@ export const CinemaMonitor = memo(function CinemaMonitor({
     bgmDuckingLevel,
   ]);
 
-  // 4. 当前时间戳命中的字幕卡
+  // 5. 当前时间戳命中的字幕卡
   const activeSubtitle = useMemo(() => {
     if (!subtitles || subtitles.length === 0) return null;
     return (
@@ -161,7 +180,7 @@ export const CinemaMonitor = memo(function CinemaMonitor({
     );
   }, [subtitles, currentTime]);
 
-  // 5. 当前时间戳所处的分镜切片
+  // 6. 当前时间戳所处的分镜切片
   const activeSceneIndex = useMemo(() => {
     if (!sceneCuts || sceneCuts.length === 0) return null;
     const sorted = [...sceneCuts].sort((a, b) => a - b);
@@ -183,10 +202,100 @@ export const CinemaMonitor = memo(function CinemaMonitor({
     return `${String(mins).padStart(2, "0")}:${String(remaining).padStart(2, "0")}`;
   };
 
+  const getContainerRatioStyle = () => {
+    switch (aspectRatio) {
+      case "16:9":
+        return "h-[210px] w-[373px] max-w-full";
+      case "1:1":
+        return "h-[210px] w-[210px]";
+      case "9:16":
+      default:
+        return "h-[210px] w-[118px] sm:w-[130px]";
+    }
+  };
+
+  const resolutionText =
+    aspectRatio === "9:16"
+      ? "1080×1920"
+      : aspectRatio === "16:9"
+        ? "1920×1080"
+        : "1080×1080";
+
   return (
-    <div className="relative flex flex-col items-center justify-center rounded-2xl border border-border bg-surface p-3 shadow-md min-h-[260px] max-h-[300px]">
-      {/* 视频主画幅 (9:16 短剧居中自适应) */}
-      <div className="relative flex h-[210px] w-[118px] sm:w-[130px] items-center justify-center overflow-hidden rounded-xl bg-zinc-950 shadow-2xl border border-black/40">
+    <div className="relative flex flex-col items-center justify-center rounded-2xl border border-border bg-surface p-3 shadow-md min-h-[270px] max-h-[310px]">
+      {/* 顶部工具栏: 构图比例切换器 + 短剧安全区开关 */}
+      <div className="absolute top-2.5 left-3 flex items-center gap-1.5 z-20">
+        <div className="flex items-center rounded-lg bg-surface-elevated/90 border border-border/80 p-0.5 text-[9px] font-mono backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => setAspectRatio("9:16")}
+            className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+              aspectRatio === "9:16"
+                ? "bg-gold text-zinc-950 font-bold shadow-xs"
+                : "text-text-muted hover:text-text-primary"
+            }`}
+            title="微短剧竖屏 (9:16 抖音/TikTok/快手)"
+          >
+            9:16 短剧
+          </button>
+          <button
+            type="button"
+            onClick={() => setAspectRatio("16:9")}
+            className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+              aspectRatio === "16:9"
+                ? "bg-gold text-zinc-950 font-bold shadow-xs"
+                : "text-text-muted hover:text-text-primary"
+            }`}
+            title="影视长剧横屏 (16:9 B站/YouTube)"
+          >
+            16:9 影视
+          </button>
+          <button
+            type="button"
+            onClick={() => setAspectRatio("1:1")}
+            className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+              aspectRatio === "1:1"
+                ? "bg-gold text-zinc-950 font-bold shadow-xs"
+                : "text-text-muted hover:text-text-primary"
+            }`}
+            title="社交正方形 (1:1)"
+          >
+            1:1 方形
+          </button>
+        </div>
+
+        {/* 短剧安全区按钮 (9:16 专属高阶辅助) */}
+        {aspectRatio === "9:16" && (
+          <button
+            type="button"
+            onClick={() => setShowSafeZone((prev) => !prev)}
+            className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg border text-[9px] font-medium backdrop-blur-md transition-all cursor-pointer ${
+              showSafeZone
+                ? "bg-amber-500/20 border-amber-500 text-amber-300 font-bold shadow-[0_0_8px_rgba(245,158,11,0.3)]"
+                : "bg-surface-elevated/70 border-border/80 text-text-muted hover:text-text-primary"
+            }`}
+            title="切换抖音/TikTok平台防遮挡安全区辅助线"
+          >
+            <span>🛡️</span>
+            <span>安全区</span>
+          </button>
+        )}
+      </div>
+
+      {/* 右上角: 电影级内嵌音频频谱仪 */}
+      <div className="absolute top-2.5 right-3 hidden sm:flex flex-col items-end gap-1 pointer-events-none z-20">
+        <span className="font-mono text-[8px] tracking-wider text-gold uppercase opacity-80">
+          Neural Audio Visualizer · 48kHz
+        </span>
+        <div className="h-7 w-28 rounded-lg overflow-hidden border border-border bg-bg/80 p-0.5 backdrop-blur-md shadow-inner">
+          <AudioVisualizerCanvas isPlaying={isPlaying} />
+        </div>
+      </div>
+
+      {/* 视频主画幅 (动态比例与安全区层) */}
+      <div
+        className={`relative flex items-center justify-center overflow-hidden rounded-xl bg-zinc-950 shadow-2xl border border-black/40 transition-all duration-300 ${getContainerRatioStyle()}`}
+      >
         {hasUploadedVideo && videoSrc ? (
           <>
             <video
@@ -204,6 +313,45 @@ export const CinemaMonitor = memo(function CinemaMonitor({
               }}
               onEnded={() => onEnded?.()}
             />
+
+            {/* 短剧防遮挡安全区网格 (Safe Zone Grid) */}
+            {showSafeZone && aspectRatio === "9:16" && (
+              <div className="absolute inset-0 pointer-events-none z-15 flex flex-col justify-between p-1.5 animate-fade-in select-none">
+                {/* 顶部防遮挡区域 (关注/搜索栏) */}
+                <div className="h-6 w-full border-b border-dashed border-red-500/40 bg-red-500/5 flex items-center justify-center">
+                  <span className="text-[7px] font-mono text-red-400 opacity-60">
+                    顶部交互避让区
+                  </span>
+                </div>
+
+                {/* 画面中心黄金交叉标线 */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-4 h-[1px] bg-gold/40" />
+                  <div className="h-4 w-[1px] bg-gold/40 absolute" />
+                </div>
+
+                {/* 右侧互动按钮区 (头像/点赞/评论/转发) */}
+                <div className="absolute right-1 bottom-14 top-10 w-6 border-l border-dashed border-amber-500/40 bg-amber-500/5 flex flex-col items-center justify-around py-1">
+                  <span className="text-[6px] font-mono text-amber-400 opacity-60 [writing-mode:vertical-rl]">
+                    右侧互动区
+                  </span>
+                </div>
+
+                {/* 底部标题文案区 (用户ID/解说文案/声音胶盘) */}
+                <div className="h-12 w-full border-t border-dashed border-red-500/40 bg-red-500/5 flex items-center justify-center">
+                  <span className="text-[7px] font-mono text-red-400 opacity-60">
+                    底部标题/声音避让区
+                  </span>
+                </div>
+
+                {/* 推荐安全字幕投放框 */}
+                <div className="absolute bottom-14 left-2 right-8 h-8 border border-emerald-500/60 bg-emerald-500/10 rounded flex items-center justify-center">
+                  <span className="text-[7px] font-mono text-emerald-400 font-bold">
+                    🎯 黄金字幕区 (Safe)
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* 实时 60fps 花字字幕叠层 (Subtitle Overlay) */}
             {activeSubtitle && (
@@ -228,10 +376,11 @@ export const CinemaMonitor = memo(function CinemaMonitor({
         )}
 
         {/* 悬浮时间码与画幅胶囊 */}
-        <div className="absolute top-2 left-2 flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-[8px] font-mono text-gold backdrop-blur-md pointer-events-none">
-          <span>●</span>
+        <div className="absolute top-2 left-2 flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-[8px] font-mono text-gold backdrop-blur-md pointer-events-none z-10">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
           <span>
-            {activeSceneIndex ? `镜 ${activeSceneIndex} · ` : ""}9:16
+            {activeSceneIndex ? `镜 ${activeSceneIndex} · ` : ""}
+            {aspectRatio} ({resolutionText})
           </span>
         </div>
 
@@ -240,23 +389,13 @@ export const CinemaMonitor = memo(function CinemaMonitor({
           <button
             type="button"
             onClick={onTogglePlay}
-            className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+            className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity cursor-pointer z-10"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md shadow-lg">
               {isPlaying ? "⏸" : "▶"}
             </span>
           </button>
         )}
-      </div>
-
-      {/* 右上角: 电影级内嵌音频频谱仪 */}
-      <div className="absolute top-3 right-3 hidden sm:flex flex-col items-end gap-1 pointer-events-none">
-        <span className="font-mono text-[8px] tracking-wider text-gold uppercase opacity-80">
-          Neural Audio Visualizer · 48kHz
-        </span>
-        <div className="h-8 w-28 rounded-lg overflow-hidden border border-border bg-bg/80 p-0.5 backdrop-blur-md shadow-inner">
-          <AudioVisualizerCanvas isPlaying={isPlaying} />
-        </div>
       </div>
 
       {/* 隐藏的旁白配音音频播放器 */}
@@ -283,7 +422,7 @@ export const CinemaMonitor = memo(function CinemaMonitor({
       )}
 
       {/* 下方悬浮播控条 */}
-      <div className="flex items-center gap-3 mt-2">
+      <div className="flex flex-wrap items-center justify-center gap-2.5 mt-2 z-10">
         <button
           type="button"
           onClick={onTogglePlay}
@@ -292,15 +431,36 @@ export const CinemaMonitor = memo(function CinemaMonitor({
         >
           {isPlaying ? "⏸" : "▶"}
         </button>
+
         <span className="font-mono text-[11px] text-text-secondary">
           {formatTime(currentTime)} / {formatTime(duration)}
         </span>
+
+        {/* 播控倍速切换 */}
+        <div className="flex items-center rounded-md bg-surface-elevated border border-border px-1 py-0.5 text-[9px] font-mono text-text-muted">
+          {SPEED_OPTIONS.map((rate) => (
+            <button
+              key={rate}
+              type="button"
+              onClick={() => setPlaybackRate(rate)}
+              className={`px-1 py-0.2 rounded transition-colors ${
+                playbackRate === rate
+                  ? "bg-gold text-zinc-950 font-bold"
+                  : "hover:text-text-primary"
+              }`}
+            >
+              {rate}x
+            </button>
+          ))}
+        </div>
+
         {voiceSrc && (
           <span className="hidden sm:inline-flex items-center gap-1 rounded bg-gold/10 border border-gold/30 px-1.5 py-0.5 font-mono text-[9px] text-gold font-bold">
             <span>🎙️</span>
             <span>旁白对齐</span>
           </span>
         )}
+
         {bgmSrc && (
           <span className="hidden sm:inline-flex items-center gap-1 rounded bg-cyan-500/10 border border-cyan-500/30 px-1.5 py-0.5 font-mono text-[9px] text-cyan-400 font-bold">
             <span>🎵</span>

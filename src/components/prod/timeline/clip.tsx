@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 时间轴音画切片渲染器 (AudioWaveformVisual & Clip Items)
+ * dramaxis v1.3.0 · 时间轴音画切片渲染器 (AudioWaveformVisual & Clip Items)
  */
 
 export interface TimelineClipItem {

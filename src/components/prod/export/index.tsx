@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · export/index.tsx · 剪映原生工程草稿与多平台交付工坊
+ * dramaxis v1.3.0 · export/index.tsx · 剪映原生工程草稿与多平台交付工坊
  *
  * 全真实数据导出与硬件加速渲染中枢:
  * - 剪映原生 PC 工程草稿 (.draft) 全真实材料与多轨组装导出 (draft.tsx)

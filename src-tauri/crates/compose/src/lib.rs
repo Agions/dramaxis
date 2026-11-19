@@ -14,8 +14,6 @@
 //! - 状态机持久化 (崩溃后能恢复)
 //! - 多并发流水线 (同一项目同时多个 source)
 
-#![allow(dead_code)]
-
 pub mod align;
 pub use align as alignment;
 pub mod exec;

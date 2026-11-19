@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · SceneCutsList · 镜头分镜与关键帧切片列表
+ * dramaxis v1.3.0 · SceneCutsList · 镜头分镜与关键帧切片列表
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.
@@ -7,6 +7,7 @@
 
 import { memo, useState } from "react";
 import { toast } from "sonner";
+import { EmptyState } from "@dramaxis/ui";
 import { detectIpc, type SceneVisualFeature } from "@dramaxis/ipc";
 
 export interface SceneCut {
@@ -211,15 +212,12 @@ export const SceneCutsList = memo(function SceneCutsList({
             );
           })
         ) : (
-          <div className="flex flex-col items-center justify-center p-6 text-center text-xs text-text-muted border border-dashed border-border rounded-xl my-auto">
-            <span className="text-xl mb-1">🎬</span>
-            <span className="font-bold text-text-secondary">
-              暂无 Scene-RAG 切片数据
-            </span>
-            <span className="text-[10px] opacity-70 mt-0.5">
-              载入视频后点击右上角「视听感知分析」提取镜头运动与情绪
-            </span>
-          </div>
+          <EmptyState
+            icon="🎬"
+            title="暂无 Scene-RAG 切片数据"
+            description="载入视频后点击右上角「视听感知分析」提取镜头运动与情绪"
+            className="my-auto p-4"
+          />
         )}
       </div>
     </div>

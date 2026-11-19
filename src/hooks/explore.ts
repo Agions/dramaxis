@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · useAssetExplorer
+ * dramaxis v1.3.0 · useAssetExplorer
  *
  * 资产探索器领域 Hook:
  * - 统一聚合项目当前素材状态与 useProject / useAssets 领域能力

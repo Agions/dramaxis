@@ -73,8 +73,16 @@ pub async fn pipeline_start(
         loop {
             match rx.recv().await {
                 Ok(event) => {
+                    let is_terminal = matches!(
+                        event,
+                        dramaxis_compose::PipelineEvent::PipelineFinished { .. }
+                            | dramaxis_compose::PipelineEvent::PipelineFailed { .. }
+                    );
                     if let Err(e) = app_clone.emit("pipeline:event", &event) {
                         tracing::warn!("emit pipeline:event 失败: {e}");
+                    }
+                    if is_terminal {
+                        break;
                     }
                 }
                 Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
@@ -149,7 +157,7 @@ fn build_deps(
                 .clone()
                 .or_else(|| config.llm_base_url.clone())
                 .unwrap_or_else(|| "https://api.openai.com".into()),
-            model: config.llm_model.clone().unwrap_or_else(|| "tts-1".into()),
+            model: config.tts_model.clone().unwrap_or_else(|| "tts-1".into()),
             voice: config.tts_voice.clone().unwrap_or_else(|| "alloy".into()),
         }))),
         Some(TtsProviderKind::Mimo) => Some(engine(TtsEngineConfig::Mimo(MimoTtsOptions {

@@ -48,7 +48,7 @@ impl Ffmpeg {
             .run_raw(&self.ffmpeg_bin, &["-encoders"], None, None)
             .await
         {
-            let lower = output.to_lowercase();
+            let lower = output.stdout.to_lowercase();
             if lower.contains("h264_videotoolbox") || lower.contains("hevc_videotoolbox") {
                 supported.push(HardwareAccelerationKind::VideoToolbox);
             }
@@ -243,14 +243,15 @@ impl Ffmpeg {
         args: &[&str],
         on_progress: Option<&ProgressFn>,
     ) -> Result<String, DramaxisError> {
-        let mut full: Vec<&str> = vec!["-hide_banner"];
+        let mut full: Vec<&str> = vec!["-y", "-hide_banner"];
         if on_progress.is_none() {
             full.push("-nostats");
         }
         full.extend_from_slice(args);
-        Ok(self
+        let out = self
             .run_raw(&self.ffmpeg_bin, &full, on_progress, None)
-            .await?)
+            .await?;
+        Ok(out.stderr)
     }
 
     /// 底层执行: 捕获 stdout/stderr,解析 time= 进度。exit != 0 → Err(stderr tail)。
@@ -260,7 +261,7 @@ impl Ffmpeg {
         args: &[&str],
         on_progress: Option<&ProgressFn>,
         _total_seconds: Option<f64>,
-    ) -> Result<String, RawExecError> {
+    ) -> Result<RawExecOutput, RawExecError> {
         use tokio::io::AsyncReadExt;
 
         let mut cmd = tokio::process::Command::new(bin);
@@ -297,10 +298,6 @@ impl Ffmpeg {
                             }
                         }
                     }
-                    if buf.len() > 8192 {
-                        let start = buf.len() - 4096;
-                        buf = buf.split_off(start);
-                    }
                 }
             }
             Ok::<String, RawExecError>(buf)
@@ -334,8 +331,18 @@ impl Ffmpeg {
             );
             return Err(RawExecError { stderr_tail: tail });
         }
-        Ok(String::from_utf8_lossy(&stdout_buf).into_owned())
+        Ok(RawExecOutput {
+            stdout: String::from_utf8_lossy(&stdout_buf).into_owned(),
+            stderr: stderr_buf,
+        })
     }
+}
+
+/// FFmpeg 执行原始捕获输出
+#[derive(Debug, Clone)]
+pub struct RawExecOutput {
+    pub stdout: String,
+    pub stderr: String,
 }
 
 #[derive(Debug)]

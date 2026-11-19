@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 //
-// dramaxis v1.1.0  - gen-ipc.mjs
+// dramaxis v1.3.0  - gen-ipc.mjs
 //
 // 自动从 Rust 源码提取 IPC 命令签名 + 公开类型定义,生成 IpcContracts 表与
 // 领域类型 interface,前后端类型单一真相源。
@@ -238,6 +238,7 @@ function findRenameAll(source, startIdx) {
 
 const stripPathPrefix = (t) =>
   t
+    .replace(/^dramaxis_[a-z_]+::/g, "")
     .replace(/^scenefab_[a-z_]+::/g, "")
     .replace(/^tauri::/g, "")
     .replace(/^std::/g, "")
@@ -743,10 +744,6 @@ function main() {
   }
 
   writeFileSync(TYPES_FILE, patched, "utf8");
-  const PKG_TYPES_FILE = resolve(HERE, "../packages/ipc/src/types.gen.ts");
-  try {
-    writeFileSync(PKG_TYPES_FILE, patched, "utf8");
-  } catch {}
   console.log(`[gen-ipc] OK - 已更新 ${TYPES_FILE}`);
 }
 

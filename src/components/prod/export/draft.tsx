@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 剪映工程草稿直出组件 (CapcutDraftCard)
+ * dramaxis v1.3.0 · 剪映工程草稿直出组件 (CapcutDraftCard)
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.

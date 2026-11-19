@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 智能体自反思演化谱系卡片 (ReflectionEvolutionCard)
+ * dramaxis v1.3.0 · 智能体自反思演化谱系卡片 (ReflectionEvolutionCard)
  *
  * 核心功能:
  * - 多轮 Critic-Screenwriter 反思演化版本链可视化 (v1 -> v2 -> v3)

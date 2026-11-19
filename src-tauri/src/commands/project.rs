@@ -150,20 +150,69 @@ pub async fn project_redo(
     redo_bundle(&p, &project_id).map_err(|e| DramaxisError::Project(format!("重做失败: {e}")))
 }
 
-/// 删除指定路径的 Project 文件或工程包，并同步从最近工程列表中注销
+/// 删除指定路径的 Project 文件或工程包，并同步从最近工程列表中注销 (带严格路径边界安全校验)
 #[tauri::command]
 pub async fn project_delete(state: State<'_, AppContext>, path: String) -> Result<(), DramaxisError> {
     let p = PathBuf::from(&path);
+    if !p.exists() {
+        if let Ok(svc) = state.service::<ProjectService>().await {
+            svc.remove_recent(&p).await;
+        }
+        return Ok(());
+    }
+
+    // 安全检查：坚决禁止删除系统根目录、主目录或桌面系统文件夹
+    if let Ok(canonical) = p.canonicalize() {
+        if canonical.parent().is_none() {
+            return Err(DramaxisError::InvalidInput("拒绝删除根目录".into()));
+        }
+        if let Some(home) = dirs::home_dir() {
+            if let Ok(home_can) = home.canonicalize() {
+                if canonical == home_can {
+                    return Err(DramaxisError::InvalidInput("拒绝删除用户主目录".into()));
+                }
+            }
+        }
+        if let Some(desktop) = dirs::desktop_dir() {
+            if let Ok(desktop_can) = desktop.canonicalize() {
+                if canonical == desktop_can {
+                    return Err(DramaxisError::InvalidInput("拒绝删除桌面目录".into()));
+                }
+            }
+        }
+    }
+
     if p.is_file() {
         let _ = tokio::fs::remove_file(&p).await;
-        if p.file_name().and_then(|n| n.to_str()) == Some("project.dramaxis.json") {
-            if let Some(parent) = p.parent() {
+        // 仅当父目录确为 .dramaxis 或 .splicr 工程包时，才级联清理包目录
+        if let Some(parent) = p.parent() {
+            let is_bundle = parent
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .map(|ext| ext == "dramaxis" || ext == "splicr")
+                .unwrap_or(false);
+            if is_bundle {
                 let _ = tokio::fs::remove_dir_all(parent).await;
             }
         }
     } else if p.is_dir() {
-        let _ = tokio::fs::remove_dir_all(&p).await;
+        let is_bundle = p
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .map(|ext| ext == "dramaxis" || ext == "splicr")
+            .unwrap_or(false)
+            || p.join("project.db").exists()
+            || p.join("project.dramaxis.json").exists();
+
+        if is_bundle {
+            let _ = tokio::fs::remove_dir_all(&p).await;
+        } else {
+            return Err(DramaxisError::InvalidInput(
+                "指定的目录并非合法的 Dramaxis 工程包，已拒绝执行级联删除".into(),
+            ));
+        }
     }
+
     if let Ok(svc) = state.service::<ProjectService>().await {
         svc.remove_recent(&p).await;
     }

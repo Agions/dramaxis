@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 首页 旗舰级电影调光室 Dashboard (全景多智能体态势与工程中枢)
+ * dramaxis v1.3.0 · 首页 旗舰级电影调光室 Dashboard (全景多智能体态势与工程中枢)
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.
@@ -78,7 +78,7 @@ function HomePage() {
               <div className="space-y-2.5">
                 <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-[11px] font-bold text-gold shadow-[0_0_12px_rgba(245,200,66,0.15)]">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
-                  <span>v1.2.0 · Rust Native 6-Agent 智能体协作中枢</span>
+                  <span>v1.3.0 · 电影级桌面端多智能体影视/短剧智能解说平台</span>
                 </div>
                 <h1 className="text-3xl md:text-4xl font-black tracking-tight text-text-primary flex flex-wrap items-center gap-3">
                   <span>Dramaxis 剧枢</span>

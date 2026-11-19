@@ -1,11 +1,12 @@
 /**
- * dramaxis v1.2.0 · AgentStudioRack · 6-Agent 智能体机架与思考控制台
+ * dramaxis v1.3.0 · AgentStudioRack · 6-Agent 智能体机架与思考控制台
  *
  * @author Agions
  * @copyright (c) 2026 Dramaxis. All rights reserved.
  */
 
 import { memo, useState } from "react";
+import { Button, Input } from "@dramaxis/ui";
 import { useWorkshopStore } from "@dramaxis/core";
 import type { AgentMessage, BreakpointRequest, Blackboard } from "@dramaxis/ipc";
 import { WORKFLOW_PROFILES } from "./header";
@@ -154,36 +155,36 @@ export const AgentStudioRack = memo(function AgentStudioRack({
 
           {/* 对话式精修输入框 */}
           <div className="space-y-1">
-            <input
-              type="text"
+            <Input
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
               placeholder="💡 输入靶向精修意见 (如：把前3秒反转加剧，主角语气更冷峻)..."
-              className="w-full rounded-lg border border-border bg-bg px-2.5 py-1.5 text-xs text-text-primary outline-none focus:border-gold placeholder:text-text-muted"
+              className="bg-bg text-xs"
             />
           </div>
 
           <div className="flex gap-2 justify-end pt-1">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => {
                 onApproveBreakpoint(false, feedbackText || "重新微调剧本");
                 setFeedbackText("");
               }}
-              className="rounded-lg border border-border bg-bg px-3 py-1.5 text-xs text-text-secondary hover:text-amber-400 hover:border-amber-400/50 transition-colors"
+              className="hover:text-amber-400 hover:border-amber-400/50"
             >
               {feedbackText ? "💬 携带指令靶向改写" : "打回重拟"}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => {
                 onApproveBreakpoint(true);
                 setFeedbackText("");
               }}
-              className="rounded-lg bg-gold px-3.5 py-1.5 text-xs font-bold text-zinc-950 hover:brightness-110 shadow-sm transition-all"
             >
               批准并继续 ➔
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -235,16 +236,18 @@ export const AgentStudioRack = memo(function AgentStudioRack({
         </div>
       </div>
 
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        size="md"
         onClick={onStartPipeline}
         disabled={isAgentRunning}
-        className="w-full rounded-xl bg-gradient-to-r from-gold to-amber py-2.5 text-xs font-bold text-zinc-950 shadow-[0_0_16px_var(--color-gold-glow)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
+        loading={isAgentRunning}
+        className="w-full bg-gradient-to-r from-gold to-amber text-zinc-950 shadow-[0_0_16px_var(--color-gold-glow)]"
       >
         {isAgentRunning
-          ? "🤖 智能体接力中..."
+          ? "智能体接力中..."
           : "⚡ 启动 Multi-Agent 自适应流水线"}
-      </button>
+      </Button>
     </div>
   );
 });

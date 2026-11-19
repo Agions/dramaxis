@@ -7,8 +7,6 @@
 //! - `audio`: 音轨抽取与字幕辅助工具 (audio.rs)
 //! - `multimodal`: 跨模态 Scene-RAG 向量检索
 
-#![allow(dead_code)]
-
 pub mod audio;
 pub mod ffmpeg;
 pub mod multi;

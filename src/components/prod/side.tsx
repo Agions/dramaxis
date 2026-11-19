@@ -1,5 +1,5 @@
 /**
- * dramaxis v1.2.0 · 生产工作台左侧机架与切片栏 (ProductionLeftSidebar)
+ * dramaxis v1.3.0 · 生产工作台左侧机架与切片栏 (ProductionLeftSidebar)
  *
  * 核心升级:
  * - 动态绑定 3 档 Multi-Agent 工作流模板 (标准微短剧 9 节点 / 极速解说 7 节点 / 高光混剪 4 节点)
@@ -11,7 +11,7 @@
  * @copyright (c) 2026 Dramaxis. All rights reserved.
  */
 
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import { SceneCutsList } from "@components/prod/cuts";
 import { usePlaybackStore, useWorkshopStore } from "@dramaxis/core";
 import type {
@@ -205,6 +205,7 @@ export const ProductionLeftSidebar = memo(function ProductionLeftSidebar({
   dagSnapshot = null,
   isAgentRunning = false,
 }: ProductionLeftSidebarProps) {
+  const [viewMode, setViewMode] = useState<"list" | "graph">("list");
   const sceneCuts = useWorkshopStore((s) => s.sceneCuts);
   const setSceneCuts = useWorkshopStore((s) => s.setSceneCuts);
   const markDirty = useWorkshopStore((s) => s.markDirty);
@@ -266,16 +267,93 @@ export const ProductionLeftSidebar = memo(function ProductionLeftSidebar({
               DAG 流水线 ({completedCount}/{totalCount})
             </span>
           </div>
-          <span className="rounded bg-surface-elevated border border-border px-1.5 py-0.2 font-mono text-[8px] font-bold text-gold">
-            {dagSnapshot?.inCritiqueLoop
-              ? `反思自愈 #${dagSnapshot.critiqueCount}`
-              : isAgentRunning
-                ? "RUNNING"
-                : "READY"}
-          </span>
+          <div className="flex items-center gap-1">
+            <div className="flex items-center rounded bg-surface-elevated border border-border p-0.5 text-[8px] font-mono">
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`px-1 py-0.2 rounded transition-colors cursor-pointer ${
+                  viewMode === "list"
+                    ? "bg-gold text-zinc-950 font-bold"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+                title="列表视图"
+              >
+                列表
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("graph")}
+                className={`px-1 py-0.2 rounded transition-colors cursor-pointer ${
+                  viewMode === "graph"
+                    ? "bg-gold text-zinc-950 font-bold"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+                title="动态拓扑图"
+              >
+                拓扑
+              </button>
+            </div>
+            <span className="rounded bg-surface-elevated border border-border px-1.5 py-0.2 font-mono text-[8px] font-bold text-gold">
+              {dagSnapshot?.inCritiqueLoop
+                ? `反思自愈 #${dagSnapshot.critiqueCount}`
+                : isAgentRunning
+                  ? "RUNNING"
+                  : "READY"}
+            </span>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        {viewMode === "graph" ? (
+          <div className="flex flex-col gap-1 p-2 rounded-xl bg-bg border border-border/80">
+            <div className="flex items-center justify-between text-[9px] text-text-muted pb-1 border-b border-border/60 font-mono">
+              <span className="text-gold">StateGraph 拓扑</span>
+              <span>{dagSnapshot?.inCritiqueLoop ? "⚡ 自反思回路" : "顺序/并发流"}</span>
+            </div>
+            <div className="relative flex flex-col items-center py-1">
+              {activeNodes.map((node, index) => {
+                const isRunning = node.status === "running";
+                const isCompleted = node.status === "completed";
+                const isFailed = node.status === "failed";
+                return (
+                  <div key={node.id} className="w-full flex flex-col items-center">
+                    <div
+                      className={`w-full flex items-center justify-between px-2 py-1 rounded-lg border text-xs transition-all ${
+                        isRunning
+                          ? "border-gold bg-gold/15 text-gold shadow-[0_0_10px_rgba(234,179,8,0.3)] ring-1 ring-gold"
+                          : isCompleted
+                            ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                            : isFailed
+                              ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
+                              : "border-border/60 bg-surface text-text-muted"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="text-xs">{node.icon}</span>
+                        <span className="font-bold text-[10px] truncate">{node.name}</span>
+                        {node.isHitl && (
+                          <span className="rounded bg-amber-500/20 px-1 text-[7px] font-mono text-amber-400">
+                            HITL
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[9px] font-mono shrink-0">
+                        {isCompleted ? "✓" : isRunning ? "●" : "○"}
+                      </div>
+                    </div>
+                    {index < activeNodes.length - 1 && (
+                      <div className="flex flex-col items-center my-0.5">
+                        <div className="w-[1px] h-2 bg-gradient-to-b from-border to-gold/50" />
+                        <div className="text-[6px] text-gold/60 -mt-1 leading-none">▼</div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1.5">
           {activeNodes.map((node) => {
             const isRunning = node.status === "running";
             const isCompleted = node.status === "completed";
@@ -332,6 +410,7 @@ export const ProductionLeftSidebar = memo(function ProductionLeftSidebar({
             );
           })}
         </div>
+        )}
       </div>
 
       <div className="h-[1px] w-full bg-border" />
