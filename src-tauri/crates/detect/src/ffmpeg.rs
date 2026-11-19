@@ -20,8 +20,9 @@ impl Ffmpeg {
     pub fn discover() -> DramaxisResult<Self> {
         let ffmpeg = which("ffmpeg")
             .ok_or_else(|| DramaxisError::Ffmpeg("ffmpeg 不在 PATH 中 (请先安装 ffmpeg)".into()))?;
-        let ffprobe = which("ffprobe")
-            .ok_or_else(|| DramaxisError::Ffmpeg("ffprobe 不在 PATH 中 (请先安装 ffmpeg)".into()))?;
+        let ffprobe = which("ffprobe").ok_or_else(|| {
+            DramaxisError::Ffmpeg("ffprobe 不在 PATH 中 (请先安装 ffmpeg)".into())
+        })?;
         Ok(Self {
             ffmpeg_bin: ffmpeg,
             ffprobe_bin: ffprobe,
@@ -109,7 +110,12 @@ impl Ffmpeg {
     }
 
     /// SRT 字幕烧录
-    pub async fn burn_captions(&self, input: &Path, srt: &Path, output: &Path) -> DramaxisResult<()> {
+    pub async fn burn_captions(
+        &self,
+        input: &Path,
+        srt: &Path,
+        output: &Path,
+    ) -> DramaxisResult<()> {
         let srt_escaped = srt
             .to_string_lossy()
             .replace(':', "\\:")

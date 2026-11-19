@@ -30,7 +30,7 @@ pub mod hooks;
 pub use flywheel::*;
 pub use hooks::*;
 
-pub use dramaxis_core::error::{LlmProviderKind, DramaxisError, DramaxisResult};
+pub use dramaxis_core::error::{DramaxisError, DramaxisResult, LlmProviderKind};
 
 // ════════════════════════════════════════════════════════════════════════
 // 输入 / 输出契约
@@ -314,7 +314,9 @@ impl LlmProvider for ClaudeProvider {
             .collect::<Vec<_>>()
             .join("");
 
-        let model = api.model.unwrap_or_else(|| self.default_model().to_string());
+        let model = api
+            .model
+            .unwrap_or_else(|| self.default_model().to_string());
         let tokens_used = api
             .usage
             .map(|u| u.input_tokens + u.output_tokens)

@@ -184,7 +184,9 @@ pub async fn agent_step(
             .await
             .map_err(|e| DramaxisError::Pipeline(e.to_string()))
     } else {
-        Err(DramaxisError::Pipeline("智能体调度器尚未初始化".to_string()))
+        Err(DramaxisError::Pipeline(
+            "智能体调度器尚未初始化".to_string(),
+        ))
     }
 }
 

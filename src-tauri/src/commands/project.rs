@@ -13,7 +13,9 @@ use tauri::{Manager, State};
 
 /// 列举最近项目 (真实从 ProjectService 取)
 #[tauri::command]
-pub async fn project_list_recent(state: State<'_, AppContext>) -> Result<Vec<String>, DramaxisError> {
+pub async fn project_list_recent(
+    state: State<'_, AppContext>,
+) -> Result<Vec<String>, DramaxisError> {
     let svc = state
         .service::<ProjectService>()
         .await
@@ -152,7 +154,10 @@ pub async fn project_redo(
 
 /// 删除指定路径的 Project 文件或工程包，并同步从最近工程列表中注销 (带严格路径边界安全校验)
 #[tauri::command]
-pub async fn project_delete(state: State<'_, AppContext>, path: String) -> Result<(), DramaxisError> {
+pub async fn project_delete(
+    state: State<'_, AppContext>,
+    path: String,
+) -> Result<(), DramaxisError> {
     let p = PathBuf::from(&path);
     if !p.exists() {
         if let Ok(svc) = state.service::<ProjectService>().await {

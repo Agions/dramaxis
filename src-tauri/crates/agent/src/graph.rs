@@ -146,7 +146,11 @@ impl<S: Send + Sync + 'static> StateGraph<S> {
         let target = target_node.into();
         // 自动为所有 required 节点向 target 添加直接边
         for req in &required_dependencies {
-            if !self.direct_edges.iter().any(|(f, t)| f == req && t == &target) {
+            if !self
+                .direct_edges
+                .iter()
+                .any(|(f, t)| f == req && t == &target)
+            {
                 self.direct_edges.push((req.clone(), target.clone()));
             }
         }
@@ -189,7 +193,8 @@ impl<S: Send + Sync + 'static> StateGraph<S> {
             }
         }
         for (target, barrier) in &self.barriers {
-            if barrier.required_dependencies.iter().any(|r| r == node_id) && !succs.contains(target) {
+            if barrier.required_dependencies.iter().any(|r| r == node_id) && !succs.contains(target)
+            {
                 succs.push(target.clone());
             }
         }
@@ -297,9 +302,9 @@ impl<S: Send + Sync + 'static> StateGraph<S> {
 
     /// 判断图是否全部执行完毕
     pub fn is_all_completed(&self) -> bool {
-        self.nodes.values().all(|n| {
-            n.status == DagNodeStatus::Completed || n.status == DagNodeStatus::Skipped
-        })
+        self.nodes
+            .values()
+            .all(|n| n.status == DagNodeStatus::Completed || n.status == DagNodeStatus::Skipped)
     }
 
     /// 执行节点（支持优雅降级 Fallback）
@@ -308,10 +313,9 @@ impl<S: Send + Sync + 'static> StateGraph<S> {
         node_id: &str,
         state: Arc<RwLock<S>>,
     ) -> DramaxisResult<String> {
-        let node = self
-            .nodes
-            .get(node_id)
-            .ok_or_else(|| DramaxisError::Pipeline(format!("Node {} not found in StateGraph", node_id)))?;
+        let node = self.nodes.get(node_id).ok_or_else(|| {
+            DramaxisError::Pipeline(format!("Node {} not found in StateGraph", node_id))
+        })?;
 
         let handler = match &node.handler {
             Some(h) => h.clone(),
@@ -418,8 +422,16 @@ mod tests {
     async fn test_barrier_and_reducer() {
         let mut graph = StateGraph::<MockState>::new();
         graph.add_node(GraphNode::new("start", "起点", AgentRole::Director));
-        graph.add_node(GraphNode::new("branch_a", "视觉分支", AgentRole::VisualCritic));
-        graph.add_node(GraphNode::new("branch_b", "音频分支", AgentRole::SoundEngineer));
+        graph.add_node(GraphNode::new(
+            "branch_a",
+            "视觉分支",
+            AgentRole::VisualCritic,
+        ));
+        graph.add_node(GraphNode::new(
+            "branch_b",
+            "音频分支",
+            AgentRole::SoundEngineer,
+        ));
         graph.add_node(GraphNode::new("join", "汇聚编剧", AgentRole::Screenwriter));
 
         graph.add_edge("start", "branch_a");
@@ -455,15 +467,26 @@ mod tests {
 
         // 应用 Barrier Reducer
         graph.apply_barrier_reducers(&ready_final, &mut state).await;
-        assert!(state.script_merged, "Reducer should have run upon barrier saturation");
+        assert!(
+            state.script_merged,
+            "Reducer should have run upon barrier saturation"
+        );
     }
 
     #[tokio::test]
     async fn test_selective_invalidation_and_critic_loop() {
         let mut graph = StateGraph::<MockState>::new();
         graph.add_node(GraphNode::new("prep", "前置抽样", AgentRole::VisualCritic));
-        graph.add_node(GraphNode::new("writer", "编剧起稿", AgentRole::Screenwriter));
-        graph.add_node(GraphNode::new("critic", "质检验收", AgentRole::QualityReviewer));
+        graph.add_node(GraphNode::new(
+            "writer",
+            "编剧起稿",
+            AgentRole::Screenwriter,
+        ));
+        graph.add_node(GraphNode::new(
+            "critic",
+            "质检验收",
+            AgentRole::QualityReviewer,
+        ));
         graph.add_node(GraphNode::new("hitl", "人机确认", AgentRole::Director));
 
         graph.add_edge("prep", "writer");
@@ -505,9 +528,18 @@ mod tests {
         assert!(invalidated.contains(&"hitl".to_string()));
         assert!(!invalidated.contains(&"prep".to_string()));
 
-        assert_eq!(graph.nodes.get("prep").unwrap().status, DagNodeStatus::Completed);
-        assert_eq!(graph.nodes.get("writer").unwrap().status, DagNodeStatus::Pending);
-        assert_eq!(graph.nodes.get("critic").unwrap().status, DagNodeStatus::Pending);
+        assert_eq!(
+            graph.nodes.get("prep").unwrap().status,
+            DagNodeStatus::Completed
+        );
+        assert_eq!(
+            graph.nodes.get("writer").unwrap().status,
+            DagNodeStatus::Pending
+        );
+        assert_eq!(
+            graph.nodes.get("critic").unwrap().status,
+            DagNodeStatus::Pending
+        );
 
         // 此时 writer 的前置 prep 是 Completed，因此 writer 立即再次就绪
         let ready = graph.get_ready_node_ids();
@@ -531,9 +563,7 @@ mod tests {
                     })
                 }))
                 .with_fallback(Arc::new(|_| {
-                    Box::pin(async move {
-                        Ok("已降级为离线轻量级合成声学模型".into())
-                    })
+                    Box::pin(async move { Ok("已降级为离线轻量级合成声学模型".into()) })
                 })),
         );
 

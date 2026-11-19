@@ -196,7 +196,8 @@ impl DualDrivenAligner {
             if s.emotion_tag == emotion {
                 s_score += 40.0;
             }
-            if (line.contains("谁能想到") || line.contains("真相")) && s.emotion_tag == "悬疑对峙" {
+            if (line.contains("谁能想到") || line.contains("真相")) && s.emotion_tag == "悬疑对峙"
+            {
                 s_score += 20.0;
             }
             // 时序平滑前进偏置: 镜头起点在上一镜头之后或接近上一镜头，保证视听持续向前流动

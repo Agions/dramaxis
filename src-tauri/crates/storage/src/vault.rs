@@ -10,7 +10,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use ring::aead::{AES_256_GCM, LessSafeKey, Nonce, UnboundKey, NONCE_LEN};
+use ring::aead::{LessSafeKey, Nonce, UnboundKey, AES_256_GCM, NONCE_LEN};
 use ring::rand::{SecureRandom, SystemRandom};
 use sha2::{Digest, Sha256};
 
@@ -54,7 +54,10 @@ impl CredentialVault {
     }
 
     /// 使用 AES-256-GCM 加密数据
-    fn encrypt_aes256_gcm(plain_bytes: &[u8], key_bytes: &[u8; 32]) -> Result<Vec<u8>, std::io::Error> {
+    fn encrypt_aes256_gcm(
+        plain_bytes: &[u8],
+        key_bytes: &[u8; 32],
+    ) -> Result<Vec<u8>, std::io::Error> {
         let unbound_key = UnboundKey::new(&AES_256_GCM, key_bytes)
             .map_err(|_| std::io::Error::other("AES-256 key init failed"))?;
         let key = LessSafeKey::new(unbound_key);
@@ -81,9 +84,15 @@ impl CredentialVault {
     }
 
     /// 使用 AES-256-GCM 解密数据
-    fn decrypt_aes256_gcm(encrypted: &[u8], key_bytes: &[u8; 32]) -> Result<Vec<u8>, std::io::Error> {
+    fn decrypt_aes256_gcm(
+        encrypted: &[u8],
+        key_bytes: &[u8; 32],
+    ) -> Result<Vec<u8>, std::io::Error> {
         if encrypted.len() < 4 + NONCE_LEN + 16 {
-            return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, "Vault payload too short"));
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::UnexpectedEof,
+                "Vault payload too short",
+            ));
         }
 
         let nonce_bytes = &encrypted[4..4 + NONCE_LEN];
@@ -96,8 +105,14 @@ impl CredentialVault {
         let nonce = Nonce::try_assume_unique_for_key(nonce_bytes)
             .map_err(|_| std::io::Error::other("Invalid nonce"))?;
 
-        let decrypted = key.open_in_place(nonce, ring::aead::Aad::empty(), &mut in_out)
-            .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidData, "AES-GCM decryption / authentication failed"))?;
+        let decrypted = key
+            .open_in_place(nonce, ring::aead::Aad::empty(), &mut in_out)
+            .map_err(|_| {
+                std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "AES-GCM decryption / authentication failed",
+                )
+            })?;
 
         Ok(decrypted.to_vec())
     }
@@ -114,7 +129,9 @@ impl CredentialVault {
             // 1. 如果包含 DRA2 头部，优先使用 AES-256-GCM 解密
             if raw_bytes.starts_with(VAULT_MAGIC_V2) {
                 if let Ok(decrypted) = Self::decrypt_aes256_gcm(&raw_bytes, &key) {
-                    if let Ok(entries) = serde_json::from_slice::<HashMap<String, String>>(&decrypted) {
+                    if let Ok(entries) =
+                        serde_json::from_slice::<HashMap<String, String>>(&decrypted)
+                    {
                         return Self { entries };
                     }
                 }
@@ -222,7 +239,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_vault_legacy_xor_backward_compatibility() {
-        let tmp = std::env::temp_dir().join(format!("test_vault_legacy_{}.vault", uuid_v4_simple()));
+        let tmp =
+            std::env::temp_dir().join(format!("test_vault_legacy_{}.vault", uuid_v4_simple()));
         let key = CredentialVault::derive_machine_key();
 
         // 构造旧版异或加密文件 (无 DRA2 头部)

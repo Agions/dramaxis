@@ -49,7 +49,8 @@ pub async fn detect_scenes(
 
 /// 探测当前系统的 GPU 硬件加速编解码器支持
 #[tauri::command]
-pub async fn detect_hardware_acceleration() -> Result<Vec<HardwareAccelerationKind>, DramaxisError> {
+pub async fn detect_hardware_acceleration() -> Result<Vec<HardwareAccelerationKind>, DramaxisError>
+{
     if let Ok(ffmpeg) = Ffmpeg::discover() {
         Ok(ffmpeg.probe_hardware_acceleration().await)
     } else {

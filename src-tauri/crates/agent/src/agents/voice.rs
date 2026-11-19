@@ -66,11 +66,16 @@ impl Agent for VoiceArtistAgent {
                 let _ = tokio::process::Command::new(&ffmpeg.ffmpeg_bin)
                     .args([
                         "-y",
-                        "-f", "lavfi",
-                        "-i", "anullsrc=r=48000:cl=mono",
-                        "-t", &dur_str,
-                        "-q:a", "9",
-                        "-acodec", "libmp3lame",
+                        "-f",
+                        "lavfi",
+                        "-i",
+                        "anullsrc=r=48000:cl=mono",
+                        "-t",
+                        &dur_str,
+                        "-q:a",
+                        "9",
+                        "-acodec",
+                        "libmp3lame",
                         &cache_dir.to_string_lossy(),
                     ])
                     .output()
@@ -98,8 +103,10 @@ impl Agent for VoiceArtistAgent {
 
         ctx.memory
             .insert("voice_audio_path".to_string(), voice_audio_path.clone());
-        ctx.memory
-            .insert("voice_duration".to_string(), format!("{:.2}", real_duration));
+        ctx.memory.insert(
+            "voice_duration".to_string(),
+            format!("{:.2}", real_duration),
+        );
 
         ctx.blackboard.set_voice_artifact(VoiceArtifact {
             audio_path: voice_audio_path,

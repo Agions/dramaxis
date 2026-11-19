@@ -43,10 +43,7 @@ impl AgentRuntimeDeps {
             _ => None,
         });
 
-        let default_provider_str = self
-            .provider
-            .clone()
-            .unwrap_or_else(|| "qwen".into());
+        let default_provider_str = self.provider.clone().unwrap_or_else(|| "qwen".into());
         let default_api_key = self.api_key.clone().unwrap_or_default();
         let default_base_url = self.base_url.clone();
         let default_model = self.model.clone();

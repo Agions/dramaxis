@@ -6,7 +6,11 @@ use std::path::{Path, PathBuf};
 
 impl crate::ffmpeg::Ffmpeg {
     /// select+showinfo 场景检测。返回切点时间列表 (秒)。
-    pub async fn detect_scenes(&self, input: &Path, threshold: f64) -> DramaxisResult<Vec<SceneCut>> {
+    pub async fn detect_scenes(
+        &self,
+        input: &Path,
+        threshold: f64,
+    ) -> DramaxisResult<Vec<SceneCut>> {
         let filter = format!("select='gt(scene,{threshold})',showinfo");
         let stderr = self
             .run_stderr(

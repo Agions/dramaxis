@@ -17,7 +17,7 @@ use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 
 use crate::exec::{default_executors, PipelineDeps};
-use crate::{Pipeline, PipelineEvent, PipelineState, Project, DramaxisResult, StepStatus};
+use crate::{DramaxisResult, Pipeline, PipelineEvent, PipelineState, Project, StepStatus};
 
 /// IPC 友好的状态快照。
 #[derive(Debug, Clone, Serialize)]

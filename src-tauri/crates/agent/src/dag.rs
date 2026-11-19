@@ -58,59 +58,109 @@ impl DagOrchestrator {
     pub fn with_profile(context: AgentContext, profile: WorkflowProfile) -> Self {
         let max_critique_rounds = 2;
         let mut graph = StateGraph::<AgentContext>::new();
-        let deps = Arc::new(std::sync::RwLock::new(crate::deps::AgentRuntimeDeps::default()));
+        let deps = Arc::new(std::sync::RwLock::new(
+            crate::deps::AgentRuntimeDeps::default(),
+        ));
 
         let nodes = match profile {
             WorkflowProfile::StandardDrama => {
                 // 1. 注册图节点
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("director_plan", "🎬 总控导演 · 统筹策划与任务派发", AgentRole::Director)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "director_plan", current_deps))
-                        })),
+                    GraphNode::new(
+                        "director_plan",
+                        "🎬 总控导演 · 统筹策划与任务派发",
+                        AgentRole::Director,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "director_plan",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("visual_analysis", "👁️ 视觉分析师 · 场景突变硬切与关键帧萃取", AgentRole::VisualCritic)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "visual_analysis", current_deps))
-                        })),
+                    GraphNode::new(
+                        "visual_analysis",
+                        "👁️ 视觉分析师 · 场景突变硬切与关键帧萃取",
+                        AgentRole::VisualCritic,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "visual_analysis",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("dialogue_probe", "🎧 音频分析师 · 原片原声对白与节奏探测", AgentRole::SoundEngineer)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "dialogue_probe", current_deps))
-                        })),
+                    GraphNode::new(
+                        "dialogue_probe",
+                        "🎧 音频分析师 · 原片原声对白与节奏探测",
+                        AgentRole::SoundEngineer,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "dialogue_probe",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("screenwriter_draft", "✍️ 金牌编剧 · 第一人称爆款解说撰写", AgentRole::Screenwriter)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "screenwriter_draft", current_deps))
-                        })),
+                    GraphNode::new(
+                        "screenwriter_draft",
+                        "✍️ 金牌编剧 · 第一人称爆款解说撰写",
+                        AgentRole::Screenwriter,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "screenwriter_draft",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("critic_review", "🔍 剧本质检 · 节奏密度与黄金前3秒评审闭环", AgentRole::QualityReviewer)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "critic_review", current_deps))
-                        })),
+                    GraphNode::new(
+                        "critic_review",
+                        "🔍 剧本质检 · 节奏密度与黄金前3秒评审闭环",
+                        AgentRole::QualityReviewer,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "critic_review",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("hitl_approval", "🤝 人机协同 · 剧本精修与终版确认 (HITL)", AgentRole::Director)
-                        .with_hitl(true)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "hitl_approval", current_deps))
-                        })),
+                    GraphNode::new(
+                        "hitl_approval",
+                        "🤝 人机协同 · 剧本精修与终版确认 (HITL)",
+                        AgentRole::Director,
+                    )
+                    .with_hitl(true)
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "hitl_approval",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
@@ -132,19 +182,35 @@ impl DagOrchestrator {
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("timeline_compose", "🎛️ 音频调音师 · 5轨毫秒级磁吸与智能避让", AgentRole::SoundEngineer)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "timeline_compose", current_deps))
-                        })),
+                    GraphNode::new(
+                        "timeline_compose",
+                        "🎛️ 音频调音师 · 5轨毫秒级磁吸与智能避让",
+                        AgentRole::SoundEngineer,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "timeline_compose",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("quality_gate", "🛡️ 终审守门员 · 视听合规与全案质检", AgentRole::QualityReviewer)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "quality_gate", current_deps))
-                        })),
+                    GraphNode::new(
+                        "quality_gate",
+                        "🛡️ 终审守门员 · 视听合规与全案质检",
+                        AgentRole::QualityReviewer,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "quality_gate",
+                            current_deps,
+                        ))
+                    })),
                 );
 
                 // 2. 声明依赖边与并行汇聚屏障
@@ -290,60 +356,116 @@ impl DagOrchestrator {
             WorkflowProfile::FastCommentary => {
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("director_plan", "🎬 总控导演 · 统筹策划与任务派发", AgentRole::Director)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "director_plan", current_deps))
-                        })),
+                    GraphNode::new(
+                        "director_plan",
+                        "🎬 总控导演 · 统筹策划与任务派发",
+                        AgentRole::Director,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "director_plan",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("visual_analysis", "👁️ 视觉分析师 · 场景关键帧萃取", AgentRole::VisualCritic)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "visual_analysis", current_deps))
-                        })),
+                    GraphNode::new(
+                        "visual_analysis",
+                        "👁️ 视觉分析师 · 场景关键帧萃取",
+                        AgentRole::VisualCritic,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "visual_analysis",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("screenwriter_draft", "✍️ 金牌编剧 · 极速解说文案撰写", AgentRole::Screenwriter)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "screenwriter_draft", current_deps))
-                        })),
+                    GraphNode::new(
+                        "screenwriter_draft",
+                        "✍️ 金牌编剧 · 极速解说文案撰写",
+                        AgentRole::Screenwriter,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "screenwriter_draft",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("hitl_approval", "🤝 人机协同 · 文案终审确认 (HITL)", AgentRole::Director)
-                        .with_hitl(true)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "hitl_approval", current_deps))
-                        })),
+                    GraphNode::new(
+                        "hitl_approval",
+                        "🤝 人机协同 · 文案终审确认 (HITL)",
+                        AgentRole::Director,
+                    )
+                    .with_hitl(true)
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "hitl_approval",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("voice_synthesis", "🎙️ 配音师 · 快速独白人声合成", AgentRole::VoiceArtist)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "voice_synthesis", current_deps))
-                        })),
+                    GraphNode::new(
+                        "voice_synthesis",
+                        "🎙️ 配音师 · 快速独白人声合成",
+                        AgentRole::VoiceArtist,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "voice_synthesis",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("timeline_compose", "🎛️ 音频调音师 · 5轨极速对齐", AgentRole::SoundEngineer)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "timeline_compose", current_deps))
-                        })),
+                    GraphNode::new(
+                        "timeline_compose",
+                        "🎛️ 音频调音师 · 5轨极速对齐",
+                        AgentRole::SoundEngineer,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "timeline_compose",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("quality_gate", "🛡️ 终审守门员 · 快速成片验收", AgentRole::QualityReviewer)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "quality_gate", current_deps))
-                        })),
+                    GraphNode::new(
+                        "quality_gate",
+                        "🛡️ 终审守门员 · 快速成片验收",
+                        AgentRole::QualityReviewer,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "quality_gate",
+                            current_deps,
+                        ))
+                    })),
                 );
 
                 graph.add_edge("director_plan", "visual_analysis");
@@ -429,35 +551,67 @@ impl DagOrchestrator {
             WorkflowProfile::PureBrollMontage => {
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("director_plan", "🎬 总控导演 · 混剪统筹与节奏打点", AgentRole::Director)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "director_plan", current_deps))
-                        })),
+                    GraphNode::new(
+                        "director_plan",
+                        "🎬 总控导演 · 混剪统筹与节奏打点",
+                        AgentRole::Director,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "director_plan",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("visual_analysis", "👁️ 视觉分析师 · 镜头突变高能切点分析", AgentRole::VisualCritic)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "visual_analysis", current_deps))
-                        })),
+                    GraphNode::new(
+                        "visual_analysis",
+                        "👁️ 视觉分析师 · 镜头突变高能切点分析",
+                        AgentRole::VisualCritic,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "visual_analysis",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("timeline_compose", "🎛️ 混剪师 · 卡点转场与 BGM 动态混流", AgentRole::SoundEngineer)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "timeline_compose", current_deps))
-                        })),
+                    GraphNode::new(
+                        "timeline_compose",
+                        "🎛️ 混剪师 · 卡点转场与 BGM 动态混流",
+                        AgentRole::SoundEngineer,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "timeline_compose",
+                            current_deps,
+                        ))
+                    })),
                 );
                 let d = deps.clone();
                 graph.add_node(
-                    GraphNode::new("quality_gate", "🛡️ 终审守门员 · 视听连贯度终验", AgentRole::QualityReviewer)
-                        .with_handler(Arc::new(move |ctx| {
-                            let current_deps = Arc::new(d.read().unwrap().clone());
-                            Box::pin(Self::execute_static_node_logic(ctx, "quality_gate", current_deps))
-                        })),
+                    GraphNode::new(
+                        "quality_gate",
+                        "🛡️ 终审守门员 · 视听连贯度终验",
+                        AgentRole::QualityReviewer,
+                    )
+                    .with_handler(Arc::new(move |ctx| {
+                        let current_deps = Arc::new(d.read().unwrap().clone());
+                        Box::pin(Self::execute_static_node_logic(
+                            ctx,
+                            "quality_gate",
+                            current_deps,
+                        ))
+                    })),
                 );
 
                 graph.add_edge("director_plan", "visual_analysis");
@@ -664,7 +818,9 @@ impl DagOrchestrator {
             // 3. 执行 Barrier 屏障状态归约 (Reducer)
             {
                 let mut ctx = self.context.write().await;
-                self.graph.apply_barrier_reducers(&ready_ids, &mut ctx).await;
+                self.graph
+                    .apply_barrier_reducers(&ready_ids, &mut ctx)
+                    .await;
             }
 
             // 4. 并行推进就绪节点 (Tokio 任务池 + 信号量并发控制)
@@ -691,11 +847,7 @@ impl DagOrchestrator {
                 let sem_clone = sem.clone();
                 let ctx_clone = self.context.clone();
                 let node_id = id.clone();
-                let handler = self
-                    .graph
-                    .nodes
-                    .get(id)
-                    .and_then(|n| n.handler.clone());
+                let handler = self.graph.nodes.get(id).and_then(|n| n.handler.clone());
                 tasks.push(async move {
                     let _permit = sem_clone.acquire().await;
                     let start = Instant::now();
@@ -795,7 +947,10 @@ impl DagOrchestrator {
                         .graph
                         .nodes
                         .get(&target)
-                        .map(|n| n.status == DagNodeStatus::Completed || n.status == DagNodeStatus::Running)
+                        .map(|n| {
+                            n.status == DagNodeStatus::Completed
+                                || n.status == DagNodeStatus::Running
+                        })
                         .unwrap_or(false);
 
                     if is_cycle && self.critique_count < self.max_critique_rounds {
@@ -923,7 +1078,9 @@ impl DagOrchestrator {
                 };
 
                 // 2. 在锁外执行耗时的 FFmpeg probe 与 VAD 静音检测
-                let (has_speech, _dur_sec, summary, intervals) = if let Some(media_path) = first_media {
+                let (has_speech, _dur_sec, summary, intervals) = if let Some(media_path) =
+                    first_media
+                {
                     let p = std::path::Path::new(&media_path);
                     if p.exists() {
                         let probe_res = if let Ok(ffmpeg) = dramaxis_detect::Ffmpeg::discover() {
@@ -958,16 +1115,31 @@ impl DagOrchestrator {
                                 );
                                 (true, d, summary, ivs)
                             } else {
-                                (false, d, "原片无音轨，已标记为纯静音画面素材".into(), Vec::new())
+                                (
+                                    false,
+                                    d,
+                                    "原片无音轨，已标记为纯静音画面素材".into(),
+                                    Vec::new(),
+                                )
                             }
                         } else {
                             (true, dur_hint, "原片音轨分析就绪".into(), Vec::new())
                         }
                     } else {
-                        (true, dur_hint, "素材文件不存在，使用默认音频配置".into(), Vec::new())
+                        (
+                            true,
+                            dur_hint,
+                            "素材文件不存在，使用默认音频配置".into(),
+                            Vec::new(),
+                        )
                     }
                 } else {
-                    (true, dur_hint, "无可用音轨，音频通道探测完成".into(), Vec::new())
+                    (
+                        true,
+                        dur_hint,
+                        "无可用音轨，音频通道探测完成".into(),
+                        Vec::new(),
+                    )
                 };
 
                 // 3. 毫秒级极速写锁提交 Delta 至 Blackboard
@@ -1021,15 +1193,20 @@ impl DagOrchestrator {
                 let mut hook_score = arc.hook_score;
                 let mut conflict_score = arc.climax_intensity.clamp(50.0, 95.0);
                 let mut overall_score =
-                    (hook_score * 0.4 + pacing_score * 0.35 + conflict_score * 0.25).clamp(60.0, 98.0);
+                    (hook_score * 0.4 + pacing_score * 0.35 + conflict_score * 0.25)
+                        .clamp(60.0, 98.0);
                 let mut critique_feedback = if overall_score < 85.0 {
-                    Some("黄金前3秒缺乏戏剧性张力与危机感，开篇反转不足，且字数节奏需微调。".to_string())
+                    Some(
+                        "黄金前3秒缺乏戏剧性张力与危机感，开篇反转不足，且字数节奏需微调。"
+                            .to_string(),
+                    )
                 } else {
                     Some("文案整体张力良好，前3秒抓人，高潮反转起伏合规。".to_string())
                 };
                 let mut suggestions: Vec<String> = Vec::new();
                 if hook_score < 85.0 {
-                    suggestions.push("前3秒应直接抛出冲突核心或生死/背叛反常识反转，避免平铺直叙".into());
+                    suggestions
+                        .push("前3秒应直接抛出冲突核心或生死/背叛反常识反转，避免平铺直叙".into());
                 }
                 if pacing_score < 80.0 {
                     suggestions.push(format!(
@@ -1078,7 +1255,9 @@ impl DagOrchestrator {
                             suggestions: Option<Vec<String>>,
                         }
 
-                        let clean_json = resp.content.trim()
+                        let clean_json = resp
+                            .content
+                            .trim()
                             .trim_start_matches("```json")
                             .trim_start_matches("```")
                             .trim_end_matches("```")
@@ -1107,7 +1286,8 @@ impl DagOrchestrator {
                     }
                 }
 
-                ctx.memory.insert("critic_score".into(), format!("{:.1}", overall_score));
+                ctx.memory
+                    .insert("critic_score".into(), format!("{:.1}", overall_score));
                 if let Some(ref fb) = critique_feedback {
                     ctx.memory.insert("critique_feedback".into(), fb.clone());
                 }
@@ -1137,7 +1317,10 @@ impl DagOrchestrator {
                 if overall_score < 85.0 {
                     ctx.log_thought(
                         AgentRole::QualityReviewer,
-                        format!("⚠️ 评分未达达标线 (85.0 分)，批注: {}", critique_feedback.as_deref().unwrap_or("需重写优化")),
+                        format!(
+                            "⚠️ 评分未达达标线 (85.0 分)，批注: {}",
+                            critique_feedback.as_deref().unwrap_or("需重写优化")
+                        ),
                     );
                 }
 
@@ -1231,7 +1414,8 @@ mod tests {
 
         // 纯画面混剪模板 (4 节点)
         let ctx = AgentContext::new(proj.clone(), true);
-        let mut orch_montage = DagOrchestrator::with_profile(ctx, WorkflowProfile::PureBrollMontage);
+        let mut orch_montage =
+            DagOrchestrator::with_profile(ctx, WorkflowProfile::PureBrollMontage);
         let snap_montage = orch_montage.snapshot().await;
         assert_eq!(snap_montage.total_nodes, 4);
         orch_montage.run_dag().await.expect("run montage");
@@ -1260,11 +1444,17 @@ mod tests {
         ctx.memory.insert("critic_score".into(), "72.0".into());
 
         let mut orchestrator = DagOrchestrator::new(ctx);
-        orchestrator.run_dag().await.expect("run dag with reflection");
+        orchestrator
+            .run_dag()
+            .await
+            .expect("run dag with reflection");
 
         let snap = orchestrator.snapshot().await;
         assert_eq!(snap.completed_nodes, 9);
         // 应该触发了至少 1 次反思回路
-        assert!(orchestrator.critique_count > 0, "should have triggered reflection loop via conditional edge");
+        assert!(
+            orchestrator.critique_count > 0,
+            "should have triggered reflection loop via conditional edge"
+        );
     }
 }

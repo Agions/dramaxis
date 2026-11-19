@@ -32,7 +32,9 @@ pub fn pipeline_step_defs() -> Vec<StepDef> {
 
 /// 状态快照 (前端 polling)
 #[tauri::command]
-pub async fn pipeline_status(state: State<'_, AppContext>) -> Result<PipelineStatus, DramaxisError> {
+pub async fn pipeline_status(
+    state: State<'_, AppContext>,
+) -> Result<PipelineStatus, DramaxisError> {
     let svc = state
         .service::<PipelineService>()
         .await

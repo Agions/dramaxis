@@ -487,17 +487,19 @@ pub async fn render_video_pipeline(
         args.push("-map".into());
         args.push(v_final_tag.into());
         if !a_final_tag.is_empty() {
-            let map_tag = if a_final_tag == "[0:a]" { "0:a" } else { a_final_tag };
+            let map_tag = if a_final_tag == "[0:a]" {
+                "0:a"
+            } else {
+                a_final_tag
+            };
             args.push("-map".into());
             args.push(map_tag.into());
         }
     }
 
     // 8 维元数据擦除与随机编码器签名
-    let meta_args = dedup.build_metadata_args(
-        "Dramaxis Master",
-        Utc::now().timestamp_micros() as u64,
-    );
+    let meta_args =
+        dedup.build_metadata_args("Dramaxis Master", Utc::now().timestamp_micros() as u64);
     args.extend(meta_args);
 
     // 5. 动态选择硬件编码器 (GPU 加速优先)

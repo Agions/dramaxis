@@ -28,14 +28,18 @@ impl Agent for VisualCriticAgent {
             let path_obj = Path::new(&media_path);
             if path_obj.exists() {
                 if let Ok(ffmpeg) = Ffmpeg::discover() {
-                    let probe = ffmpeg.probe(path_obj).await.unwrap_or(dramaxis_detect::FfmpegProbe {
-                        duration_seconds: 60.0,
-                        width: 1080,
-                        height: 1920,
-                        video_codec: Some("h264".into()),
-                        audio_codec: Some("aac".into()),
-                        size_bytes: 1024 * 1024 * 10,
-                    });
+                    let probe =
+                        ffmpeg
+                            .probe(path_obj)
+                            .await
+                            .unwrap_or(dramaxis_detect::FfmpegProbe {
+                                duration_seconds: 60.0,
+                                width: 1080,
+                                height: 1920,
+                                video_codec: Some("h264".into()),
+                                audio_codec: Some("aac".into()),
+                                size_bytes: 1024 * 1024 * 10,
+                            });
                     let cuts = ffmpeg
                         .detect_scenes(path_obj, 0.3)
                         .await
@@ -110,7 +114,8 @@ impl Agent for VisualCriticAgent {
                     0.9
                 };
                 let motion_intensity = ((pace_factor * 20.0 + 35.0) * arc_factor).clamp(15.0, 98.0);
-                let conflict_score = ((motion_intensity * 0.7) + (arc_factor * 25.0)).clamp(20.0, 99.0);
+                let conflict_score =
+                    ((motion_intensity * 0.7) + (arc_factor * 25.0)).clamp(20.0, 99.0);
 
                 let (emotion_tag, visual_summary) = if conflict_score > 82.0 {
                     ("激烈对抗", "高强度肢体冲突与紧绷动作镜头")

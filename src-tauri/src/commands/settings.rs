@@ -87,8 +87,10 @@ pub async fn settings_set(
     if let Ok(vp) = vault_path(&app) {
         let mut vault = CredentialVault::load(&vp).await;
 
-        let sync_vault_key = |v: &mut CredentialVault, key_name: &str, field: &mut Option<String>| {
-            match field.as_deref() {
+        let sync_vault_key =
+            |v: &mut CredentialVault, key_name: &str, field: &mut Option<String>| match field
+                .as_deref()
+            {
                 Some("********") => {
                     *field = v.get(key_name).cloned();
                 }
@@ -100,8 +102,7 @@ pub async fn settings_set(
                     v.remove(key_name);
                     *field = None;
                 }
-            }
-        };
+            };
 
         sync_vault_key(&mut vault, "llm_api_key", &mut real_snapshot.llm_api_key);
         sync_vault_key(&mut vault, "tts_api_key", &mut real_snapshot.tts_api_key);

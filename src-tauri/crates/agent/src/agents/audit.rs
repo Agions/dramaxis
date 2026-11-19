@@ -77,8 +77,21 @@ impl Agent for QualityReviewerAgent {
         // 4. 违禁与敏感合规 (Gate 4)
         let mut compliance_violations = Vec::new();
         let prohibited_words = [
-            "国家级", "世界级", "最高级", "最佳", "第一", "唯一", "首个", "顶级",
-            "极品", "绝对", "独家垄断", "毫无保留包赚", "暴利", "刷单", "兼职日入",
+            "国家级",
+            "世界级",
+            "最高级",
+            "最佳",
+            "第一",
+            "唯一",
+            "首个",
+            "顶级",
+            "极品",
+            "绝对",
+            "独家垄断",
+            "毫无保留包赚",
+            "暴利",
+            "刷单",
+            "兼职日入",
         ];
 
         let full_script_text = ctx
@@ -108,7 +121,9 @@ impl Agent for QualityReviewerAgent {
         let compliance_passed = compliance_violations.is_empty();
         if !compliance_passed {
             for v in &compliance_violations {
-                suggestions.push(format!("文案触发平台禁用极限词预警: '{v}'，建议替换为合规表达"));
+                suggestions.push(format!(
+                    "文案触发平台禁用极限词预警: '{v}'，建议替换为合规表达"
+                ));
             }
         }
 

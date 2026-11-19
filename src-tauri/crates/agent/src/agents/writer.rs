@@ -98,7 +98,8 @@ impl ScreenwriterAgent {
                 .unwrap_or_default();
 
             let shots_instruction = if !shots.is_empty() {
-                let mut buf = String::from("\n【镜头级时序分镜指引 (按镜头节奏与画面内容紧密咬合撰写)】:\n");
+                let mut buf =
+                    String::from("\n【镜头级时序分镜指引 (按镜头节奏与画面内容紧密咬合撰写)】:\n");
                 for shot in shots.iter().take(8) {
                     buf.push_str(&format!(
                         "- 镜头 {}: {:.1}s~{:.1}s (约{}字, 情绪: {}): {}\n",

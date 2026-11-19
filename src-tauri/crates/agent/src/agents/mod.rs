@@ -8,15 +8,15 @@
 //! - `SoundEngineerAgent`: 混音剪辑师 (audio.rs)
 //! - `QualityReviewerAgent`: 终审质量守门员 (audit.rs)
 
-pub mod audit;
 pub mod audio;
+pub mod audit;
 pub mod lead;
 pub mod vision;
 pub mod voice;
 pub mod writer;
 
-pub use audit::QualityReviewerAgent;
 pub use audio::SoundEngineerAgent;
+pub use audit::QualityReviewerAgent;
 pub use lead::DirectorAgent;
 pub use vision::VisualCriticAgent;
 pub use voice::VoiceArtistAgent;

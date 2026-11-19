@@ -30,10 +30,10 @@ pub mod i18n;
 pub mod logging;
 pub mod services;
 
-pub use ioc::ServiceContainer;
 pub use context::{AppContext, AppContextBuilder};
 pub use error::{DramaxisError, DramaxisResult};
 pub use help::{HelpCategory, HelpRegistry, HelpTopic, SearchHit};
 pub use i18n::{Locale, Translator};
+pub use ioc::ServiceContainer;
 pub use logging::init_logging;
 pub use services::{ConfigService, LoggingService, ProjectService};
