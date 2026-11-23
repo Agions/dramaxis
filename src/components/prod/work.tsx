@@ -23,12 +23,14 @@ import { useTimelineDerivedClips } from "@hooks/clips";
 interface ProductionWorkspaceProps {
   hasUploadedVideo: boolean;
   mediaPath?: string | null;
+  mediaDuration?: number;
   onImportVideo: () => void;
 }
 
 export const ProductionWorkspace = memo(function ProductionWorkspace({
   hasUploadedVideo,
   mediaPath,
+  mediaDuration,
   onImportVideo,
 }: ProductionWorkspaceProps) {
   // 1. 高频播放时钟状态隔离
@@ -40,6 +42,13 @@ export const ProductionWorkspace = memo(function ProductionWorkspace({
   const setIsPlaying = usePlaybackStore((s) => s.setIsPlaying);
   const togglePlay = usePlaybackStore((s) => s.togglePlay);
   const seek = usePlaybackStore((s) => s.seek);
+
+  // 保证主媒体时长就绪时第一时间同步时钟
+  useEffect(() => {
+    if (mediaDuration && mediaDuration > 0) {
+      setDuration(mediaDuration);
+    }
+  }, [mediaDuration, setDuration]);
 
   // 2. 工坊领域数据状态
   const sceneCuts = useWorkshopStore((s) => s.sceneCuts);

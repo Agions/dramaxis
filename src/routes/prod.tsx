@@ -30,6 +30,7 @@ function ProductionCinemaStudio() {
     currentProject,
     hasUploadedVideo,
     mediaPath,
+    mediaDuration,
     showImport,
     setShowImport,
     isAgentRunning,
@@ -80,6 +81,7 @@ function ProductionCinemaStudio() {
         <ProductionWorkspace
           hasUploadedVideo={hasUploadedVideo}
           mediaPath={mediaPath}
+          mediaDuration={mediaDuration}
           onImportVideo={handleDirectImportVideo}
         />
 

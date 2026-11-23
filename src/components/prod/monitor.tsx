@@ -95,10 +95,15 @@ export const CinemaMonitor = memo(function CinemaMonitor({
   const [aspectRatio, setAspectRatio] = useState<AspectRatioKind>("9:16");
   const [showSafeZone, setShowSafeZone] = useState(false);
   const [playbackRate, setPlaybackRate] = useState<number>(1.0);
+  const [videoLoadError, setVideoLoadError] = useState(false);
 
   const videoSrc = mediaPath ? convertFileSrc(mediaPath) : undefined;
   const voiceSrc = voiceAudioPath ? convertFileSrc(voiceAudioPath) : undefined;
   const bgmSrc = bgmAudioPath ? convertFileSrc(bgmAudioPath) : undefined;
+
+  useEffect(() => {
+    setVideoLoadError(false);
+  }, [videoSrc]);
 
   // 1. 同步外部 isPlaying 状态至 video、voice、bgm
   useEffect(() => {
@@ -300,6 +305,7 @@ export const CinemaMonitor = memo(function CinemaMonitor({
           <>
             <video
               ref={videoRef}
+              key={videoSrc}
               src={videoSrc}
               className="h-full w-full object-cover"
               controls={false}
@@ -311,8 +317,26 @@ export const CinemaMonitor = memo(function CinemaMonitor({
                   onDurationChange?.(d);
                 }
               }}
+              onError={() => {
+                setVideoLoadError(true);
+              }}
               onEnded={() => onEnded?.()}
             />
+
+            {/* 原生预览失败兜底提示 */}
+            {videoLoadError && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950/90 z-10 p-2 text-center pointer-events-none">
+                <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-black/75 backdrop-blur-md border border-amber-500/30 max-w-[90%] shadow-lg">
+                  <span className="text-xl">⚠️</span>
+                  <span className="text-[10px] font-bold text-amber-300 mt-1">
+                    当前视频格式暂不支持原生预览
+                  </span>
+                  <span className="text-[8px] text-zinc-400 mt-0.5">
+                    时长与元数据已就绪，不影响智能体分析与导出
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* 短剧防遮挡安全区网格 (Safe Zone Grid) */}
             {showSafeZone && aspectRatio === "9:16" && (

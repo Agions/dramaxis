@@ -143,4 +143,29 @@ describe("CinemaMonitor", () => {
     fireEvent.click(safeZoneBtn);
     expect(screen.getByText(/黄金字幕区/)).toBeInTheDocument();
   });
+
+  it("当视频原生加载失败触发 onError 时显示优雅兜底提示", () => {
+    const { container } = render(
+      <CinemaMonitor
+        hasUploadedVideo={true}
+        mediaPath="/videos/unsupported_codec.mkv"
+        isPlaying={false}
+        currentTime={0}
+        duration={120}
+        onTogglePlay={vi.fn()}
+        onImportVideo={vi.fn()}
+      />,
+    );
+
+    const video = container.querySelector("video");
+    expect(video).not.toBeNull();
+    fireEvent.error(video!);
+
+    expect(
+      screen.getByText("当前视频格式暂不支持原生预览"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("时长与元数据已就绪，不影响智能体分析与导出"),
+    ).toBeInTheDocument();
+  });
 });

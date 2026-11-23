@@ -21,6 +21,7 @@ import { useProject } from "@hooks/project";
 import {
   useProjectStore,
   useWorkshopStore,
+  usePlaybackStore,
   deriveStandardTimeline,
   type WorkshopSceneCut,
 } from "@dramaxis/core";
@@ -109,6 +110,21 @@ export function useProductionSession() {
   }, [currentProject?.project?.media_files, mediaItems]);
 
   const hasUploadedVideo = Boolean(mediaPath);
+
+  // 从已导入素材中提取主视频真实时长 (秒)
+  const mediaDuration = useMemo(() => {
+    const dur =
+      currentProject?.project?.media_files?.[0]?.duration_seconds ??
+      mediaItems?.[0]?.duration_seconds;
+    return typeof dur === "number" && dur > 0 ? dur : 0;
+  }, [currentProject?.project?.media_files, mediaItems]);
+
+  // 同步主视频时长至全局播放时钟 Store (保证导入即显示真实时长，不受视频原生 loadedmetadata 阻断)
+  useEffect(() => {
+    if (mediaDuration > 0) {
+      usePlaybackStore.getState().setDuration(mediaDuration);
+    }
+  }, [mediaDuration]);
 
   // 4. Multi-Agent 智能体编排工作流
   const {
@@ -229,7 +245,10 @@ export function useProductionSession() {
       if (selected) {
         const p = Array.isArray(selected) ? selected[0] : selected;
         if (p) {
-          await importFromPaths([p]);
+          const added = await importFromPaths([p]);
+          if (added && added[0]?.duration_seconds && added[0].duration_seconds > 0) {
+            usePlaybackStore.getState().setDuration(added[0].duration_seconds);
+          }
           markDirty("scenesDirty", true);
           markDirty("scriptDirty", true);
           markDirty("timelineDirty", true);
@@ -331,6 +350,7 @@ export function useProductionSession() {
     currentProject,
     hasUploadedVideo,
     mediaPath,
+    mediaDuration,
     showImport,
     setShowImport,
     isAgentRunning,
