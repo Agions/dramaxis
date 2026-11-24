@@ -146,6 +146,7 @@ impl Agent for SoundEngineerAgent {
                 },
                 visual_cut_ref: Some(format!("scene-{:02}", idx)),
                 score: None,
+                ..Default::default()
             });
         }
         ctx.project.scripts = script_segments;

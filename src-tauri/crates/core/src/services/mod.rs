@@ -105,6 +105,14 @@ pub struct ConfigSnapshot {
     pub tts_prompt_text: Option<String>,
     /// 异构多智能体模型矩阵专精覆盖 (视觉/编剧/质检专精配置)
     pub agent_model_matrix: Option<AgentModelMatrix>,
+    /// ASR 语音识别与原片对白提取配置 (P0-1)
+    pub asr_provider: Option<String>,
+    pub asr_whisper_cli_path: Option<String>,
+    pub asr_whisper_model_path: Option<String>,
+    pub asr_api_base_url: Option<String>,
+    pub asr_api_model: Option<String>,
+    pub asr_api_key: Option<String>,
+    pub asr_language: Option<String>,
 }
 
 #[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]

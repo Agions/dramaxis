@@ -5,8 +5,26 @@
 //! - 自适应镜头微变速 (Adaptive Speed Trimming: 0.90x ~ 1.15x)
 //! - 镜头不足时自动推荐 B-roll 特写并生成对齐报告
 
+use dramaxis_core::domain::{ScriptSegment, SegmentKind};
 use dramaxis_detect::SceneVisualFeature;
 use serde::{Deserialize, Serialize};
+
+/// 混排声画对齐块（支持解说旁白、原片原声金句与叙事停顿）
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct InterleavedTimelineBlock {
+    pub segment_id: String,
+    pub kind: SegmentKind,
+    pub timeline_start: f64,
+    pub timeline_end: f64,
+    pub source_in: f64,
+    pub source_out: f64,
+    pub text: String,
+    /// 是否压低 BGM（解说旁白与原声金句期间自动触发侧链闪避）
+    pub duck_bgm: bool,
+    /// 是否保留原片人声音轨（仅 `OriginalClip` 为 true）
+    pub keep_original_audio: bool,
+}
 
 /// 单句文案与视觉镜头的对齐匹配结果
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -141,6 +159,89 @@ impl DualDrivenAligner {
         }
     }
 
+    /// P1-2: 混排声画对齐（支持 `Narration` 解说、`OriginalClip` 原片金句穿插与 `Pause` 气口停顿）
+    pub fn align_mixed_segments(
+        &self,
+        scenes: &[SceneVisualFeature],
+        segments: &[ScriptSegment],
+    ) -> Vec<InterleavedTimelineBlock> {
+        let mut blocks = Vec::with_capacity(segments.len());
+        let mut cursor = 0.0_f64;
+
+        for seg in segments {
+            match seg.kind {
+                SegmentKind::OriginalClip => {
+                    let src_in = seg.source_in_sec.or(seg.start_seconds).unwrap_or(0.0).max(0.0);
+                    let src_out = seg
+                        .source_out_sec
+                        .or(seg.end_seconds)
+                        .unwrap_or(src_in + 3.0)
+                        .max(src_in + 0.5);
+                    let dur = src_out - src_in;
+                    blocks.push(InterleavedTimelineBlock {
+                        segment_id: seg.id.clone(),
+                        kind: SegmentKind::OriginalClip,
+                        timeline_start: cursor,
+                        timeline_end: cursor + dur,
+                        source_in: src_in,
+                        source_out: src_out,
+                        text: seg.text.clone(),
+                        duck_bgm: true,
+                        keep_original_audio: true,
+                    });
+                    cursor += dur;
+                }
+                SegmentKind::Pause => {
+                    let dur = match (seg.start_seconds, seg.end_seconds) {
+                        (Some(s), Some(e)) if e > s => (e - s).clamp(0.2, 3.0),
+                        _ => 0.5,
+                    };
+                    blocks.push(InterleavedTimelineBlock {
+                        segment_id: seg.id.clone(),
+                        kind: SegmentKind::Pause,
+                        timeline_start: cursor,
+                        timeline_end: cursor + dur,
+                        source_in: cursor,
+                        source_out: cursor + dur,
+                        text: String::new(),
+                        duck_bgm: false,
+                        keep_original_audio: false,
+                    });
+                    cursor += dur;
+                }
+                SegmentKind::Narration => {
+                    let est_dur = match (seg.start_seconds, seg.end_seconds) {
+                        (Some(s), Some(e)) if e > s => e - s,
+                        _ => ((seg.text.chars().count() as f64) / 4.3).max(1.2),
+                    };
+                    let matched = scenes.iter().max_by(|a, b| {
+                        a.conflict_score
+                            .partial_cmp(&b.conflict_score)
+                            .unwrap_or(std::cmp::Ordering::Equal)
+                    });
+                    let src_in = matched.map(|m| m.start_time).unwrap_or(0.0);
+                    let src_out = matched
+                        .map(|m| (m.start_time + est_dur).min(m.end_time.max(m.start_time + 0.5)))
+                        .unwrap_or(src_in + est_dur);
+                    blocks.push(InterleavedTimelineBlock {
+                        segment_id: seg.id.clone(),
+                        kind: SegmentKind::Narration,
+                        timeline_start: cursor,
+                        timeline_end: cursor + est_dur,
+                        source_in: src_in,
+                        source_out: src_out,
+                        text: seg.text.clone(),
+                        duck_bgm: true,
+                        keep_original_audio: false,
+                    });
+                    cursor += est_dur;
+                }
+            }
+        }
+
+        blocks
+    }
+
     fn infer_script_emotion(&self, text: &str) -> String {
         if text.contains("打脸")
             || text.contains("反杀")
@@ -242,6 +343,8 @@ mod tests {
                 emotion_tag: "激烈动作".into(),
                 conflict_score: 95.0,
                 visual_summary: "高能打脸反杀镜头".into(),
+                is_vlm_verified: false,
+                has_hard_subtitle: false,
             },
             SceneVisualFeature {
                 scene_id: 2,
@@ -253,6 +356,8 @@ mod tests {
                 emotion_tag: "悬疑对峙".into(),
                 conflict_score: 65.0,
                 visual_summary: "角色紧绷眼神对视".into(),
+                is_vlm_verified: false,
+                has_hard_subtitle: false,
             },
         ];
 
@@ -281,6 +386,8 @@ mod tests {
                 emotion_tag: "激烈动作".into(),
                 conflict_score: 98.0,
                 visual_summary: "开篇冲突".into(),
+                is_vlm_verified: false,
+                has_hard_subtitle: false,
             },
             SceneVisualFeature {
                 scene_id: 2,
@@ -292,6 +399,8 @@ mod tests {
                 emotion_tag: "平稳叙事".into(),
                 conflict_score: 50.0,
                 visual_summary: "中景叙事".into(),
+                is_vlm_verified: false,
+                has_hard_subtitle: false,
             },
             SceneVisualFeature {
                 scene_id: 3,
@@ -303,6 +412,8 @@ mod tests {
                 emotion_tag: "悬疑对峙".into(),
                 conflict_score: 75.0,
                 visual_summary: "真相揭晓".into(),
+                is_vlm_verified: false,
+                has_hard_subtitle: false,
             },
         ];
 
@@ -319,5 +430,43 @@ mod tests {
         // 后续句子自然平滑向前推进，命中场景 2 与 3
         assert_eq!(plan.matches[1].matched_scene_id, 2);
         assert_eq!(plan.matches[2].matched_scene_id, 3);
+    }
+
+    #[test]
+    fn test_interleaved_original_dialogue_and_pause_alignment() {
+        let aligner = DualDrivenAligner::new();
+        let segments = vec![
+            ScriptSegment {
+                id: "s1".into(),
+                text: "就在所有人嘲笑他是个废物时，下一秒全场鸦雀无声。".into(),
+                kind: SegmentKind::Narration,
+                ..Default::default()
+            },
+            ScriptSegment {
+                id: "s2".into(),
+                text: "跪下！从今天起这里我说了算！".into(),
+                kind: SegmentKind::OriginalClip,
+                source_in_sec: Some(42.0),
+                source_out_sec: Some(45.5),
+                ..Default::default()
+            },
+            ScriptSegment {
+                id: "s3".into(),
+                kind: SegmentKind::Pause,
+                start_seconds: Some(0.0),
+                end_seconds: Some(0.4),
+                ..Default::default()
+            },
+        ];
+
+        let blocks = aligner.align_mixed_segments(&[], &segments);
+        assert_eq!(blocks.len(), 3);
+        assert!(!blocks[0].keep_original_audio);
+        assert!(blocks[0].duck_bgm);
+        assert!(blocks[1].keep_original_audio);
+        assert!((blocks[1].source_in - 42.0).abs() < 1e-3);
+        assert!((blocks[1].timeline_end - blocks[1].timeline_start - 3.5).abs() < 1e-3);
+        assert!(!blocks[2].duck_bgm);
+        assert!((blocks[2].timeline_end - blocks[2].timeline_start - 0.4).abs() < 1e-3);
     }
 }

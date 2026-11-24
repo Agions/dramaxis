@@ -9,6 +9,7 @@ authors.workspace = true
 
 [dependencies]
 dramaxis-core = { path = "../core" }
+reqwest = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

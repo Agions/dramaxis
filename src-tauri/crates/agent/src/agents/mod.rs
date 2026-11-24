@@ -41,6 +41,7 @@ pub fn resolve_agent_llm(
             .memory
             .get("agent_model_matrix_json")
             .and_then(|j| serde_json::from_str(j).ok()),
+        ..Default::default()
     };
     deps.resolve_agent_llm(role)
 }

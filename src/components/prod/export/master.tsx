@@ -6,7 +6,7 @@
  */
 
 import { memo } from "react";
-import type { DedupIntensity } from "@dramaxis/ipc";
+import type { DedupIntensity, PreFlightDedupReport, SubtitleMaskMode } from "@dramaxis/ipc";
 
 export interface DedupMatrixCardProps {
   antiDupZoom: number;
@@ -37,6 +37,15 @@ export interface DedupMatrixCardProps {
   onEnableBgmReverbChange: (val: boolean) => void;
   enableMetadataScrub: boolean;
   onEnableMetadataScrubChange: (val: boolean) => void;
+  subtitleMaskMode?: SubtitleMaskMode;
+  onSubtitleMaskModeChange?: (mode: SubtitleMaskMode) => void;
+  enableDynamicKenBurns?: boolean;
+  onEnableDynamicKenBurnsChange?: (val: boolean) => void;
+  aiComplianceBadge?: boolean;
+  onAiComplianceBadgeChange?: (val: boolean) => void;
+  preflightReport?: PreFlightDedupReport | null;
+  isEvaluatingPreflight?: boolean;
+  onRunPreflight?: () => void;
   isFissioning: boolean;
   isRendering: boolean;
   fissionCount: number;
@@ -75,6 +84,15 @@ export const MasteringOptionsCard = memo(function MasteringOptionsCard({
   onEnableBgmReverbChange,
   enableMetadataScrub,
   onEnableMetadataScrubChange,
+  subtitleMaskMode = "none",
+  onSubtitleMaskModeChange,
+  enableDynamicKenBurns = false,
+  onEnableDynamicKenBurnsChange,
+  aiComplianceBadge = true,
+  onAiComplianceBadgeChange,
+  preflightReport,
+  isEvaluatingPreflight = false,
+  onRunPreflight,
   isFissioning,
   isRendering,
   fissionCount,
@@ -296,6 +314,114 @@ export const MasteringOptionsCard = memo(function MasteringOptionsCard({
                   className="accent-gold cursor-pointer"
                 />
               </label>
+
+              {/* 9. 原片硬字幕遮罩模式 (P1-4) */}
+              <div className="space-y-1 pt-1 border-t border-border/50">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-text-secondary">原片硬字幕遮罩模式</span>
+                  <select
+                    value={subtitleMaskMode}
+                    onChange={(e) => onSubtitleMaskModeChange?.(e.target.value as SubtitleMaskMode)}
+                    className="rounded border border-border bg-bg px-2 py-0.5 text-[10px] text-text-primary focus:border-gold focus:outline-none"
+                  >
+                    <option value="none">不处理 (None)</option>
+                    <option value="blur-box">高斯模糊抹除 (BlurBox)</option>
+                    <option value="crop-bottom">底部裁切14%放大 (CropBottom)</option>
+                    <option value="gradient-bar">深色渐变垫底条 (GradientBar)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 10. 动态 Ken Burns 非均匀微变焦 (P1-4) */}
+              <label className="flex items-center justify-between cursor-pointer">
+                <span>动态 Ken Burns 非均匀呼吸式变焦</span>
+                <input
+                  type="checkbox"
+                  checked={enableDynamicKenBurns}
+                  onChange={(e) => onEnableDynamicKenBurnsChange?.(e.target.checked)}
+                  className="accent-gold cursor-pointer"
+                />
+              </label>
+
+              {/* 11. AI 合规元数据标识 (P1-4) */}
+              <label className="flex items-center justify-between cursor-pointer">
+                <span>保留 AI 合成内容法规合规标识</span>
+                <input
+                  type="checkbox"
+                  checked={aiComplianceBadge}
+                  onChange={(e) => onAiComplianceBadgeChange?.(e.target.checked)}
+                  className="accent-gold cursor-pointer"
+                />
+              </label>
+            </div>
+          )}
+        </div>
+
+        {/* 发布前原创度与平台合规自检 Preflight 报告卡片 */}
+        <div className="rounded-lg border border-border/70 bg-surface/60 p-2.5 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs">🛡️</span>
+              <span className="text-[11px] font-bold text-text-primary">
+                发布前原创度与合规体检 (Preflight Check)
+              </span>
+            </div>
+            {onRunPreflight && (
+              <button
+                type="button"
+                disabled={isEvaluatingPreflight}
+                onClick={onRunPreflight}
+                className="rounded border border-border bg-surface-elevated px-2 py-0.5 text-[10px] font-bold text-text-primary transition hover:border-gold active:scale-95 disabled:opacity-50"
+              >
+                {isEvaluatingPreflight ? "评估中..." : "🔍 立即体检"}
+              </button>
+            )}
+          </div>
+
+          {preflightReport && (
+            <div className="space-y-1.5 pt-1 text-[10px]">
+              <div className="flex items-center justify-between">
+                <span className="text-text-secondary">原创度评分:</span>
+                <span
+                  className={`font-mono font-bold text-xs ${
+                    preflightReport.originalityScore >= 80
+                      ? "text-emerald-400"
+                      : preflightReport.originalityScore >= 60
+                      ? "text-amber-400"
+                      : "text-rose-400"
+                  }`}
+                >
+                  {Math.round(preflightReport.originalityScore)} 分
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-text-secondary">平台搬运风险:</span>
+                <span
+                  className={`rounded px-1.5 py-0.2 font-bold uppercase text-[9px] ${
+                    preflightReport.riskLevel === "low"
+                      ? "bg-emerald-500/20 text-emerald-300"
+                      : preflightReport.riskLevel === "medium"
+                      ? "bg-amber-500/20 text-amber-300"
+                      : "bg-rose-500/20 text-rose-300"
+                  }`}
+                >
+                  {preflightReport.riskLevel}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-text-secondary">硬字幕遮罩安全:</span>
+                <span>{preflightReport.hardSubtitleSafe ? "✅ 达标" : "⚠️ 有打架风险"}</span>
+              </div>
+              {preflightReport.recommendations.length > 0 && (
+                <div className="mt-1 space-y-0.5 rounded bg-bg/50 p-1.5 text-text-muted">
+                  {preflightReport.recommendations.map((rec, idx) => (
+                    <div key={idx} className="flex items-start gap-1">
+                      <span className="text-gold">•</span>
+                      <span>{rec}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -15,6 +15,8 @@ pub struct AgentRuntimeDeps {
     pub model: Option<String>,
     pub provider: Option<String>,
     pub matrix: Option<AgentModelMatrix>,
+    /// P0-1: 原片 ASR 语音转写配置（本地 whisper-cli / 局域网或云端 Whisper API）
+    pub asr_config: dramaxis_subtitle::AsrConfig,
 }
 
 impl AgentRuntimeDeps {
@@ -26,6 +28,7 @@ impl AgentRuntimeDeps {
             model: snap.llm_model.clone(),
             provider: Some(snap.llm_provider.clone()),
             matrix: snap.agent_model_matrix.clone(),
+            asr_config: dramaxis_subtitle::AsrConfig::default(),
         }
     }
 

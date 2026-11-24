@@ -30,15 +30,24 @@
 
 pub mod capcut;
 pub mod dedup;
+pub mod fcpxml;
 pub mod master;
+pub mod pack;
 pub mod renderer;
 pub use capcut::{
     create_capcut_draft, detect_jianying_draft_root, CapcutDraftOptions, CapcutDraftResult,
     CapcutSubtitleItem,
 };
+pub use fcpxml::{
+    export_fcpxml_file, export_fcpxml_string, format_rational_time, FcpxmlOptions,
+};
 pub use master::{
     generate_fission_variants, generate_master_variants, DedupIntensity, DedupOptions,
     MasterIntensity, MasterOptions,
+};
+pub use pack::{
+    export_pack_file, export_pack_to_string, import_pack_file, import_pack_from_string,
+    DramaxisPack,
 };
 pub use renderer::*;
 
@@ -73,6 +82,27 @@ pub enum ExportError {
     /// 字幕格式化错误
     #[error("字幕格式化错误: {0}")]
     SubtitleFormatError(String),
+    /// IO 读写异常
+    #[error("IO 错误: {0}")]
+    Io(String),
+    /// XML 生成或解析异常
+    #[error("FCPXML 导出异常: {0}")]
+    Fcpxml(String),
+    /// 创作者资产包打包/解包异常
+    #[error("资产包错误: {0}")]
+    Pack(String),
+}
+
+impl From<std::io::Error> for ExportError {
+    fn from(e: std::io::Error) -> Self {
+        Self::Io(e.to_string())
+    }
+}
+
+impl From<serde_json::Error> for ExportError {
+    fn from(e: serde_json::Error) -> Self {
+        Self::Pack(e.to_string())
+    }
 }
 
 // ════════════════════════════════════════════════════════════════════════

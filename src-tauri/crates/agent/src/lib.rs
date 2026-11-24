@@ -12,6 +12,7 @@ pub mod dag;
 pub mod deps;
 pub mod engine;
 pub mod graph;
+pub mod nodes;
 pub mod types;
 
 pub use agents::*;

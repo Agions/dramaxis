@@ -1,7 +1,9 @@
 //! dramaxis v1.1.0 · 智能字幕与 ASS/SRT/VTT 渲染 Tauri 命令
 
 use dramaxis_core::error::DramaxisError;
+use dramaxis_core::CancelToken;
 use dramaxis_export::{SubtitleFormat, SubtitleItem};
+use dramaxis_subtitle::asr::{AsrConfig, AsrProvider, AutoAsrEngine, TranscriptResult};
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -78,4 +80,25 @@ pub async fn subtitle_generate(
         item_count: count,
         items,
     })
+}
+
+/// 原片听觉理解与 ASR 语音对白转写 (P0-1)
+#[tauri::command]
+pub async fn subtitle_asr_transcribe(
+    media_path: String,
+    config: Option<AsrConfig>,
+) -> Result<TranscriptResult, DramaxisError> {
+    let p = std::path::PathBuf::from(&media_path);
+    if !p.exists() {
+        return Err(DramaxisError::InvalidInput(format!(
+            "媒体文件不存在: {media_path}"
+        )));
+    }
+    let asr_cfg = config.unwrap_or_default();
+    let engine = AutoAsrEngine::new(asr_cfg);
+    let cancel = CancelToken::new();
+    engine
+        .transcribe(&p, &cancel)
+        .await
+        .map_err(|e| DramaxisError::Pipeline(e.to_string()))
 }

@@ -128,6 +128,7 @@ describe("useAgentWorkflow", () => {
         speechIntervals: [{ start: 0.0, end: 15.0 }],
         bgmIntensityPeaks: [3.0],
         dialogueSummary: "原声对白",
+        transcriptSegments: [],
       },
       voiceArtifact: {
         audioPath: "/tmp/voice.mp3",

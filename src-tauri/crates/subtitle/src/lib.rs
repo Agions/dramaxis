@@ -6,9 +6,15 @@
 //! - 动态字幕：逐字高亮 + 情绪关键词变色
 //! - 双语字幕：中英双语同轨生成
 
+pub mod asr;
 pub mod dynamic;
 pub mod formats;
 pub mod vad;
+
+pub use asr::{
+    parse_srt_transcript, AsrConfig, AsrProvider, AutoAsrEngine, TranscriptResult,
+    TranscriptSegment,
+};
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -17,6 +23,8 @@ use thiserror::Error;
 pub enum SubtitleError {
     #[error("VAD 端点检测失败: {0}")]
     VadError(String),
+    #[error("ASR 语音转写失败: {0}")]
+    AsrError(String),
     #[error("字幕格式化失败: {0}")]
     FormatError(String),
     #[error("时间轴对齐失败: {0}")]

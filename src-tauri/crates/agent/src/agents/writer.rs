@@ -116,6 +116,30 @@ impl ScreenwriterAgent {
                 String::new()
             };
 
+            let story_bible_instruction = ctx
+                .memory
+                .get("story_bible_context")
+                .filter(|s| !s.trim().is_empty())
+                .map(|sb| {
+                    format!(
+                        "\n【剧集 Story Bible 跨集剧情圣经（严禁人物改名或违背前情）】:\n{}\n",
+                        sb
+                    )
+                })
+                .unwrap_or_default();
+
+            let asr_instruction = ctx
+                .memory
+                .get("asr_transcript_context")
+                .filter(|s| !s.trim().is_empty())
+                .map(|asr_ctx| {
+                    format!(
+                        "\n【原片 ASR 真实台词与★金句参考（严禁编造与原片台词矛盾的剧情，可自然呼应★金句）】:\n{}\n",
+                        asr_ctx
+                    )
+                })
+                .unwrap_or_default();
+
             let critique_feedback = ctx.memory.get("critique_feedback").cloned();
             let critique_instruction = if let Some(fb) = &critique_feedback {
                 format!(
@@ -131,8 +155,8 @@ impl ScreenwriterAgent {
                 【绝对字数与时长红线】\n\
                 本段视频有效播放总时长为 {:.1} 秒。按照短剧解说黄金语速（约 4.3 汉字/秒），你的解说词总字数必须严格控制在约 {} 字以内（允许 ±10% 误差），切忌废话与过长台词导致音画失配！\n\
                 【多模态视听要求】\n\
-                已传入本视频关键帧画面（共 {} 张）。请仔细观察画面中人物的动作、表情、所处环境及发生的冲突事件，以主角第一人称【我】输出 0~3s 抓人眼球的黄金 Hook 以及扣人心弦的高能解说，必须做到每一句话都与镜头画面真实事件严密对应。{}{}",
-                video_duration, target_word_count, images_base64.len(), shots_instruction, critique_instruction
+                已传入本视频关键帧画面（共 {} 张）。请仔细观察画面中人物的动作、表情、所处环境及发生的冲突事件，以主角第一人称【我】输出 0~3s 抓人眼球的黄金 Hook 以及扣人心弦的高能解说，必须做到每一句话都与镜头画面真实事件严密对应。{}{}{}{}",
+                video_duration, target_word_count, images_base64.len(), story_bible_instruction, shots_instruction, asr_instruction, critique_instruction
             );
 
             let req = LlmRequest {

@@ -10,6 +10,13 @@ vi.mock("@dramaxis/ipc", () => ({
     renderVideo: vi.fn(),
     batchFission: vi.fn(),
     getDedupPreset: vi.fn(),
+    evaluatePreflight: vi.fn().mockResolvedValue({
+      originalityScore: 88,
+      riskLevel: "low",
+      hardSubtitleSafe: true,
+      complianceTagged: true,
+      recommendations: ["建议开启动态 Ken Burns 变焦"],
+    }),
   },
 }));
 
@@ -251,6 +258,36 @@ describe("ExportStudioPanel", () => {
         expect.stringContaining("成功批量导出 3 份定制母带"),
         expect.any(Object),
       );
+    });
+  });
+
+  it("点击立即体检按钮成功调用 evaluatePreflight 并展示原创度与合规自检报告", async () => {
+    render(
+      <ExportStudioPanel
+        currentProject={mockProject}
+        antiDupZoom={1.04}
+        onAntiDupZoomChange={vi.fn()}
+        enableAmbientBlur={true}
+        onEnableAmbientBlurChange={vi.fn()}
+      />,
+    );
+
+    const preflightBtn = screen.getByText("🔍 立即体检");
+    fireEvent.click(preflightBtn);
+
+    await waitFor(() => {
+      expect(exportIpc.evaluatePreflight).toHaveBeenCalledWith(
+        expect.objectContaining({
+          intensity: "standard",
+          enableZoom: true,
+          zoomRate: 1.04,
+        }),
+        false,
+        false
+      );
+      expect(screen.getByText("88 分")).toBeInTheDocument();
+      expect(screen.getByText("low")).toBeInTheDocument();
+      expect(screen.getByText("建议开启动态 Ken Burns 变焦")).toBeInTheDocument();
     });
   });
 });

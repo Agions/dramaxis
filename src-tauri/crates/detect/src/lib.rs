@@ -16,7 +16,7 @@ pub mod scene;
 
 pub use audio::*;
 pub use ffmpeg::*;
-pub use multi::{SceneRagEngine, SceneVisualFeature};
+pub use multi::{SceneRagEngine, SceneVisualFeature, VlmSceneAnnotation};
 pub use probe::*;
 pub use scene::*;
 

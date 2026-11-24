@@ -8,21 +8,21 @@
 //! 5. **策略级优雅降级 (Graceful Fallback)**：关键节点发生网络或外部故障时自动执行备选降级策略
 //! 6. **人机协同断点 (HITL Checkpoint)**：关键交付节点向前端挂起交互并支持靶向自然语言精修
 
-use crate::agents::*;
 use crate::context::AgentContext;
 use crate::graph::{GraphNode, StateGraph};
 use crate::types::{
     AgentEventPayload, AgentRole, AgentStatus, BreakpointRequest, DagNodeInfo, DagNodeStatus,
     DagSnapshot, QualityReport, WorkflowProfile,
 };
-use dramaxis_core::DramaxisResult;
-use dramaxis_script::flywheel::ScriptFlywheelEngine;
-use dramaxis_script::LlmRequest;
+use dramaxis_core::{CancelToken, DramaxisError, DramaxisResult};
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::RwLock;
 
 pub type EventEmitter = Arc<dyn Fn(AgentEventPayload) + Send + Sync>;
+
+/// 断点持久化回调钩子：(session_id, project_id, node_id, profile_name, blackboard_json, dag_snapshot_json)
+pub type CheckpointHook = Arc<dyn Fn(&str, &str, &str, &str, &str, &str) + Send + Sync>;
 
 /// DAG 节点实体（向后兼容视图层契约）
 #[derive(Clone)]
@@ -43,6 +43,9 @@ pub struct DagOrchestrator {
     pub nodes: Vec<DagNode>,
     pub graph: StateGraph<AgentContext>,
     pub event_emitter: Option<EventEmitter>,
+    pub checkpoint_hook: Option<CheckpointHook>,
+    pub cancel_token: CancelToken,
+    pub profile: WorkflowProfile,
     pub critique_count: u32,
     pub max_critique_rounds: u32,
     pub deps: Arc<std::sync::RwLock<crate::deps::AgentRuntimeDeps>>,
@@ -661,6 +664,47 @@ impl DagOrchestrator {
                     },
                 ]
             }
+            WorkflowProfile::DeterministicLinear => {
+                // P0-3: 收编原 7 步线性流水线为确定性 StateGraph Profile（顺序执行、无反思回路、无 HITL 阻塞）
+                let linear_specs: [(&'static str, &'static str, AgentRole); 7] = [
+                    ("director_plan", "🎬 步骤 1 · 媒体校验与总控策划", AgentRole::Director),
+                    ("visual_analysis", "👁️ 步骤 2 · 场景切点与视觉分析", AgentRole::VisualCritic),
+                    ("dialogue_probe", "🎧 步骤 3 · 原片 VAD 与 ASR 台词提取", AgentRole::SoundEngineer),
+                    ("screenwriter_draft", "✍️ 步骤 4 · 确定性解说剧本生成", AgentRole::Screenwriter),
+                    ("voice_synthesis", "🎙️ 步骤 5 · 48kHz 配音合成", AgentRole::VoiceArtist),
+                    ("timeline_compose", "🎛️ 步骤 6 · 5 轨声画对齐与混流", AgentRole::SoundEngineer),
+                    ("quality_gate", "🛡️ 步骤 7 · 成片合规质检与交付准备", AgentRole::QualityReviewer),
+                ];
+
+                let mut dag_nodes = Vec::with_capacity(linear_specs.len());
+                let mut prev_id: Option<&'static str> = None;
+
+                for (id, name, role) in linear_specs {
+                    let d = deps.clone();
+                    graph.add_node(
+                        GraphNode::new(id, name, role).with_handler(Arc::new(move |ctx| {
+                            let current_deps = Arc::new(d.read().unwrap().clone());
+                            Box::pin(Self::execute_static_node_logic(ctx, id, current_deps))
+                        })),
+                    );
+                    if let Some(prev) = prev_id {
+                        graph.add_edge(prev, id);
+                    }
+                    dag_nodes.push(DagNode {
+                        id,
+                        name,
+                        role,
+                        dependencies: prev_id.map(|p| vec![p]).unwrap_or_default(),
+                        status: DagNodeStatus::Pending,
+                        is_hitl_checkpoint: false,
+                        duration_ms: 0,
+                        summary: None,
+                    });
+                    prev_id = Some(id);
+                }
+
+                dag_nodes
+            }
         };
 
         Self {
@@ -668,6 +712,9 @@ impl DagOrchestrator {
             nodes,
             graph,
             event_emitter: None,
+            checkpoint_hook: None,
+            cancel_token: CancelToken::new(),
+            profile,
             critique_count: 0,
             max_critique_rounds,
             deps,
@@ -684,6 +731,42 @@ impl DagOrchestrator {
     pub fn with_emitter(mut self, emitter: EventEmitter) -> Self {
         self.event_emitter = Some(emitter);
         self
+    }
+
+    /// 注入断点持久化钩子（由宿主层写入 SQLite `agent_checkpoints` 表）
+    pub fn with_checkpoint_hook(mut self, hook: CheckpointHook) -> Self {
+        self.checkpoint_hook = Some(hook);
+        self
+    }
+
+    /// 注入外部取消令牌（支持与 Tauri 命令共享即时取消信号）
+    pub fn with_cancel_token(mut self, token: CancelToken) -> Self {
+        self.cancel_token = token;
+        self
+    }
+
+    /// 触发即时取消（同步通知所有运行中的 FFmpeg/ASR 子进程与调度循环）
+    pub fn cancel(&self) {
+        self.cancel_token.cancel();
+    }
+
+    /// 将当前黑板与 DAG 快照通过持久化钩子落盘
+    async fn persist_checkpoint(&self, node_id: &str) {
+        let Some(hook) = &self.checkpoint_hook else {
+            return;
+        };
+        let snap = self.snapshot().await;
+        let dag_json = serde_json::to_string(&snap).unwrap_or_default();
+        let (session_id, project_id, bb_json) = {
+            let ctx = self.context.read().await;
+            (
+                ctx.session_id.clone(),
+                ctx.project.id.clone(),
+                serde_json::to_string(&ctx.blackboard).unwrap_or_default(),
+            )
+        };
+        let profile_str = format!("{:?}", self.profile).to_lowercase();
+        hook(&session_id, &project_id, node_id, &profile_str, &bb_json, &dag_json);
     }
 
     /// 同步 StateGraph 节点状态至对外暴露的 nodes 视图切片
@@ -741,6 +824,18 @@ impl DagOrchestrator {
         let total_timer = Instant::now();
 
         loop {
+            if self.cancel_token.is_cancelled() {
+                let mut ctx = self.context.write().await;
+                ctx.status = AgentStatus::Failed;
+                if let Some(emitter) = &self.event_emitter {
+                    emitter(AgentEventPayload::Error {
+                        role: None,
+                        message: "工作流已被用户取消".into(),
+                    });
+                }
+                return Err(DramaxisError::Pipeline("工作流已被用户取消".into()));
+            }
+
             // 1. 基于声明式 StateGraph 获取当前就绪节点 ID 列表
             let ready_ids = self.graph.get_ready_node_ids();
 
@@ -811,6 +906,9 @@ impl DagOrchestrator {
                 if let Some(emitter) = &self.event_emitter {
                     emitter(AgentEventPayload::BreakpointRequired(req.clone()));
                 }
+
+                // 挂起前落盘 SQLite 断点，确保应用重启后可无缝恢复审批
+                self.persist_checkpoint(node_id).await;
 
                 return Ok(Some(req));
             }
@@ -908,8 +1006,11 @@ impl DagOrchestrator {
 
                         // 收集待评估条件边
                         if self.graph.conditional_edges.contains_key(&node_id) {
-                            conditional_triggers.push(node_id);
+                            conditional_triggers.push(node_id.clone());
                         }
+
+                        // 每完成一个节点即落盘一次状态断点
+                        self.persist_checkpoint(&node_id).await;
                     }
                     Err(err) => {
                         if let Some(node) = self.graph.nodes.get_mut(&node_id) {
@@ -1040,313 +1141,13 @@ impl DagOrchestrator {
         self.run_dag().await
     }
 
-    /// 节点底层执行映射 (支持静态多任务并行调度)
+    /// 节点底层执行映射（已模块化下沉至 `crate::nodes::execute_node`）
     pub async fn execute_static_node_logic(
         context: Arc<RwLock<AgentContext>>,
         node_id: &str,
         deps: Arc<crate::deps::AgentRuntimeDeps>,
     ) -> DramaxisResult<String> {
-        match node_id {
-            "director_plan" => {
-                let mut ctx = context.write().await;
-                let agent = DirectorAgent;
-                let res = agent.execute(&mut ctx).await?;
-                Ok(res.unwrap_or_else(|| "总控策划已就绪".into()))
-            }
-            "visual_analysis" => {
-                let mut ctx = context.write().await;
-                let agent = VisualCriticAgent;
-                let res = agent.execute(&mut ctx).await?;
-                Ok(res.unwrap_or_else(|| "画面关键帧与场景采样完成".into()))
-            }
-            "dialogue_probe" => {
-                // 1. 无锁快照读取输入，避免与 visual_analysis 并行执行时产生全局写锁互斥
-                let (first_media, dur_hint) = {
-                    let mut ctx = context.write().await;
-                    ctx.log_thought(
-                        AgentRole::SoundEngineer,
-                        "启动音频通道探测器，提取原片音频并进行真实 VAD 静音端点检测与活动分段...",
-                    );
-                    let m = ctx.project.media_files.first().map(|m| m.path.clone());
-                    let d = ctx
-                        .blackboard
-                        .visual_brief
-                        .as_ref()
-                        .map(|v| v.total_duration_sec)
-                        .unwrap_or(60.0);
-                    (m, d)
-                };
-
-                // 2. 在锁外执行耗时的 FFmpeg probe 与 VAD 静音检测
-                let (has_speech, _dur_sec, summary, intervals) = if let Some(media_path) =
-                    first_media
-                {
-                    let p = std::path::Path::new(&media_path);
-                    if p.exists() {
-                        let probe_res = if let Ok(ffmpeg) = dramaxis_detect::Ffmpeg::discover() {
-                            ffmpeg.probe(p).await.ok()
-                        } else {
-                            None
-                        };
-
-                        if let Some(probe) = probe_res {
-                            let has_audio = probe.audio_codec.is_some();
-                            let d = probe.duration_seconds;
-                            if has_audio {
-                                // 接入 dramaxis-subtitle 真实 VAD 检测
-                                let vad_cfg = dramaxis_subtitle::vad::VadConfig::default();
-                                let segments = dramaxis_subtitle::vad::detect_segments(p, &vad_cfg)
-                                    .await
-                                    .unwrap_or_default();
-
-                                let ivs: Vec<crate::board::SpeechInterval> = segments
-                                    .into_iter()
-                                    .map(|s| crate::board::SpeechInterval {
-                                        start: s.start_ms as f64 / 1000.0,
-                                        end: s.end_ms as f64 / 1000.0,
-                                    })
-                                    .collect();
-
-                                let summary = format!(
-                                    "检测到原片音轨 ({})，时长 {:.1}s，识别到 {} 处语音活动区间",
-                                    probe.audio_codec.unwrap_or_default(),
-                                    d,
-                                    ivs.len()
-                                );
-                                (true, d, summary, ivs)
-                            } else {
-                                (
-                                    false,
-                                    d,
-                                    "原片无音轨，已标记为纯静音画面素材".into(),
-                                    Vec::new(),
-                                )
-                            }
-                        } else {
-                            (true, dur_hint, "原片音轨分析就绪".into(), Vec::new())
-                        }
-                    } else {
-                        (
-                            true,
-                            dur_hint,
-                            "素材文件不存在，使用默认音频配置".into(),
-                            Vec::new(),
-                        )
-                    }
-                } else {
-                    (
-                        true,
-                        dur_hint,
-                        "无可用音轨，音频通道探测完成".into(),
-                        Vec::new(),
-                    )
-                };
-
-                // 3. 毫秒级极速写锁提交 Delta 至 Blackboard
-                {
-                    let mut ctx = context.write().await;
-                    ctx.blackboard
-                        .set_audio_brief(crate::board::AudioBriefArtifact {
-                            has_original_speech: has_speech,
-                            speech_intervals: intervals,
-                            bgm_intensity_peaks: vec![3.0, 15.0, 30.0],
-                            dialogue_summary: summary.clone(),
-                        });
-                    ctx.memory.insert("dialogue_summary".into(), summary);
-                    ctx.log_action(
-                        AgentRole::SoundEngineer,
-                        "对白抽取",
-                        "完成音频音轨抽取与静音断句探测",
-                    );
-                }
-                Ok("原声对白与音频探测完成".into())
-            }
-            "screenwriter_draft" => {
-                let mut ctx = context.write().await;
-                let agent = ScreenwriterAgent;
-                let res = agent.execute_with_deps(&mut ctx, &deps).await?;
-                Ok(res.unwrap_or_else(|| "第一人称叙述剧本撰写完成".into()))
-            }
-            "critic_review" => {
-                let mut ctx = context.write().await;
-                let script_text = ctx
-                    .blackboard
-                    .active_script()
-                    .map(|s| s.text.clone())
-                    .or_else(|| ctx.memory.get("script_text").cloned())
-                    .unwrap_or_default();
-
-                let video_dur_str = ctx
-                    .memory
-                    .get("video_duration")
-                    .cloned()
-                    .unwrap_or_else(|| "60.0".into());
-                let video_duration: f64 = video_dur_str.parse().unwrap_or(60.0);
-
-                // 1. 客观层：基于 Flywheel 留存张力波形算法计算
-                let flywheel = ScriptFlywheelEngine::new();
-                let arc = flywheel.calculate_retention_arc(&script_text, video_duration);
-                let target_words = ((video_duration * 4.3).round() as usize).clamp(30, 2000);
-                let actual_words = script_text.chars().count();
-                let word_ratio = actual_words as f32 / target_words.max(1) as f32;
-                let mut pacing_score = (100.0 - (word_ratio - 1.0).abs() * 50.0).clamp(55.0, 96.0);
-                let mut hook_score = arc.hook_score;
-                let mut conflict_score = arc.climax_intensity.clamp(50.0, 95.0);
-                let mut overall_score =
-                    (hook_score * 0.4 + pacing_score * 0.35 + conflict_score * 0.25)
-                        .clamp(60.0, 98.0);
-                let mut critique_feedback = if overall_score < 85.0 {
-                    Some(
-                        "黄金前3秒缺乏戏剧性张力与危机感，开篇反转不足，且字数节奏需微调。"
-                            .to_string(),
-                    )
-                } else {
-                    Some("文案整体张力良好，前3秒抓人，高潮反转起伏合规。".to_string())
-                };
-                let mut suggestions: Vec<String> = Vec::new();
-                if hook_score < 85.0 {
-                    suggestions
-                        .push("前3秒应直接抛出冲突核心或生死/背叛反常识反转，避免平铺直叙".into());
-                }
-                if pacing_score < 80.0 {
-                    suggestions.push(format!(
-                        "字数配比（当前{}字/预期{}字）稍有偏差，请微调台词节奏",
-                        actual_words, target_words
-                    ));
-                }
-
-                // 2. 主观层：调用 LLM-as-a-Judge 深度文学裁判 (若已配置模型)
-                let (kind, api_key, model_override, base_url, _temp) =
-                    deps.resolve_agent_llm(AgentRole::QualityReviewer);
-
-                if !api_key.trim().is_empty() {
-                    let provider = dramaxis_script::factory_custom(kind, api_key, base_url);
-                    let judge_req = LlmRequest {
-                        system: "你是一名拥有千万粉丝短视频操盘经验的短剧金牌审稿人与文学裁判。\n\
-                        请对送审的第一人称短剧解说文案进行严格评分，返回合法 JSON 格式，严禁包含 markdown 围栏或额外解释：\n\
-                        {\n\
-                          \"hookScore\": 88.0,\n\
-                          \"conflictScore\": 90.0,\n\
-                          \"pacingScore\": 86.0,\n\
-                          \"overallScore\": 88.0,\n\
-                          \"critiqueFeedback\": \"评语意见...\",\n\
-                          \"suggestions\": [\"修改建议1\", \"修改建议2\"]\n\
-                        }".into(),
-                        user: format!(
-                            "视频时长: {:.1}s，目标字数: ~{}字。送审文案如下：\n\"\"\"\n{}\n\"\"\"",
-                            video_duration, target_words, script_text
-                        ),
-                        model: model_override,
-                        max_tokens: Some(512),
-                        temperature: Some(0.2),
-                        stream: false,
-                        images_base64: Vec::new(),
-                    };
-
-                    if let Ok(resp) = provider.chat(&judge_req).await {
-                        #[derive(serde::Deserialize)]
-                        #[serde(rename_all = "camelCase")]
-                        struct JudgeResult {
-                            hook_score: Option<f32>,
-                            conflict_score: Option<f32>,
-                            pacing_score: Option<f32>,
-                            overall_score: Option<f32>,
-                            critique_feedback: Option<String>,
-                            suggestions: Option<Vec<String>>,
-                        }
-
-                        let clean_json = resp
-                            .content
-                            .trim()
-                            .trim_start_matches("```json")
-                            .trim_start_matches("```")
-                            .trim_end_matches("```")
-                            .trim();
-
-                        if let Ok(jr) = serde_json::from_str::<JudgeResult>(clean_json) {
-                            if let Some(s) = jr.overall_score {
-                                overall_score = (s * 0.7 + overall_score * 0.3).clamp(50.0, 99.0);
-                            }
-                            if let Some(h) = jr.hook_score {
-                                hook_score = h;
-                            }
-                            if let Some(p) = jr.pacing_score {
-                                pacing_score = p;
-                            }
-                            if let Some(c) = jr.conflict_score {
-                                conflict_score = c;
-                            }
-                            if let Some(fb) = jr.critique_feedback {
-                                critique_feedback = Some(fb);
-                            }
-                            if let Some(sugg) = jr.suggestions {
-                                suggestions = sugg;
-                            }
-                        }
-                    }
-                }
-
-                ctx.memory
-                    .insert("critic_score".into(), format!("{:.1}", overall_score));
-                if let Some(ref fb) = critique_feedback {
-                    ctx.memory.insert("critique_feedback".into(), fb.clone());
-                }
-
-                // 回填到最新版本黑板产物
-                let versions_len = ctx.blackboard.script_versions.len();
-                if versions_len > 0 {
-                    let latest_idx = versions_len - 1;
-                    if let Some(latest) = ctx.blackboard.script_versions.get_mut(latest_idx) {
-                        latest.estimated_retention = overall_score;
-                        latest.hook_score = Some(hook_score);
-                        latest.pacing_score = Some(pacing_score);
-                        latest.conflict_score = Some(conflict_score);
-                        latest.critique_feedback = critique_feedback.clone();
-                        latest.critique_suggestions = suggestions.clone();
-                    }
-                }
-
-                ctx.log_thought(
-                    AgentRole::QualityReviewer,
-                    format!(
-                        "文学与留存张力 Hybrid 评审完成：综合得分 {:.1}（前3s Hook: {:.1}，语速节奏: {:.1}，冲突高潮: {:.1}）",
-                        overall_score, hook_score, pacing_score, conflict_score
-                    ),
-                );
-
-                if overall_score < 85.0 {
-                    ctx.log_thought(
-                        AgentRole::QualityReviewer,
-                        format!(
-                            "⚠️ 评分未达达标线 (85.0 分)，批注: {}",
-                            critique_feedback.as_deref().unwrap_or("需重写优化")
-                        ),
-                    );
-                }
-
-                Ok(format!("剧本评审完成，综合得分 {:.1} 分", overall_score))
-            }
-            "hitl_approval" => Ok("人机协同审核通过".into()),
-            "voice_synthesis" => {
-                let mut ctx = context.write().await;
-                let agent = VoiceArtistAgent;
-                let res = agent.execute(&mut ctx).await?;
-                Ok(res.unwrap_or_else(|| "48kHz 旁白人声生成完成".into()))
-            }
-            "timeline_compose" => {
-                let mut ctx = context.write().await;
-                let agent = SoundEngineerAgent;
-                let res = agent.execute(&mut ctx).await?;
-                Ok(res.unwrap_or_else(|| "时间轴 5 轨磁性吸附对齐完成".into()))
-            }
-            "quality_gate" => {
-                let mut ctx = context.write().await;
-                let agent = QualityReviewerAgent;
-                let res = agent.execute(&mut ctx).await?;
-                Ok(res.unwrap_or_else(|| "视听全案质检完成，已达工业级交付标准".into()))
-            }
-            _ => Ok("执行完毕".into()),
-        }
+        crate::nodes::execute_node(context, node_id, deps, CancelToken::new()).await
     }
 }
 
@@ -1456,5 +1257,48 @@ mod tests {
             orchestrator.critique_count > 0,
             "should have triggered reflection loop via conditional edge"
         );
+    }
+
+    #[tokio::test]
+    async fn test_deterministic_linear_profile_and_checkpoint_hook() {
+        let proj = Project {
+            name: "确定性线性流水线测试".into(),
+            ..Default::default()
+        };
+        let recorded = Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
+        let rec_clone = recorded.clone();
+
+        let ctx = AgentContext::new(proj, false); // 即使 auto_mode=false 也不应被 HITL 阻塞
+        let mut orch =
+            DagOrchestrator::with_profile(ctx, WorkflowProfile::DeterministicLinear)
+                .with_checkpoint_hook(Arc::new(
+                    move |_sid, _pid, node_id, profile, _bb, _dag| {
+                        assert_eq!(profile, "deterministiclinear");
+                        rec_clone.lock().unwrap().push(node_id.to_string());
+                    },
+                ));
+
+        let bp = orch.run_dag().await.expect("run deterministic linear");
+        assert!(bp.is_none(), "DeterministicLinear 不应挂起 HITL 断点");
+
+        let snap = orch.snapshot().await;
+        assert_eq!(snap.total_nodes, 7);
+        assert_eq!(snap.completed_nodes, 7);
+        assert_eq!(recorded.lock().unwrap().len(), 7);
+    }
+
+    #[tokio::test]
+    async fn test_dag_cancel_token_aborts_immediately() {
+        let proj = Project {
+            name: "取消令牌测试".into(),
+            ..Default::default()
+        };
+        let ctx = AgentContext::new(proj, true);
+        let token = CancelToken::new();
+        token.cancel();
+
+        let mut orch = DagOrchestrator::new(ctx).with_cancel_token(token);
+        let res = orch.run_dag().await;
+        assert!(res.is_err(), "预取消的工作流应立即返回错误");
     }
 }

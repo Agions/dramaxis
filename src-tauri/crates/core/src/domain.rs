@@ -206,12 +206,25 @@ pub struct Clip {
     pub volume: Option<f32>, // 仅 audio 有意义
 }
 
-/// 第一人称叙述脚本的一段 (含黄金前3秒爆款钩子支持与画面对齐评定)。
+/// 脚本段落类型（P1-2: 支持解说旁白、原片原声金句穿插与气口停顿混排）
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum SegmentKind {
+    /// AI 第一人称解说旁白（默认）
+    #[default]
+    Narration,
+    /// 原片高光原声金句留白（保留原片人声，暂停旁白并压低 BGM）
+    OriginalClip,
+    /// 叙事气口/悬念停顿
+    Pause,
+}
+
+/// 第一人称叙述脚本的一段 (含黄金前3秒爆款钩子、原声金句穿插与画面对齐评定)。
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ScriptSegment {
     pub id: String,
     pub step_index: u8, // 0..=6 (对应 7 步流水线)
-    pub text: String,   // 中文人称
+    pub text: String,   // 中文人称或原片金句台词
     pub emotion: Option<String>,
     pub start_seconds: Option<f64>,
     pub end_seconds: Option<f64>,
@@ -223,6 +236,14 @@ pub struct ScriptSegment {
     pub visual_cut_ref: Option<String>,
     #[serde(default)]
     pub score: Option<f32>,
+    #[serde(default)]
+    pub kind: SegmentKind,
+    /// 原片素材入点（秒），当 `kind == SegmentKind::OriginalClip` 时生效
+    #[serde(default)]
+    pub source_in_sec: Option<f64>,
+    /// 原片素材出点（秒），当 `kind == SegmentKind::OriginalClip` 时生效
+    #[serde(default)]
+    pub source_out_sec: Option<f64>,
 }
 
 impl Default for ScriptSegment {
@@ -238,8 +259,124 @@ impl Default for ScriptSegment {
             hook_style: None,
             visual_cut_ref: None,
             score: None,
+            kind: SegmentKind::Narration,
+            source_in_sec: None,
+            source_out_sec: None,
         }
     }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// P1-1: 剧集三层内容模型 (Series -> Episode -> Variant) 与 Story Bible
+// ════════════════════════════════════════════════════════════════════════
+
+/// 剧集人物档案（确保 60~100 集微短剧连载解说中称呼、身份与关系零串戏）
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct CharacterProfile {
+    pub id: String,
+    pub name: String,
+    /// 解说常用昵称/标签（如“隐藏大佬男主”、“势利眼岳母”）
+    pub alias: Option<String>,
+    pub role_type: String,
+    pub traits: String,
+    pub relationships: String,
+}
+
+/// 剧集剧情圣经与跨集滚动记忆库 (Story Bible)
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct StoryBible {
+    pub series_id: String,
+    pub worldview: String,
+    pub core_conflict: String,
+    pub narrator_persona: String,
+    pub characters: Vec<CharacterProfile>,
+    /// 按集数累积的滚动前情提要（每集定稿自动沉淀 150~200 字）
+    pub rolling_recaps: Vec<EpisodeRecap>,
+}
+
+/// 单集前情提要节点
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct EpisodeRecap {
+    pub episode_number: u32,
+    pub summary: String,
+    pub unresolved_hook: Option<String>,
+}
+
+impl StoryBible {
+    /// 格式化为注入编剧 Agent Prompt 的跨集剧情记忆上下文
+    pub fn to_prompt_context(&self) -> String {
+        let mut buf = String::new();
+        if !self.worldview.trim().is_empty() {
+            buf.push_str(&format!("【世界观与主线冲突】{} / {}\n", self.worldview, self.core_conflict));
+        }
+        if !self.characters.is_empty() {
+            buf.push_str("【核心人物档案（严禁改名或混淆关系）】\n");
+            for c in &self.characters {
+                let alias = c
+                    .alias
+                    .as_deref()
+                    .map(|a| format!("（解说称呼: {a}）"))
+                    .unwrap_or_default();
+                buf.push_str(&format!(
+                    "- {}{} [{}]: {} | 关系: {}\n",
+                    c.name, alias, c.role_type, c.traits, c.relationships
+                ));
+            }
+        }
+        if !self.rolling_recaps.is_empty() {
+            buf.push_str("【前情提要（最近 3 集滚动记忆）】\n");
+            let start = self.rolling_recaps.len().saturating_sub(3);
+            for r in &self.rolling_recaps[start..] {
+                let hook = r
+                    .unresolved_hook
+                    .as_deref()
+                    .map(|h| format!(" | 遗留悬念: {h}"))
+                    .unwrap_or_default();
+                buf.push_str(&format!("- 第 {} 集: {}{}\n", r.episode_number, r.summary, hook));
+            }
+        }
+        buf
+    }
+}
+
+/// 顶层剧集空间 (Series)
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Series {
+    pub id: String,
+    pub title: String,
+    pub genre: String,
+    pub default_style: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// 分集拆条单元 (Episode)
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Episode {
+    pub id: String,
+    pub series_id: String,
+    pub episode_number: u32,
+    pub title: String,
+    pub source_paths: Vec<PathBuf>,
+    pub created_at: DateTime<Utc>,
+}
+
+/// 同一分集下的矩阵变体工程 (Variant)，共享原片语义索引，独立维护风格/平台/脚本
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Variant {
+    pub id: String,
+    pub episode_id: String,
+    pub project_id: String,
+    pub label: String,
+    pub style_preset: String,
+    pub target_platform: Option<PlatformId>,
+    pub created_at: DateTime<Utc>,
 }
 
 /// 一次导出记录。
@@ -285,6 +422,59 @@ fn uuid_v4_like() -> String {
         .map(|d| d.as_nanos())
         .unwrap_or(0);
     format!("proj-{:x}", nanos)
+}
+
+/// 批量任务执行状态 (P2-1)
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum BatchJobStatus {
+    #[default]
+    Pending,
+    Running,
+    Completed,
+    Failed,
+    Cancelled,
+}
+
+impl std::fmt::Display for BatchJobStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Pending => write!(f, "pending"),
+            Self::Running => write!(f, "running"),
+            Self::Completed => write!(f, "completed"),
+            Self::Failed => write!(f, "failed"),
+            Self::Cancelled => write!(f, "cancelled"),
+        }
+    }
+}
+
+/// 批量任务业务算子类型 (P2-1)
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum BatchJobType {
+    AsrTranscribe,
+    SceneAnalysis,
+    ScriptGeneration,
+    VoiceSynthesis,
+    MasterRender,
+    FullFission,
+}
+
+/// 持久化后台批处理任务实体 (P2-1)
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchJob {
+    pub id: String,
+    pub job_type: BatchJobType,
+    pub status: BatchJobStatus,
+    pub payload_json: String,
+    pub result_json: Option<String>,
+    pub error_message: Option<String>,
+    pub progress: f32,
+    pub retry_count: u32,
+    pub max_retries: u32,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[cfg(test)]

@@ -97,9 +97,35 @@ pub async fn agent_start(
         let _ = handle_clone.emit("agent://event", payload);
     });
 
+    let ckpt_db_path = dirs::data_local_dir()
+        .unwrap_or_else(std::env::temp_dir)
+        .join("dramaxis")
+        .join("dramaxis.db");
+    let checkpoint_hook = Arc::new(
+        move |session_id: &str,
+              project_id: &str,
+              node_id: &str,
+              profile: &str,
+              bb_json: &str,
+              dag_json: &str| {
+            if let Err(e) = dramaxis_storage::save_agent_checkpoint_at_path(
+                &ckpt_db_path,
+                session_id,
+                project_id,
+                node_id,
+                profile,
+                bb_json,
+                dag_json,
+            ) {
+                tracing::warn!("持久化 Agent 断点失败 (node={node_id}): {e}");
+            }
+        },
+    );
+
     let orch = AgentOrchestrator::new(ctx.clone()).with_emitter(emitter.clone());
     let dag = DagOrchestrator::with_profile(ctx.clone(), workflow_profile.unwrap_or_default())
         .with_emitter(emitter)
+        .with_checkpoint_hook(checkpoint_hook)
         .with_deps(Arc::new(runtime_deps));
 
     let initial_snapshot = dag.snapshot().await;

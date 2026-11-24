@@ -65,6 +65,12 @@ pub struct AudioBriefArtifact {
     pub speech_intervals: Vec<SpeechInterval>,
     pub bgm_intensity_peaks: Vec<f64>,
     pub dialogue_summary: String,
+    /// P0-1: 真实 ASR 原片台词流（带时间戳与原声金句标注）
+    #[serde(default)]
+    pub transcript_segments: Vec<dramaxis_subtitle::TranscriptSegment>,
+    /// 实际命中的 ASR 通道（sidecar_srt / whisper_cli_local / whisper_http_api / none_fallback）
+    #[serde(default)]
+    pub asr_provider: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

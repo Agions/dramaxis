@@ -24,6 +24,41 @@ pub enum MasterIntensity {
 
 pub type DedupIntensity = MasterIntensity;
 
+/// 原片硬字幕区域处理模式（避免与新解说字幕双层重叠打架）
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum SubtitleMaskMode {
+    /// 不处理原片字幕区域
+    #[default]
+    None,
+    /// 底部硬字幕区域智能柔化抹除 (delogo)
+    BlurBox,
+    /// 裁切底部 14% 硬字幕区并等比放大还原安全画幅
+    CropBottom,
+    /// 底部半透明深色垫底条（适合新字幕直接覆盖其上）
+    GradientBar,
+}
+
+/// 发布前防搬运与合规自检风险等级
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DedupRiskLevel {
+    Low,
+    Medium,
+    High,
+}
+
+/// 发布前母带原创度与平台合规体检报告 (P1-4)
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PreFlightDedupReport {
+    pub originality_score: f32,
+    pub risk_level: DedupRiskLevel,
+    pub hard_subtitle_safe: bool,
+    pub compliance_tagged: bool,
+    pub recommendations: Vec<String>,
+}
+
 /// 多平台视听母带后处理参数 (兼容原 DedupOptions 字段与契约)
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -53,6 +88,15 @@ pub struct MasterOptions {
     pub reverb_decay: f64,
     /// 8. 元数据规范化封装
     pub enable_metadata_scrub: bool,
+    /// 9. (P1-4) 原片硬字幕智能遮罩/裁切模式
+    #[serde(default)]
+    pub subtitle_mask_mode: SubtitleMaskMode,
+    /// 10. (P1-4) 动态 Ken Burns 非均匀微变焦曲线
+    #[serde(default)]
+    pub enable_dynamic_ken_burns: bool,
+    /// 11. (P1-4) AI 合成内容法规合规元数据标识
+    #[serde(default)]
+    pub ai_compliance_badge: bool,
 }
 
 pub type DedupOptions = MasterOptions;
@@ -86,6 +130,9 @@ impl MasterOptions {
             enable_bgm_reverb: false,
             reverb_decay: 0.2,
             enable_metadata_scrub: true,
+            subtitle_mask_mode: SubtitleMaskMode::None,
+            enable_dynamic_ken_burns: false,
+            ai_compliance_badge: true,
         }
     }
 
@@ -107,6 +154,9 @@ impl MasterOptions {
             enable_bgm_reverb: true,
             reverb_decay: 0.3,
             enable_metadata_scrub: true,
+            subtitle_mask_mode: SubtitleMaskMode::GradientBar,
+            enable_dynamic_ken_burns: false,
+            ai_compliance_badge: true,
         }
     }
 
@@ -128,6 +178,9 @@ impl MasterOptions {
             enable_bgm_reverb: true,
             reverb_decay: 0.45,
             enable_metadata_scrub: true,
+            subtitle_mask_mode: SubtitleMaskMode::BlurBox,
+            enable_dynamic_ken_burns: true,
+            ai_compliance_badge: true,
         }
     }
 
@@ -135,11 +188,38 @@ impl MasterOptions {
     pub fn build_video_filters(&self, base_w: u32, base_h: u32) -> Vec<String> {
         let mut filters = Vec::new();
 
-        // 1. 微缩放与居中裁切
-        if self.enable_zoom && (self.zoom_rate - 1.0).abs() > 0.001 {
+        // 1. 动态 Ken Burns 曲线或静态微缩放裁切
+        if self.enable_dynamic_ken_burns {
+            filters.push(format!(
+                "scale=w='iw*(1.02+0.02*sin(t*0.7))':h='ih*(1.02+0.02*sin(t*0.7))':eval=frame,crop={base_w}:{base_h}"
+            ));
+        } else if self.enable_zoom && (self.zoom_rate - 1.0).abs() > 0.001 {
             let zw = (((base_w as f64) * self.zoom_rate) as u32 / 2) * 2;
             let zh = (((base_h as f64) * self.zoom_rate) as u32 / 2) * 2;
             filters.push(format!("scale={zw}:{zh},crop={base_w}:{base_h}"));
+        }
+
+        // 1b. 原片硬字幕智能遮罩/裁切（防止双层字幕重叠）
+        match self.subtitle_mask_mode {
+            SubtitleMaskMode::None => {}
+            SubtitleMaskMode::BlurBox => {
+                let mask_x = (base_w / 20).max(2);
+                let mask_w = base_w.saturating_sub(mask_x * 2).max(4);
+                let mask_y = ((base_h as f64) * 0.80) as u32;
+                let mask_h = ((base_h as f64) * 0.12).max(4.0) as u32;
+                filters.push(format!("delogo=x={mask_x}:y={mask_y}:w={mask_w}:h={mask_h}"));
+            }
+            SubtitleMaskMode::CropBottom => {
+                let crop_h = (((base_h as f64) * 0.86) as u32 / 2) * 2;
+                filters.push(format!("crop={base_w}:{crop_h}:0:0,scale={base_w}:{base_h}"));
+            }
+            SubtitleMaskMode::GradientBar => {
+                let bar_y = ((base_h as f64) * 0.80) as u32;
+                let bar_h = ((base_h as f64) * 0.14) as u32;
+                filters.push(format!(
+                    "drawbox=x=0:y={bar_y}:w={base_w}:h={bar_h}:color=black@0.72:t=fill"
+                ));
+            }
         }
 
         // 2. 画面水平翻转
@@ -201,7 +281,7 @@ impl MasterOptions {
         }
 
         let pseudo_hash = format!("{:012x}", seed.wrapping_mul(0x5DEECE66D));
-        vec![
+        let mut args = vec![
             "-map_metadata".into(),
             "-1".into(),
             "-metadata".into(),
@@ -209,8 +289,77 @@ impl MasterOptions {
             "-metadata".into(),
             format!("comment=Master_{pseudo_hash}"),
             "-metadata".into(),
-            "encoder=Dramaxis Mastering Studio v1.2".into(),
-        ]
+            "encoder=Dramaxis Mastering Studio v1.4".into(),
+        ];
+        if self.ai_compliance_badge {
+            args.push("-metadata".into());
+            args.push("ai_generated=true".into());
+            args.push("-metadata".into());
+            args.push("compliance_label=Dramaxis_AI_Synthesized".into());
+        }
+        args
+    }
+
+    /// P1-4: 发布前原创度与平台合规自检评估
+    pub fn evaluate_preflight(
+        &self,
+        has_original_clips: bool,
+        hard_sub_detected: bool,
+    ) -> PreFlightDedupReport {
+        let mut score: f32 = 45.0;
+        let mut recs = Vec::new();
+
+        if self.enable_zoom || self.enable_dynamic_ken_burns {
+            score += if self.enable_dynamic_ken_burns { 14.0 } else { 10.0 };
+        } else {
+            recs.push("建议开启微缩放或动态 Ken Burns 变焦以降低画面像素指纹重合度".into());
+        }
+        if self.enable_speed {
+            score += 8.0;
+        }
+        if self.enable_noise {
+            score += 7.0;
+        }
+        if self.enable_fps_drift {
+            score += 6.0;
+        }
+        if self.enable_pitch_shift {
+            score += 6.0;
+        }
+        if self.enable_metadata_scrub {
+            score += 6.0;
+        }
+        if has_original_clips {
+            score += 8.0;
+        } else {
+            recs.push("适当穿插 15%~25% 原片高光原声金句可显著提升完播率与二次创作特征".into());
+        }
+
+        let hard_subtitle_safe = !hard_sub_detected || self.subtitle_mask_mode != SubtitleMaskMode::None;
+        if !hard_subtitle_safe {
+            score -= 15.0;
+            recs.push("检测到原片含底部硬字幕，建议开启 GradientBar 垫底或 BlurBox 遮罩避免双字幕重叠".into());
+        }
+        if !self.ai_compliance_badge {
+            recs.push("建议保留 AI 合成内容合规元数据标识以满足主流平台审核要求".into());
+        }
+
+        let final_score = score.clamp(0.0, 100.0);
+        let risk_level = if final_score >= 80.0 && hard_subtitle_safe {
+            DedupRiskLevel::Low
+        } else if final_score >= 60.0 {
+            DedupRiskLevel::Medium
+        } else {
+            DedupRiskLevel::High
+        };
+
+        PreFlightDedupReport {
+            originality_score: final_score,
+            risk_level,
+            hard_subtitle_safe,
+            compliance_tagged: self.ai_compliance_badge,
+            recommendations: recs,
+        }
     }
 }
 
@@ -315,5 +464,24 @@ mod tests {
         assert!(args.contains(&"-map_metadata".to_string()));
         assert!(args.contains(&"-1".to_string()));
         assert!(args.contains(&"title=TestMovie".to_string()));
+        assert!(args.contains(&"ai_generated=true".to_string()));
+    }
+
+    #[test]
+    fn test_subtitle_mask_ken_burns_and_preflight_report() {
+        let mut opts = MasterOptions::aggressive();
+        let filters = opts.build_video_filters(1080, 1920);
+        assert!(filters.iter().any(|f| f.contains("sin(t*0.7)")));
+        assert!(filters.iter().any(|f| f.starts_with("delogo=")));
+
+        let report_low = opts.evaluate_preflight(true, true);
+        assert_eq!(report_low.risk_level, DedupRiskLevel::Low);
+        assert!(report_low.hard_subtitle_safe);
+        assert!(report_low.originality_score >= 85.0);
+
+        opts.subtitle_mask_mode = SubtitleMaskMode::None;
+        let report_warn = opts.evaluate_preflight(false, true);
+        assert!(!report_warn.hard_subtitle_safe);
+        assert!(!report_warn.recommendations.is_empty());
     }
 }

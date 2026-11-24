@@ -14,10 +14,15 @@
 
 use std::path::PathBuf;
 
-use dramaxis_core::domain::{ExportStrategy, ProjectSettings};
+use dramaxis_core::domain::{ExportStrategy, MediaFile, ProjectSettings, Timeline};
 use dramaxis_core::error::DramaxisError;
 pub use dramaxis_export::capcut::{CapcutDraftOptions, CapcutDraftResult};
 pub use dramaxis_export::dedup::{DedupIntensity, DedupOptions};
+pub use dramaxis_export::fcpxml::{export_fcpxml_file, FcpxmlOptions};
+pub use dramaxis_export::master::{MasterOptions, PreFlightDedupReport};
+pub use dramaxis_export::pack::{
+    export_pack_file, import_pack_file, DramaxisPack,
+};
 pub use dramaxis_export::renderer::{
     BatchFissionParams, BatchFissionResult, FissionProgressPayload, RenderProgressPayload,
     RenderVideoParams, RenderVideoResult,
@@ -86,6 +91,19 @@ pub async fn export_get_dedup_preset(
         DedupIntensity::Aggressive => DedupOptions::aggressive(),
         DedupIntensity::Custom => DedupOptions::standard(),
     })
+}
+
+/// 发布前原创度与平台合规自检体检 (P1-4)
+#[tauri::command]
+pub async fn export_evaluate_preflight(
+    options: MasterOptions,
+    has_original_clips: Option<bool>,
+    hard_sub_detected: Option<bool>,
+) -> Result<PreFlightDedupReport, DramaxisError> {
+    Ok(options.evaluate_preflight(
+        has_original_clips.unwrap_or(false),
+        hard_sub_detected.unwrap_or(false),
+    ))
 }
 
 /// 使用 FFmpeg 压制渲染视频 (GPU 加速 + 8 维消重 + 环境模糊 + 侧链闪避)
@@ -296,4 +314,39 @@ pub async fn export_launch_jianying() -> Result<(), DramaxisError> {
             "Linux 及其他平台暂不支持直接唤起剪映客户端".into(),
         ))
     }
+}
+
+/// 导出 Final Cut Pro XML (FCPXML 1.10) 格式时间线工程文件
+#[tauri::command]
+pub async fn export_fcpxml_timeline(
+    timeline: Timeline,
+    media_files: Vec<MediaFile>,
+    options: FcpxmlOptions,
+    output_path: String,
+) -> Result<String, DramaxisError> {
+    let path = PathBuf::from(&output_path);
+    export_fcpxml_file(&timeline, &media_files, &options, &path)
+        .map(|p| p.to_string_lossy().into_owned())
+        .map_err(|e| DramaxisError::Other(e.to_string()))
+}
+
+/// 导出创作者资产模板包 (.dramaxis-pack)
+#[tauri::command]
+pub async fn export_template_pack(
+    pack: DramaxisPack,
+    output_path: String,
+) -> Result<String, DramaxisError> {
+    let path = PathBuf::from(&output_path);
+    export_pack_file(&pack, &path)
+        .map(|p| p.to_string_lossy().into_owned())
+        .map_err(|e| DramaxisError::Other(e.to_string()))
+}
+
+/// 导入并解析创作者资产模板包 (.dramaxis-pack)
+#[tauri::command]
+pub async fn import_template_pack(
+    pack_path: String,
+) -> Result<DramaxisPack, DramaxisError> {
+    let path = PathBuf::from(&pack_path);
+    import_pack_file(&path).map_err(|e| DramaxisError::Other(e.to_string()))
 }

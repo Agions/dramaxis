@@ -14,6 +14,7 @@ import { Tabs } from "@dramaxis/ui";
 import { toast } from "sonner";
 import { LlmProvidersSection } from "@components/settings/llm";
 import { TtsVoicesSection } from "@components/settings/tts";
+import { AsrSection } from "@components/settings/asr";
 import { EnvironmentSection } from "@components/settings/env";
 import { KeybindingsSection } from "@components/settings/keys";
 
@@ -36,6 +37,13 @@ const DEFAULT_SNAPSHOT: ConfigSnapshot = {
   tts_voice: null,
   tts_ref_audio_path: null,
   tts_prompt_text: null,
+  asr_provider: "auto",
+  asr_whisper_cli_path: null,
+  asr_whisper_model_path: null,
+  asr_api_base_url: null,
+  asr_api_model: null,
+  asr_api_key: null,
+  asr_language: "zh",
 };
 
 function SettingsPage() {
@@ -78,6 +86,7 @@ function SettingsPage() {
   const TAB_ITEMS = [
     { id: "llm", label: "大语言模型", icon: "🤖", badge: "10" },
     { id: "tts", label: "TTS 配音引擎", icon: "🎙️", badge: "4" },
+    { id: "asr", label: "ASR 语音转写", icon: "👂", badge: "Local" },
     { id: "env", label: "系统与硬件加速", icon: "⚡" },
     { id: "keys", label: "快捷键字典", icon: "⌨️" },
   ];
@@ -115,6 +124,9 @@ function SettingsPage() {
           )}
           {activeTab === "tts" && (
             <TtsVoicesSection form={form} setForm={setForm} />
+          )}
+          {activeTab === "asr" && (
+            <AsrSection form={form} setForm={setForm} />
           )}
           {activeTab === "env" && (
             <EnvironmentSection form={form} setForm={setForm} />

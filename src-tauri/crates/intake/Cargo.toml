@@ -14,7 +14,10 @@ workspace = true
 
 [dependencies]
 serde = { workspace = true }
+serde_json = { workspace = true }
 thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
 dramaxis-core = { path = "../core" }
 
 [dev-dependencies]

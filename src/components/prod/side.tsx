@@ -179,6 +179,50 @@ const PROFILE_TEMPLATES: Record<WorkflowProfile, SidebarDagNode[]> = {
       desc: "混剪成片质量验收",
     },
   ],
+  deterministic_linear: [
+    {
+      id: "director_plan",
+      name: "总控导演",
+      role: "director",
+      icon: "🎬",
+      desc: "确定性单向工业流水线规划",
+    },
+    {
+      id: "visual_analysis",
+      name: "视觉分析",
+      role: "visual_critic",
+      icon: "👁️",
+      desc: "镜头硬切与画面特征抽取",
+    },
+    {
+      id: "screenwriter_draft",
+      name: "金牌编剧",
+      role: "screenwriter",
+      icon: "✍️",
+      desc: "结构化台词解说脚本生成",
+    },
+    {
+      id: "voice_synthesis",
+      name: "配音师",
+      role: "voice_artist",
+      icon: "🎙️",
+      desc: "高拟真旁白人声合成",
+    },
+    {
+      id: "timeline_compose",
+      name: "混音剪辑",
+      role: "sound_engineer",
+      icon: "🎛️",
+      desc: "音画磁吸与智能花字字幕排布",
+    },
+    {
+      id: "quality_gate",
+      name: "终审守门",
+      role: "quality_reviewer",
+      icon: "🛡️",
+      desc: "母带规格与消重指数质检验收",
+    },
+  ],
 };
 
 const ROLE_ICONS: Record<AgentRole, string> = {

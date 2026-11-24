@@ -11,7 +11,7 @@
  * @copyright (c) 2026 Dramaxis. All rights reserved.
  */
 
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@dramaxis/ui";
 import { settingsIpc, type Blackboard } from "@dramaxis/ipc";
@@ -19,6 +19,7 @@ import { HookEngineCard } from "./script/hook";
 import { ReferenceDeconstructCard } from "./script/decon";
 import { RetentionArcCard } from "./script/arc";
 import { ReflectionEvolutionCard } from "./script/evolve";
+import { TextBasedEditor, type TbeSegment } from "./script/tbe";
 
 interface ScriptStudioPanelProps {
   llmProvider: string;
@@ -52,6 +53,46 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
   // 模型连通性快速测速
   const [testingModel, setTestingModel] = useState(false);
   const [modelLatency, setModelLatency] = useState<number | null>(null);
+  const [editorMode, setEditorMode] = useState<"text" | "tbe">("text");
+
+  const segments: TbeSegment[] = useMemo(() => {
+    return scriptText
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((line, idx) => ({
+        id: `seg_${idx}`,
+        kind: line.startsWith("【原声】")
+          ? "original_clip"
+          : line.startsWith("【停顿】")
+          ? "pause"
+          : "narration",
+        text: line.replace(/^【(原声|停顿)】/, ""),
+        startSec: idx * 2.8,
+        endSec: (idx + 1) * 2.8,
+        isGoldenQuote:
+          line.includes("！") ||
+          line.includes("？") ||
+          line.includes("!") ||
+          line.includes("?") ||
+          line.includes("金句"),
+      }));
+  }, [scriptText]);
+
+  const handleSegmentsChange = (nextSegs: TbeSegment[]) => {
+    const nextText = nextSegs
+      .map((s) => {
+        const prefix =
+          s.kind === "original_clip"
+            ? "【原声】"
+            : s.kind === "pause"
+            ? "【停顿】"
+            : "";
+        return `${prefix}${s.text}`;
+      })
+      .join("\n");
+    onScriptTextChange(nextText);
+  };
 
   const handleQuickTest = async () => {
     setTestingModel(true);
@@ -169,9 +210,35 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
       {/* 5. 解说文案主编辑区 */}
       <div className="space-y-1.5">
         <div className="flex justify-between items-center">
-          <label className="text-xs font-semibold text-text-secondary">
-            解说文案编辑
-          </label>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold text-text-secondary">
+              解说文案编辑
+            </label>
+            <div className="flex rounded-lg border border-border bg-surface p-0.5 text-[10px]">
+              <button
+                type="button"
+                onClick={() => setEditorMode("text")}
+                className={`rounded px-1.5 py-0.5 transition cursor-pointer ${
+                  editorMode === "text"
+                    ? "bg-gold/20 text-gold font-bold"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+              >
+                文本模式
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorMode("tbe")}
+                className={`rounded px-1.5 py-0.5 transition cursor-pointer ${
+                  editorMode === "tbe"
+                    ? "bg-gold/20 text-gold font-bold"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+              >
+                🎬 以文剪片 (TBE)
+              </button>
+            </div>
+          </div>
           {scriptText && (
             <button
               type="button"
@@ -185,13 +252,23 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
             </button>
           )}
         </div>
-        <textarea
-          value={scriptText}
-          onChange={(e) => onScriptTextChange(e.target.value)}
-          rows={8}
-          placeholder="等待 AI 智能体生成或直接在此输入/编辑解说词..."
-          className="w-full rounded-xl border border-border bg-bg p-3 text-xs leading-relaxed text-text-primary outline-none focus:border-gold font-sans"
-        />
+
+        {editorMode === "text" ? (
+          <textarea
+            value={scriptText}
+            onChange={(e) => onScriptTextChange(e.target.value)}
+            rows={8}
+            placeholder="等待 AI 智能体生成或直接在此输入/编辑解说词..."
+            className="w-full rounded-xl border border-border bg-bg p-3 text-xs leading-relaxed text-text-primary outline-none focus:border-gold font-sans"
+          />
+        ) : (
+          <div className="rounded-xl border border-border bg-bg p-2 max-h-96 overflow-y-auto">
+            <TextBasedEditor
+              segments={segments}
+              onChange={handleSegmentsChange}
+            />
+          </div>
+        )}
 
         {/* 6. 留存曲线张力分析卡片 */}
         <RetentionArcCard scriptText={scriptText} />

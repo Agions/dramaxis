@@ -4,11 +4,16 @@
 
 use std::path::{Path, PathBuf};
 
-use dramaxis_core::domain::{MediaFile, Project};
+use dramaxis_core::domain::{Episode, MediaFile, Project, Series, StoryBible, Variant};
 use dramaxis_core::error::DramaxisError;
 use dramaxis_core::services::ProjectService;
 use dramaxis_core::AppContext;
 use dramaxis_storage::bundle::{create_bundle, open_bundle, redo_bundle, save_bundle, undo_bundle};
+use dramaxis_storage::db::{
+    init_database, list_episodes, list_series, list_variants, load_story_bible, save_episode,
+    save_series, save_story_bible, save_variant,
+};
+use rusqlite::Connection;
 use tauri::{Manager, State};
 
 /// 列举最近项目 (真实从 ProjectService 取)
@@ -278,6 +283,115 @@ pub async fn project_add_media(
     }
 
     Ok(proj)
+}
+
+fn get_db_conn(
+    app: &tauri::AppHandle,
+    bundle_path: Option<&str>,
+) -> Result<Connection, DramaxisError> {
+    if let Some(bp) = bundle_path {
+        let p = PathBuf::from(bp);
+        let bundle = dramaxis_storage::bundle::DramaxisBundle::new(p);
+        bundle
+            .connect()
+            .map_err(|e| DramaxisError::Project(e.to_string()))
+    } else {
+        let base_dir = project_dir(app).map_err(|e| DramaxisError::Io(e.to_string()))?;
+        let _ = std::fs::create_dir_all(&base_dir);
+        let db_path = base_dir.join("library.db");
+        let conn = Connection::open(&db_path)
+            .map_err(|e| DramaxisError::Project(format!("打开资料库数据库失败: {e}")))?;
+        init_database(&conn)
+            .map_err(|e| DramaxisError::Project(format!("初始化资料库数据库失败: {e}")))?;
+        Ok(conn)
+    }
+}
+
+/// 保存/更新剧集总括 (Series)
+#[tauri::command]
+pub async fn project_series_save(
+    app: tauri::AppHandle,
+    series: Series,
+    bundle_path: Option<String>,
+) -> Result<(), DramaxisError> {
+    let conn = get_db_conn(&app, bundle_path.as_deref())?;
+    save_series(&conn, &series).map_err(|e| DramaxisError::Project(e.to_string()))
+}
+
+/// 列出所有剧集 (Series)
+#[tauri::command]
+pub async fn project_series_list(
+    app: tauri::AppHandle,
+    bundle_path: Option<String>,
+) -> Result<Vec<Series>, DramaxisError> {
+    let conn = get_db_conn(&app, bundle_path.as_deref())?;
+    list_series(&conn).map_err(|e| DramaxisError::Project(e.to_string()))
+}
+
+/// 保存/更新设定集 (StoryBible)
+#[tauri::command]
+pub async fn project_story_bible_save(
+    app: tauri::AppHandle,
+    bible: StoryBible,
+    bundle_path: Option<String>,
+) -> Result<(), DramaxisError> {
+    let conn = get_db_conn(&app, bundle_path.as_deref())?;
+    save_story_bible(&conn, &bible).map_err(|e| DramaxisError::Project(e.to_string()))
+}
+
+/// 加载指定剧集的设定集 (StoryBible)
+#[tauri::command]
+pub async fn project_story_bible_load(
+    app: tauri::AppHandle,
+    series_id: String,
+    bundle_path: Option<String>,
+) -> Result<Option<StoryBible>, DramaxisError> {
+    let conn = get_db_conn(&app, bundle_path.as_deref())?;
+    load_story_bible(&conn, &series_id).map_err(|e| DramaxisError::Project(e.to_string()))
+}
+
+/// 保存/更新单集分集拆条 (Episode)
+#[tauri::command]
+pub async fn project_episode_save(
+    app: tauri::AppHandle,
+    episode: Episode,
+    bundle_path: Option<String>,
+) -> Result<(), DramaxisError> {
+    let conn = get_db_conn(&app, bundle_path.as_deref())?;
+    save_episode(&conn, &episode).map_err(|e| DramaxisError::Project(e.to_string()))
+}
+
+/// 列出指定剧集下的所有分集 (Episode)
+#[tauri::command]
+pub async fn project_episode_list(
+    app: tauri::AppHandle,
+    series_id: String,
+    bundle_path: Option<String>,
+) -> Result<Vec<Episode>, DramaxisError> {
+    let conn = get_db_conn(&app, bundle_path.as_deref())?;
+    list_episodes(&conn, &series_id).map_err(|e| DramaxisError::Project(e.to_string()))
+}
+
+/// 保存/更新解说变体分支 (Variant)
+#[tauri::command]
+pub async fn project_variant_save(
+    app: tauri::AppHandle,
+    variant: Variant,
+    bundle_path: Option<String>,
+) -> Result<(), DramaxisError> {
+    let conn = get_db_conn(&app, bundle_path.as_deref())?;
+    save_variant(&conn, &variant).map_err(|e| DramaxisError::Project(e.to_string()))
+}
+
+/// 列出指定单集下的所有解说变体分支 (Variant)
+#[tauri::command]
+pub async fn project_variant_list(
+    app: tauri::AppHandle,
+    episode_id: String,
+    bundle_path: Option<String>,
+) -> Result<Vec<Variant>, DramaxisError> {
+    let conn = get_db_conn(&app, bundle_path.as_deref())?;
+    list_variants(&conn, &episode_id).map_err(|e| DramaxisError::Project(e.to_string()))
 }
 
 // ── IPC 类型 ──────────────────────────────────────────────────────────

@@ -70,7 +70,7 @@ export interface IpcContracts {
     args: void;
     result: string;
   };
-  // ─────── project · 8 个 ───────
+  // ─────── project · 18 个 ───────
   project_add_media: {
     args: {
       path: string;
@@ -86,6 +86,20 @@ export interface IpcContracts {
   project_delete: {
     args: {
       path: string;
+    };
+    result: void;
+  };
+  project_episode_list: {
+    args: {
+      seriesId: string;
+      bundlePath: string | null;
+    };
+    result: Episode[];
+  };
+  project_episode_save: {
+    args: {
+      episode: Episode;
+      bundlePath: string | null;
     };
     result: void;
   };
@@ -106,10 +120,54 @@ export interface IpcContracts {
     };
     result: Project | null;
   };
+  project_remap_nas_paths: {
+    args: {
+      project: Project;
+      rules: PathMappingRule[];
+      candidateRoots: string[];
+    };
+    result: Project;
+  };
   project_save: {
     args: {
       path: string;
       project: Project;
+    };
+    result: void;
+  };
+  project_search_script_segments: {
+    args: {
+      query: string;
+      projectId: string | null;
+      limit: number | null;
+      bundlePath: string | null;
+    };
+    result: ScriptSegmentHit[];
+  };
+  project_series_list: {
+    args: {
+      bundlePath: string | null;
+    };
+    result: Series[];
+  };
+  project_series_save: {
+    args: {
+      series: Series;
+      bundlePath: string | null;
+    };
+    result: void;
+  };
+  project_story_bible_load: {
+    args: {
+      seriesId: string;
+      bundlePath: string | null;
+    };
+    result: StoryBible | null;
+  };
+  project_story_bible_save: {
+    args: {
+      bible: StoryBible;
+      bundlePath: string | null;
     };
     result: void;
   };
@@ -119,6 +177,20 @@ export interface IpcContracts {
       projectId: string;
     };
     result: Project | null;
+  };
+  project_variant_list: {
+    args: {
+      episodeId: string;
+      bundlePath: string | null;
+    };
+    result: Variant[];
+  };
+  project_variant_save: {
+    args: {
+      variant: Variant;
+      bundlePath: string | null;
+    };
+    result: void;
   };
   // ─────── pipeline · 5 个 ───────
   pipeline_cancel: {
@@ -144,7 +216,7 @@ export interface IpcContracts {
     args: void;
     result: PipelineStepDef[];
   };
-  // ─────── settings · 3 个 ───────
+  // ─────── settings · 4 个 ───────
   settings_get: {
     args: void;
     result: ConfigSnapshot;
@@ -154,6 +226,17 @@ export interface IpcContracts {
       snapshot: ConfigSnapshot;
     };
     result: void;
+  };
+  settings_test_asr: {
+    args: {
+      provider: string;
+      whisperCliPath: string | null;
+      whisperModelPath: string | null;
+      apiBaseUrl: string | null;
+      apiKey: string | null;
+      apiModel: string | null;
+    };
+    result: AsrTestResult;
   };
   settings_test_llm: {
     args: {
@@ -185,7 +268,21 @@ export interface IpcContracts {
     args: void;
     result: void;
   };
-  // ─────── assets · 4 个 ───────
+  // ─────── assets · 6 个 ───────
+  assets_generate_proxy: {
+    args: {
+      sourcePath: string;
+      config: ProxyConfig | null;
+    };
+    result: ProxyArtifact;
+  };
+  assets_get_waveform_peaks: {
+    args: {
+      sourcePath: string;
+      buckets: number | null;
+    };
+    result: WaveformPeaks;
+  };
   assets_metadata: {
     args: {
       path: string;
@@ -213,7 +310,7 @@ export interface IpcContracts {
     };
     result: ThumbnailResult;
   };
-  // ─────── export · 9 个 ───────
+  // ─────── export · 12 个 ───────
   export_batch_fission: {
     args: {
       params: BatchFissionParams;
@@ -225,6 +322,23 @@ export interface IpcContracts {
       params: CapcutDraftOptions;
     };
     result: CapcutDraftResult;
+  };
+  export_evaluate_preflight: {
+    args: {
+      options: DedupOptions;
+      hasOriginalClips: boolean | null;
+      hardSubDetected: boolean | null;
+    };
+    result: PreFlightDedupReport;
+  };
+  export_fcpxml_timeline: {
+    args: {
+      timeline: Timeline;
+      mediaFiles: MediaFile[];
+      options: FcpxmlOptions;
+      outputPath: string;
+    };
+    result: string;
   };
   export_get_dedup_preset: {
     args: {
@@ -261,6 +375,13 @@ export interface IpcContracts {
       params: RenderVideoParams;
     };
     result: RenderVideoResult;
+  };
+  export_template_pack: {
+    args: {
+      pack: DramaxisPack;
+      outputPath: string;
+    };
+    result: string;
   };
   export_validate_params: {
     args: {
@@ -346,7 +467,14 @@ export interface IpcContracts {
     };
     result: DetectScenesResult;
   };
-  // ─────── subtitle · 1 个 ───────
+  // ─────── subtitle · 2 个 ───────
+  subtitle_asr_transcribe: {
+    args: {
+      mediaPath: string;
+      config: AsrConfig | null;
+    };
+    result: TranscriptResult;
+  };
   subtitle_generate: {
     args: {
       params: SubtitleGenerateParams;
@@ -433,6 +561,54 @@ export interface IpcContracts {
     };
     result: AlignmentPlan;
   };
+  // ─────── batch · 4 个 ───────
+  batch_cancel_job: {
+    args: {
+      id: string;
+      bundlePath: string | null;
+    };
+    result: void;
+  };
+  batch_create_job: {
+    args: {
+      projectId: string | null;
+      jobType: BatchJobType;
+      payload: string;
+      priority: number | null;
+      bundlePath: string | null;
+    };
+    result: BatchJob;
+  };
+  batch_get_job: {
+    args: {
+      id: string;
+      bundlePath: string | null;
+    };
+    result: BatchJob | null;
+  };
+  batch_list_jobs: {
+    args: {
+      status: BatchJobStatus | null;
+      projectId: string | null;
+      limit: number | null;
+      bundlePath: string | null;
+    };
+    result: BatchJob[];
+  };
+  // ─────── compute · 1 个 ───────
+  compute_check_health: {
+    args: {
+      config: ComputeNodeConfig;
+    };
+    result: ComputeHealth;
+  };
+  // ─────── import · 1 个 ───────
+  import_template_pack: {
+    args: {
+      packPath: string;
+    };
+    result: DramaxisPack;
+  };
 }
 /* <<< gen-ipc end */
 
@@ -487,6 +663,13 @@ export interface LlmTestResult {
   latencyMs: number;
   message: string;
   model: string;
+}
+
+// Rust 端 AsrTestResult (pub struct, rename_all = "camelCase")
+export interface AsrTestResult {
+  success: boolean;
+  latencyMs: number;
+  message: string;
 }
 
 // Rust 端 SubtitleGenerateParams (pub struct, rename_all = "camelCase")
@@ -581,6 +764,8 @@ export interface AudioBriefArtifact {
   speechIntervals: SpeechInterval[];
   bgmIntensityPeaks: number[];
   dialogueSummary: string;
+  transcriptSegments: TranscriptSegment[];
+  asrProvider?: string | null;
 }
 
 // Rust 端 VoiceArtifact (pub struct, rename_all = "camelCase")
@@ -689,7 +874,8 @@ export interface DagSnapshot {
 export type WorkflowProfile =
   | "standard_drama"
   | "fast_commentary"
-  | "pure_broll_montage";
+  | "pure_broll_montage"
+  | "deterministic_linear";
 
 // Rust 端 AgentRole (pub enum, rename_all = "snake_case")
 export type AgentRole =
@@ -730,6 +916,19 @@ export type AgentEventPayload =
   | "dag_progress"
   | "workflow_completed"
   | "error";
+
+// Rust 端 InterleavedTimelineBlock (pub struct, rename_all = "camelCase")
+export interface InterleavedTimelineBlock {
+  segmentId: string;
+  kind: SegmentKind;
+  timelineStart: number;
+  timelineEnd: number;
+  sourceIn: number;
+  sourceOut: number;
+  text: string;
+  duckBgm: boolean;
+  keepOriginalAudio: boolean;
+}
 
 // Rust 端 AlignmentMatch (pub struct, rename_all = "camelCase")
 export interface AlignmentMatch {
@@ -780,6 +979,38 @@ export interface PipelineStatus {
   currentStep: number;
   projectName?: string | null;
 }
+
+// Rust 端 ComputeNodeConfig (pub struct, rename_all = "camelCase")
+export interface ComputeNodeConfig {
+  id: string;
+  name: string;
+  kind: ComputeNodeKind;
+  endpointUrl: string;
+  apiKey?: string | null;
+  modelName?: string | null;
+  isActive: boolean;
+  priority: number;
+}
+
+// Rust 端 ComputeHealth (pub struct, rename_all = "camelCase")
+export interface ComputeHealth {
+  isHealthy: boolean;
+  latencyMs: number;
+  versionInfo?: string | null;
+  message: string;
+}
+
+// Rust 端 HttpComputeProvider (pub struct)
+export interface HttpComputeProvider {
+  config: ComputeNodeConfig;
+}
+
+// Rust 端 ComputeNodeKind (pub enum, rename_all = "snake_case")
+export type ComputeNodeKind =
+  | "llm_server"
+  | "whisper_asr"
+  | "tts_engine"
+  | "vocal_separator";
 
 // Rust 端 Project (pub struct)
 export interface Project {
@@ -850,6 +1081,67 @@ export interface ScriptSegment {
   hook_style?: string | null;
   visual_cut_ref?: string | null;
   score?: number | null;
+  kind: SegmentKind;
+  source_in_sec?: number | null;
+  source_out_sec?: number | null;
+}
+
+// Rust 端 CharacterProfile (pub struct, rename_all = "camelCase")
+export interface CharacterProfile {
+  id: string;
+  name: string;
+  alias?: string | null;
+  roleType: string;
+  traits: string;
+  relationships: string;
+}
+
+// Rust 端 StoryBible (pub struct, rename_all = "camelCase")
+export interface StoryBible {
+  seriesId: string;
+  worldview: string;
+  coreConflict: string;
+  narratorPersona: string;
+  characters: CharacterProfile[];
+  rollingRecaps: EpisodeRecap[];
+}
+
+// Rust 端 EpisodeRecap (pub struct, rename_all = "camelCase")
+export interface EpisodeRecap {
+  episodeNumber: number;
+  summary: string;
+  unresolvedHook?: string | null;
+}
+
+// Rust 端 Series (pub struct, rename_all = "camelCase")
+export interface Series {
+  id: string;
+  title: string;
+  genre: string;
+  defaultStyle: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Rust 端 Episode (pub struct, rename_all = "camelCase")
+export interface Episode {
+  id: string;
+  seriesId: string;
+  episodeNumber: number;
+  title: string;
+  sourcePaths: string[];
+  createdAt: string;
+}
+
+// Rust 端 Variant (pub struct, rename_all = "camelCase")
+export interface Variant {
+  id: string;
+  episodeId: string;
+  projectId: string;
+  label: string;
+  stylePreset: string;
+  targetPlatform?: PlatformId | null;
+  createdAt: string;
 }
 
 // Rust 端 ExportRecord (pub struct)
@@ -860,6 +1152,21 @@ export interface ExportRecord {
   started_at: string;
   finished_at?: string | null;
   success: boolean;
+}
+
+// Rust 端 BatchJob (pub struct, rename_all = "camelCase")
+export interface BatchJob {
+  id: string;
+  jobType: BatchJobType;
+  status: BatchJobStatus;
+  payloadJson: string;
+  resultJson?: string | null;
+  errorMessage?: string | null;
+  progress: number;
+  retryCount: number;
+  maxRetries: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Rust 端 PlatformId (pub enum, rename_all = "kebab-case")
@@ -882,12 +1189,35 @@ export type TrackKind =
   | "subtitle"
   | "audio";
 
+// Rust 端 SegmentKind (pub enum, rename_all = "snake_case")
+export type SegmentKind =
+  | "narration"
+  | "original_clip"
+  | "pause";
+
 // Rust 端 ExportStrategy (pub enum, rename_all = "kebab-case")
 export type ExportStrategy =
   | "single"
   | "concat"
   | "batch"
   | "series";
+
+// Rust 端 BatchJobStatus (pub enum, rename_all = "snake_case")
+export type BatchJobStatus =
+  | "pending"
+  | "running"
+  | "completed"
+  | "failed"
+  | "cancelled";
+
+// Rust 端 BatchJobType (pub enum, rename_all = "snake_case")
+export type BatchJobType =
+  | "asr_transcribe"
+  | "scene_analysis"
+  | "script_generation"
+  | "voice_synthesis"
+  | "master_render"
+  | "full_fission";
 
 // Rust 端 TtsProviderKind (pub enum, rename_all = "kebab-case")
 export type TtsProviderKind =
@@ -929,6 +1259,21 @@ export type Locale =
   | "ZhCn"
   | "EnUs";
 
+// Rust 端 SchedulerStats (pub struct, rename_all = "camelCase")
+export interface SchedulerStats {
+  ffmpegAvailable: number;
+  asrAvailable: number;
+  llmApiAvailable: number;
+  ttsApiAvailable: number;
+}
+
+// Rust 端 ResourceSlot (pub enum, rename_all = "snake_case")
+export type ResourceSlot =
+  | "ffmpeg"
+  | "asr"
+  | "llm_api"
+  | "tts_api";
+
 // Rust 端 ConfigSnapshot (pub struct)
 export interface ConfigSnapshot {
   theme: string;
@@ -947,6 +1292,13 @@ export interface ConfigSnapshot {
   tts_ref_audio_path?: string | null;
   tts_prompt_text?: string | null;
   agent_model_matrix?: AgentModelMatrix | null;
+  asr_provider?: string | null;
+  asr_whisper_cli_path?: string | null;
+  asr_whisper_model_path?: string | null;
+  asr_api_base_url?: string | null;
+  asr_api_model?: string | null;
+  asr_api_key?: string | null;
+  asr_language?: string | null;
 }
 
 // Rust 端 AgentModelOverride (pub struct, rename_all = "camelCase")
@@ -983,6 +1335,17 @@ export interface SceneVisualFeature {
   emotionTag: string;
   conflictScore: number;
   visualSummary: string;
+  isVlmVerified: boolean;
+  hasHardSubtitle: boolean;
+}
+
+// Rust 端 VlmSceneAnnotation (pub struct, rename_all = "camelCase")
+export interface VlmSceneAnnotation {
+  sceneId: number;
+  emotionTag: string;
+  conflictScore: number;
+  visualSummary: string;
+  hasHardSubtitle: boolean;
 }
 
 // Rust 端 FfmpegProbe (pub struct, rename_all = "camelCase")
@@ -1042,6 +1405,14 @@ export interface CapcutDraftResult {
   totalDurationSeconds: number;
 }
 
+// Rust 端 FcpxmlOptions (pub struct, rename_all = "camelCase")
+export interface FcpxmlOptions {
+  projectName: string;
+  fps: number;
+  width: number;
+  height: number;
+}
+
 // Rust 端 ExportParams (pub struct)
 export interface ExportParams {
   resolution: string;
@@ -1087,6 +1458,15 @@ export type SubtitleFormat =
   | "ass"
   | "vtt";
 
+// Rust 端 PreFlightDedupReport (pub struct, rename_all = "camelCase")
+export interface PreFlightDedupReport {
+  originalityScore: number;
+  riskLevel: DedupRiskLevel;
+  hardSubtitleSafe: boolean;
+  complianceTagged: boolean;
+  recommendations: string[];
+}
+
 // Rust 端 MasterOptions (pub struct, rename_all = "camelCase")
 export interface DedupOptions {
   intensity: DedupIntensity;
@@ -1104,6 +1484,9 @@ export interface DedupOptions {
   enableBgmReverb: boolean;
   reverbDecay: number;
   enableMetadataScrub: boolean;
+  subtitleMaskMode: SubtitleMaskMode;
+  enableDynamicKenBurns: boolean;
+  aiComplianceBadge: boolean;
 }
 
 // Rust 端 MasterIntensity (pub enum, rename_all = "kebab-case")
@@ -1112,6 +1495,34 @@ export type DedupIntensity =
   | "standard"
   | "aggressive"
   | "custom";
+
+// Rust 端 SubtitleMaskMode (pub enum, rename_all = "kebab-case")
+export type SubtitleMaskMode =
+  | "none"
+  | "blur-box"
+  | "crop-bottom"
+  | "gradient-bar";
+
+// Rust 端 DedupRiskLevel (pub enum, rename_all = "snake_case")
+export type DedupRiskLevel =
+  | "low"
+  | "medium"
+  | "high";
+
+// Rust 端 DramaxisPack (pub struct, rename_all = "camelCase")
+export interface DramaxisPack {
+  schemaVersion: string;
+  name: string;
+  author: string;
+  version: string;
+  description: string;
+  tags: string[];
+  createdAt: string;
+  scriptPromptTemplate?: string | null;
+  hookTemplates: string[];
+  subtitleStylePreset?: string | null;
+  masterOptions?: DedupOptions | null;
+}
 
 // Rust 端 RenderVideoParams (pub struct, rename_all = "camelCase")
 export interface RenderVideoParams {
@@ -1211,6 +1622,28 @@ export type VideoPlanError =
   | "BadEpisodeTemplate"
   | "BadSourcePath";
 
+// Rust 端 ProxyConfig (pub struct, rename_all = "camelCase")
+export interface ProxyConfig {
+  maxHeight: number;
+  gopSize: number;
+  crf: number;
+  maxCacheBytes: number;
+}
+
+// Rust 端 ProxyArtifact (pub struct, rename_all = "camelCase")
+export interface ProxyArtifact {
+  proxyPath: string;
+  cacheHit: boolean;
+  fingerprint: string;
+}
+
+// Rust 端 WaveformPeaks (pub struct, rename_all = "camelCase")
+export interface WaveformPeaks {
+  fingerprint: string;
+  buckets: number;
+  peaks: number[];
+}
+
 // Rust 端 TensionPoint (pub struct, rename_all = "camelCase")
 export interface TensionPoint {
   timestampSec: number;
@@ -1261,6 +1694,29 @@ export interface DramaxisBundle {
   path: string;
 }
 
+// Rust 端 AgentCheckpointRecord (pub struct, rename_all = "camelCase")
+export interface AgentCheckpointRecord {
+  id: number;
+  sessionId: string;
+  projectId: string;
+  nodeId: string;
+  workflowProfile: string;
+  blackboardJson: string;
+  dagSnapshotJson: string;
+  createdAt: string;
+}
+
+// Rust 端 ScriptSegmentHit (pub struct, rename_all = "camelCase")
+export interface ScriptSegmentHit {
+  segmentId: string;
+  projectId: string;
+  text: string;
+  emotion?: string | null;
+  startSeconds?: number | null;
+  endSeconds?: number | null;
+  isHook: boolean;
+}
+
 // Rust 端 AssetEntry (pub struct, rename_all = "camelCase")
 export interface AssetEntry {
   path: string;
@@ -1293,6 +1749,56 @@ export type AssetKind =
   | "subtitle"
   | "other";
 
+// Rust 端 PatchOp (pub enum, rename_all = "lowercase")
+export type PatchOp =
+  | "add"
+  | "remove"
+  | "replace";
+
+// Rust 端 PathMappingRule (pub struct, rename_all = "camelCase")
+export interface PathMappingRule {
+  fromPrefix: string;
+  toPrefix: string;
+}
+
+// Rust 端 NasPathRemapper (pub struct, rename_all = "camelCase")
+export interface NasPathRemapper {
+  rules: PathMappingRule[];
+}
+
+// Rust 端 TranscriptSegment (pub struct, rename_all = "camelCase")
+export interface TranscriptSegment {
+  startSec: number;
+  endSec: number;
+  text: string;
+  speaker?: string | null;
+  confidence?: number | null;
+  isGoldenQuote: boolean;
+}
+
+// Rust 端 TranscriptResult (pub struct, rename_all = "camelCase")
+export interface TranscriptResult {
+  segments: TranscriptSegment[];
+  provider: string;
+  language: string;
+  fullText: string;
+}
+
+// Rust 端 AsrConfig (pub struct, rename_all = "camelCase")
+export interface AsrConfig {
+  whisperCliPath?: string | null;
+  whisperModelPath?: string | null;
+  apiBaseUrl?: string | null;
+  apiKey?: string | null;
+  apiModel: string;
+  language: string;
+}
+
+// Rust 端 AutoAsrEngine (pub struct)
+export interface AutoAsrEngine {
+  config: AsrConfig;
+}
+
 // Rust 端 SubtitleEntry (pub struct)
 export interface SubtitleEntry {
   index: number;
@@ -1312,6 +1818,7 @@ export interface SubtitleTrack {
 // Rust 端 SubtitleError (pub enum)
 export type SubtitleError =
   | "VadError"
+  | "AsrError"
   | "FormatError"
   | "AlignError";
 

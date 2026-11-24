@@ -10,6 +10,8 @@ pub enum WorkflowProfile {
     FastCommentary,
     /// 纯画面高光混剪 (跳过剧本撰写与配音，专注于场景硬切检测 + BGM 节奏点吸附)
     PureBrollMontage,
+    /// 确定性线性流水线 (收编原 7 步线性流水线：顺序执行、跳过反思循环与 HITL，适合批量确定性排产)
+    DeterministicLinear,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

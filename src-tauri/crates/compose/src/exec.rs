@@ -160,6 +160,7 @@ impl StepExecutor for SceneSplitStep {
                 hook_style: None,
                 visual_cut_ref: Some(format!("scene-{:02}", i)),
                 score: None,
+                ..Default::default()
             })
             .collect();
         Ok(())
@@ -280,6 +281,7 @@ impl StepExecutor for ScriptGenStep {
                     hook_style: None,
                     visual_cut_ref: None,
                     score: None,
+                    ..Default::default()
                 }];
             }
         }

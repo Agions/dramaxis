@@ -21,6 +21,8 @@ import {
   type DedupOptions,
   type FissionProgressPayload,
   type CapcutDraftResult,
+  type SubtitleMaskMode,
+  type PreFlightDedupReport,
 } from "@dramaxis/ipc";
 import { useTauriEvent } from "@hooks/event";
 import { CapcutDraftCard } from "./draft";
@@ -81,6 +83,60 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
   const [enableBgmReverb, setEnableBgmReverb] = useState(true);
   const [enableMetadataScrub, setEnableMetadataScrub] = useState(true);
   const [showAdvancedDedup, setShowAdvancedDedup] = useState(false);
+  const [subtitleMaskMode, setSubtitleMaskMode] = useState<SubtitleMaskMode>("none");
+  const [enableDynamicKenBurns, setEnableDynamicKenBurns] = useState(false);
+  const [aiComplianceBadge, setAiComplianceBadge] = useState(true);
+  const [preflightReport, setPreflightReport] = useState<PreFlightDedupReport | null>(null);
+  const [isEvaluatingPreflight, setIsEvaluatingPreflight] = useState(false);
+
+  const handleRunPreflight = useCallback(async () => {
+    setIsEvaluatingPreflight(true);
+    try {
+      const opts: DedupOptions = {
+        intensity: dedupIntensity,
+        enableZoom: antiDupZoom > 1.0,
+        zoomRate: antiDupZoom,
+        enableSpeed,
+        speedRate,
+        enableMirror,
+        enableNoise,
+        noiseStrength,
+        enableFpsDrift,
+        fpsDriftVal: 0.002,
+        enablePitchShift,
+        pitchShiftRate,
+        enableBgmReverb,
+        reverbDecay: 0.15,
+        enableMetadataScrub,
+        subtitleMaskMode,
+        enableDynamicKenBurns,
+        aiComplianceBadge,
+      };
+      const report = await exportIpc.evaluatePreflight(opts, false, false);
+      setPreflightReport(report);
+      toast.info(`原创度评估完成: ${Math.round(report.originalityScore)} 分`);
+    } catch (e: unknown) {
+      toast.error(`体检失败: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setIsEvaluatingPreflight(false);
+    }
+  }, [
+    dedupIntensity,
+    antiDupZoom,
+    enableSpeed,
+    speedRate,
+    enableMirror,
+    enableNoise,
+    noiseStrength,
+    enableFpsDrift,
+    enablePitchShift,
+    pitchShiftRate,
+    enableBgmReverb,
+    enableMetadataScrub,
+    subtitleMaskMode,
+    enableDynamicKenBurns,
+    aiComplianceBadge,
+  ]);
 
   // 批量母带变体导出状态
   const [isFissioning, setIsFissioning] = useState(false);
@@ -312,6 +368,9 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
       enableBgmReverb,
       reverbDecay: 0.3,
       enableMetadataScrub,
+      subtitleMaskMode,
+      enableDynamicKenBurns: false,
+      aiComplianceBadge: true,
     };
 
     try {
@@ -379,6 +438,9 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
       enableBgmReverb,
       reverbDecay: 0.3,
       enableMetadataScrub,
+      subtitleMaskMode,
+      enableDynamicKenBurns: false,
+      aiComplianceBadge: true,
     };
 
     try {
@@ -473,6 +535,15 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
         onEnableBgmReverbChange={setEnableBgmReverb}
         enableMetadataScrub={enableMetadataScrub}
         onEnableMetadataScrubChange={setEnableMetadataScrub}
+        subtitleMaskMode={subtitleMaskMode}
+        onSubtitleMaskModeChange={setSubtitleMaskMode}
+        enableDynamicKenBurns={enableDynamicKenBurns}
+        onEnableDynamicKenBurnsChange={setEnableDynamicKenBurns}
+        aiComplianceBadge={aiComplianceBadge}
+        onAiComplianceBadgeChange={setAiComplianceBadge}
+        preflightReport={preflightReport}
+        isEvaluatingPreflight={isEvaluatingPreflight}
+        onRunPreflight={handleRunPreflight}
         isFissioning={isFissioning}
         isRendering={isRendering}
         fissionCount={fissionCount}

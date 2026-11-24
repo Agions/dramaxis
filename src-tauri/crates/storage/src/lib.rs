@@ -21,12 +21,23 @@ use dramaxis_detect::{parse_probe_json, Ffmpeg, FfmpegProbe};
 
 pub mod bundle;
 pub mod db;
+pub mod patch;
+pub mod remap;
 pub mod vault;
 
 pub use bundle::{
     create_bundle, open_bundle, redo_bundle, save_bundle, undo_bundle, DramaxisBundle,
 };
-pub use db::{init_database, load_project, redo, save_checkpoint, save_project, undo};
+pub use db::{
+    cancel_batch_job, clear_agent_checkpoints, complete_batch_job, fail_batch_job,
+    fetch_next_pending_job, get_batch_job, init_database, list_agent_checkpoints, list_batch_jobs,
+    list_episodes, list_series, list_variants, load_latest_agent_checkpoint,
+    load_latest_project_checkpoint, load_project, load_story_bible, redo, save_agent_checkpoint,
+    save_agent_checkpoint_at_path, save_batch_job, save_checkpoint, save_episode, save_project,
+    save_series, save_story_bible, save_variant, search_script_segments_fts,
+    update_batch_job_progress, undo, AgentCheckpointRecord, ScriptSegmentHit,
+};
+pub use remap::{NasPathRemapper, PathMappingRule};
 pub use vault::CredentialVault;
 
 // ════════════════════════════════════════════════════════════════════════

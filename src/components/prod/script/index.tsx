@@ -9,3 +9,4 @@ export * from "./hook";
 export * from "./arc";
 export * from "./decon";
 export * from "./evolve";
+export * from "./tbe";

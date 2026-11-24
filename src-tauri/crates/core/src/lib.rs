@@ -20,20 +20,26 @@
 
 #![allow(dead_code, unused_imports)]
 
-pub mod ioc;
-pub use ioc as container;
+pub mod compute;
 pub mod context;
 pub mod domain;
 pub mod error;
 pub mod help;
 pub mod i18n;
+pub mod ioc;
+pub use ioc as container;
 pub mod logging;
+pub mod scheduler;
 pub mod services;
 
+pub use compute::{
+    ComputeHealth, ComputeNodeConfig, ComputeNodeKind, ComputeProvider, HttpComputeProvider,
+};
 pub use context::{AppContext, AppContextBuilder};
 pub use error::{DramaxisError, DramaxisResult};
 pub use help::{HelpCategory, HelpRegistry, HelpTopic, SearchHit};
 pub use i18n::{Locale, Translator};
 pub use ioc::ServiceContainer;
 pub use logging::init_logging;
+pub use scheduler::{CancelToken, MediaScheduler, ResourceSlot, SchedulerStats};
 pub use services::{ConfigService, LoggingService, ProjectService};

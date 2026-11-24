@@ -19,6 +19,7 @@
 pub mod agent;
 pub mod app;
 pub mod assets;
+pub mod batch;
 pub mod detect;
 pub mod export;
 pub mod help;

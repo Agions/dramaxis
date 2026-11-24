@@ -909,6 +909,7 @@ dependencies = [
  "dramaxis-subtitle",
  "dramaxis-update",
  "dramaxis-voice",
+ "rusqlite",
  "serde",
  "serde_json",
  "tauri",
@@ -1014,6 +1015,8 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.20",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -1059,6 +1062,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "dramaxis-core",
+ "reqwest 0.12.28",
  "rstest",
  "serde",
  "serde_json",

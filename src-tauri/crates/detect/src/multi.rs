@@ -5,7 +5,10 @@
 //! - 自动打标视听情绪（"激烈动作", "悬疑对峙", "情绪爆发", "绝望痛点", "温情舒缓"）
 //! - 基于语义线索 (Semantic Cues) 从视频库中检索最契合的镜头切片
 
+use dramaxis_core::{CancelToken, MediaScheduler, ResourceSlot};
 use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
+use tokio::process::Command;
 
 /// 视觉场景感知特征
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -20,6 +23,24 @@ pub struct SceneVisualFeature {
     pub emotion_tag: String,
     pub conflict_score: f32, // 0.0 .. 100.0
     pub visual_summary: String,
+    /// 是否经过真实多模态 VLM 视觉模型校验（false 表示启发式兜底）
+    #[serde(default)]
+    pub is_vlm_verified: bool,
+    /// 是否检测到原片底部存在硬字幕（供后续母带消重/遮罩决策）
+    #[serde(default)]
+    pub has_hard_subtitle: bool,
+}
+
+/// VLM 批量拼图视觉标注结构
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct VlmSceneAnnotation {
+    pub scene_id: usize,
+    pub emotion_tag: String,
+    pub conflict_score: f32,
+    pub visual_summary: String,
+    #[serde(default)]
+    pub has_hard_subtitle: bool,
 }
 
 /// 场景特征分析与语义 RAG 引擎
@@ -50,6 +71,8 @@ impl SceneRagEngine {
                 emotion_tag: "平稳叙事".into(),
                 conflict_score: 55.0,
                 visual_summary: "全局主摄短剧连续镜头".into(),
+                is_vlm_verified: false,
+                has_hard_subtitle: false,
             }];
         }
 
@@ -118,9 +141,134 @@ impl SceneRagEngine {
                     emotion_tag,
                     conflict_score,
                     visual_summary,
+                    is_vlm_verified: false,
+                    has_hard_subtitle: false,
                 }
             })
             .collect()
+    }
+
+    /// 将多张关键帧拼接为网格图（Contact Sheet），单次 VLM 调用可覆盖 9~16 个镜头，节省 80%+ 视觉 Token
+    pub async fn build_contact_sheet(
+        &self,
+        keyframe_paths: &[String],
+        output_path: &Path,
+        cols: u32,
+        rows: u32,
+        cancel: &CancelToken,
+    ) -> Result<PathBuf, String> {
+        let valid_paths: Vec<&String> = keyframe_paths
+            .iter()
+            .filter(|p| Path::new(p).exists())
+            .take((cols * rows) as usize)
+            .collect();
+        if valid_paths.is_empty() {
+            return Err("没有可用于拼图的有效关键帧文件".into());
+        }
+
+        let _permit = MediaScheduler::global()
+            .acquire_cancellable(ResourceSlot::Ffmpeg, cancel)
+            .await
+            .ok_or_else(|| "拼图任务已取消".to_string())?;
+
+        // 生成 FFmpeg concat 列表 + tile 滤镜，避免命令行输入数过多
+        let list_path = output_path.with_extension("concat.txt");
+        let list_body = valid_paths
+            .iter()
+            .map(|p| format!("file '{}'\n", p.replace('\'', "'\\''")))
+            .collect::<String>();
+        std::fs::write(&list_path, list_body).map_err(|e| format!("写入拼图清单失败: {e}"))?;
+
+        let tile_filter = format!("scale=320:180:force_original_aspect_ratio=decrease,pad=320:180:(ow-iw)/2:(oh-ih)/2,tile={cols}x{rows}");
+        let mut cmd = Command::new("ffmpeg");
+        cmd.args([
+            "-y",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            &list_path.to_string_lossy(),
+            "-vf",
+            &tile_filter,
+            "-frames:v",
+            "1",
+            "-q:v",
+            "3",
+            &output_path.to_string_lossy(),
+        ]);
+
+        let run_res = cancel.run_command(&mut cmd).await;
+        let _ = std::fs::remove_file(&list_path);
+
+        let output = run_res
+            .map_err(|e| format!("FFmpeg 启动失败: {e}"))?
+            .ok_or_else(|| "拼图任务被用户取消".to_string())?;
+
+        if !output.status.success() || !output_path.exists() {
+            return Err(format!(
+                "Contact-Sheet 拼图生成失败: {}",
+                String::from_utf8_lossy(&output.stderr)
+                    .lines()
+                    .last()
+                    .unwrap_or("unknown")
+            ));
+        }
+
+        Ok(output_path.to_path_buf())
+    }
+
+    /// 构造供多模态 VLM 分析网格拼图的结构化 Prompt
+    pub fn build_contact_sheet_vlm_prompt(&self, shot_count: usize, start_scene_id: usize) -> String {
+        format!(
+            "这是一张按从左到右、从上到下顺序拼接的影视关键帧网格图，共包含 {shot_count} 个镜头（编号从 {start_scene_id} 到 {}）。\
+            请逐格观察真实画面内容，严格输出 JSON 数组（不要附加多余解释），每个元素格式如下：\
+            [{{\"sceneId\":{start_scene_id},\"emotionTag\":\"激烈动作|悬疑对峙|情绪爆发|绝望痛点|温情舒缓\",\"conflictScore\":0-100,\"visualSummary\":\"20字以内的真实画面人物与动作描述\",\"hasHardSubtitle\":true/false}}]",
+            start_scene_id + shot_count.saturating_sub(1)
+        )
+    }
+
+    /// 解析 VLM 返回的 JSON 数组（兼容 Markdown ```json 代码块包裹）
+    pub fn parse_vlm_scene_response(&self, raw: &str) -> Vec<VlmSceneAnnotation> {
+        let trimmed = raw.trim();
+        let json_slice = if let (Some(start), Some(end)) = (trimmed.find('['), trimmed.rfind(']')) {
+            if end >= start {
+                &trimmed[start..=end]
+            } else {
+                trimmed
+            }
+        } else {
+            trimmed
+        };
+
+        serde_json::from_str::<Vec<VlmSceneAnnotation>>(json_slice).unwrap_or_else(|e| {
+            tracing::warn!("VLM 场景标注 JSON 解析失败，保持兜底特征: {e}");
+            Vec::new()
+        })
+    }
+
+    /// 将真实 VLM 视觉标注融合进 SceneVisualFeature 列表，返回成功更新的镜头数量
+    pub fn merge_vlm_annotations(
+        &self,
+        features: &mut [SceneVisualFeature],
+        annotations: &[VlmSceneAnnotation],
+    ) -> usize {
+        let mut updated = 0usize;
+        for ann in annotations {
+            if let Some(feat) = features.iter_mut().find(|f| f.scene_id == ann.scene_id) {
+                if !ann.visual_summary.trim().is_empty() {
+                    feat.visual_summary = ann.visual_summary.trim().to_string();
+                }
+                if !ann.emotion_tag.trim().is_empty() {
+                    feat.emotion_tag = ann.emotion_tag.trim().to_string();
+                }
+                feat.conflict_score = ann.conflict_score.clamp(0.0, 100.0);
+                feat.has_hard_subtitle = ann.has_hard_subtitle;
+                feat.is_vlm_verified = true;
+                updated += 1;
+            }
+        }
+        updated
     }
 
     /// 通过语义线索与目标情绪检索最佳匹配的候选镜头 (Semantic Cues RAG)
@@ -180,6 +328,25 @@ impl SceneRagEngine {
             score += 30.0;
         }
 
+        // 真实视觉摘要语义重合度加分（双字切词重叠，适配中文影视画面描述）
+        let summary_lower = scene.visual_summary.to_lowercase();
+        let cue_chars: Vec<char> = cue_lower
+            .chars()
+            .filter(|c| !c.is_whitespace() && !c.is_ascii_punctuation())
+            .collect();
+        let mut bigram_hits = 0usize;
+        for win in cue_chars.windows(2) {
+            let bigram: String = win.iter().collect();
+            if summary_lower.contains(&bigram) {
+                bigram_hits += 1;
+            }
+        }
+        score += (bigram_hits as f32 * 12.0).min(48.0);
+
+        if scene.is_vlm_verified {
+            score += 8.0;
+        }
+
         score
     }
 }
@@ -194,6 +361,7 @@ mod tests {
         let features = engine.analyze_scenes(&[], 45.0, None);
         assert_eq!(features.len(), 1);
         assert_eq!(features[0].duration, 45.0);
+        assert!(!features[0].is_vlm_verified);
     }
 
     #[test]
@@ -203,6 +371,33 @@ mod tests {
         let features = engine.analyze_scenes(&cuts, 45.0, None);
         assert_eq!(features.len(), 5);
         assert!(features.iter().any(|f| f.conflict_score > 60.0));
+    }
+
+    #[test]
+    fn test_vlm_response_parse_merge_and_semantic_rag() {
+        let engine = SceneRagEngine::new();
+        let cuts = vec![5.0, 12.0, 20.0];
+        let mut features = engine.analyze_scenes(&cuts, 30.0, None);
+
+        let raw_vlm = r#"```json
+[
+  {"sceneId": 1, "emotionTag": "温情舒缓", "conflictScore": 30.0, "visualSummary": "女主在咖啡厅安静看书", "hasHardSubtitle": false},
+  {"sceneId": 2, "emotionTag": "激烈动作", "conflictScore": 95.0, "visualSummary": "暴雨夜黑衣保镖在天台持刀追杀男主", "hasHardSubtitle": true}
+]
+```"#;
+        let anns = engine.parse_vlm_scene_response(raw_vlm);
+        assert_eq!(anns.len(), 2);
+
+        let updated = engine.merge_vlm_annotations(&mut features, &anns);
+        assert_eq!(updated, 2);
+        assert!(features[1].is_vlm_verified);
+        assert!(features[1].has_hard_subtitle);
+
+        // 基于真实 VLM 视觉摘要语义命中天台追杀镜头
+        let matched = engine
+            .search_matching_scene(&features, "暴雨夜天台保镖追杀男主的生死时刻", None)
+            .expect("should match");
+        assert_eq!(matched.scene_id, 2);
     }
 
     #[test]

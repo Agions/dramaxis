@@ -22,6 +22,7 @@ import type {
   HelpCategory,
   HelpTopic,
   MediaFile,
+  Timeline,
   OutputPlan,
   PipelineStatus,
   PipelineStepDef,
@@ -66,9 +67,46 @@ import type {
   WorkflowProfile,
   ShotAnnotation,
   ScriptArtifact,
+  Series,
+  Episode,
+  StoryBible,
+  Variant,
+  EpisodeRecap,
+  CharacterProfile,
+  AsrConfig,
+  TranscriptResult,
+  TranscriptSegment,
+  AsrTestResult,
+  ProxyConfig,
+  ProxyArtifact,
+  WaveformPeaks,
+  PreFlightDedupReport,
+  SubtitleMaskMode,
+  BatchJob,
+  BatchJobStatus,
+  BatchJobType,
+  PathMappingRule,
+  NasPathRemapper,
+  ScriptSegmentHit,
+  ComputeNodeConfig,
+  ComputeHealth,
+  ComputeNodeKind,
+  FcpxmlOptions,
+  DramaxisPack,
 } from "./types.gen";
 
 export type {
+  BatchJob,
+  BatchJobStatus,
+  BatchJobType,
+  PathMappingRule,
+  NasPathRemapper,
+  ScriptSegmentHit,
+  ComputeNodeConfig,
+  ComputeHealth,
+  ComputeNodeKind,
+  FcpxmlOptions,
+  DramaxisPack,
   AgentContext,
   AgentMessage,
   BreakpointRequest,
@@ -90,7 +128,24 @@ export type {
   WorkflowProfile,
   ShotAnnotation,
   ScriptArtifact,
+  Series,
+  Episode,
+  StoryBible,
+  Variant,
+  EpisodeRecap,
+  CharacterProfile,
+  AsrConfig,
+  TranscriptResult,
+  TranscriptSegment,
+  AsrTestResult,
+  ProxyConfig,
+  ProxyArtifact,
+  WaveformPeaks,
+  PreFlightDedupReport,
+  SubtitleMaskMode,
 };
+
+export type MasterOptions = DedupOptions;
 
 // ─────────────────────────────────────────────────────────────────────────
 // app · 应用信息 (3/3)
@@ -123,6 +178,49 @@ export const projectIpc = {
     callIpc("project_undo", { path, projectId }),
   redo: (path: string, projectId: string): Promise<Project | null> =>
     callIpc("project_redo", { path, projectId }),
+  saveSeries: (series: Series, bundlePath?: string | null): Promise<void> =>
+    callIpc("project_series_save", { series, bundlePath: bundlePath ?? null }),
+  listSeries: (bundlePath?: string | null): Promise<Series[]> =>
+    callIpc("project_series_list", { bundlePath: bundlePath ?? null }),
+  saveStoryBible: (bible: StoryBible, bundlePath?: string | null): Promise<void> =>
+    callIpc("project_story_bible_save", { bible, bundlePath: bundlePath ?? null }),
+  loadStoryBible: (
+    seriesId: string,
+    bundlePath?: string | null,
+  ): Promise<StoryBible | null> =>
+    callIpc("project_story_bible_load", { seriesId, bundlePath: bundlePath ?? null }),
+  saveEpisode: (episode: Episode, bundlePath?: string | null): Promise<void> =>
+    callIpc("project_episode_save", { episode, bundlePath: bundlePath ?? null }),
+  listEpisodes: (
+    seriesId: string,
+    bundlePath?: string | null,
+  ): Promise<Episode[]> =>
+    callIpc("project_episode_list", { seriesId, bundlePath: bundlePath ?? null }),
+  saveVariant: (variant: Variant, bundlePath?: string | null): Promise<void> =>
+    callIpc("project_variant_save", { variant, bundlePath: bundlePath ?? null }),
+  listVariants: (
+    episodeId: string,
+    bundlePath?: string | null,
+  ): Promise<Variant[]> =>
+    callIpc("project_variant_list", { episodeId, bundlePath: bundlePath ?? null }),
+  remapNasPaths: (
+    project: Project,
+    rules: PathMappingRule[],
+    candidateRoots: string[],
+  ): Promise<Project> =>
+    callIpc("project_remap_nas_paths", { project, rules, candidateRoots }),
+  searchScriptSegments: (
+    query: string,
+    projectId?: string | null,
+    limit?: number | null,
+    bundlePath?: string | null,
+  ): Promise<ScriptSegmentHit[]> =>
+    callIpc("project_search_script_segments", {
+      query,
+      projectId: projectId ?? null,
+      limit: limit ?? null,
+      bundlePath: bundlePath ?? null,
+    }),
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -168,6 +266,22 @@ export const settingsIpc = {
       model: params.model ?? null,
       baseUrl: params.baseUrl ?? null,
     }),
+  testAsr: (params: {
+    provider: string;
+    whisperCliPath?: string | null;
+    whisperModelPath?: string | null;
+    apiBaseUrl?: string | null;
+    apiKey?: string | null;
+    apiModel?: string | null;
+  }): Promise<AsrTestResult> =>
+    callIpc("settings_test_asr", {
+      provider: params.provider,
+      whisperCliPath: params.whisperCliPath ?? null,
+      whisperModelPath: params.whisperModelPath ?? null,
+      apiBaseUrl: params.apiBaseUrl ?? null,
+      apiKey: params.apiKey ?? null,
+      apiModel: params.apiModel ?? null,
+    }),
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -195,6 +309,19 @@ export const assetsIpc = {
     callIpc("assets_thumbnail", { path, width }),
   search: (mediaPaths: string[], pattern: string): Promise<string[]> =>
     callIpc("assets_search", { mediaPaths, pattern }),
+  generateProxy: (
+    sourcePath: string,
+    config?: ProxyConfig | null,
+  ): Promise<ProxyArtifact> =>
+    callIpc("assets_generate_proxy", { sourcePath, config: config ?? null }),
+  getWaveformPeaks: (
+    sourcePath: string,
+    buckets?: number | null,
+  ): Promise<WaveformPeaks> =>
+    callIpc("assets_get_waveform_peaks", {
+      sourcePath,
+      buckets: buckets ?? null,
+    }),
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -220,6 +347,32 @@ export const exportIpc = {
     callIpc("export_open_folder", { path }),
   launchJianying: (): Promise<void> =>
     callIpc("export_launch_jianying"),
+  evaluatePreflight: (
+    options: DedupOptions,
+    hasOriginalClips?: boolean | null,
+    hardSubDetected?: boolean | null,
+  ): Promise<PreFlightDedupReport> =>
+    callIpc("export_evaluate_preflight", {
+      options,
+      hasOriginalClips: hasOriginalClips ?? null,
+      hardSubDetected: hardSubDetected ?? null,
+    }),
+  fcpxml: (
+    timeline: Timeline,
+    mediaFiles: MediaFile[],
+    options: FcpxmlOptions,
+    outputPath: string,
+  ): Promise<string> =>
+    callIpc("export_fcpxml_timeline", {
+      timeline,
+      mediaFiles,
+      options,
+      outputPath,
+    }),
+  exportPack: (pack: DramaxisPack, outputPath: string): Promise<string> =>
+    callIpc("export_template_pack", { pack, outputPath }),
+  importPack: (packPath: string): Promise<DramaxisPack> =>
+    callIpc("import_template_pack", { packPath }),
 } as const;
 
 export const detectIpc = {
@@ -240,6 +393,14 @@ export const detectIpc = {
 export const subtitleIpc = {
   generate: (params: SubtitleGenerateParams): Promise<SubtitleGenerateResult> =>
     callIpc("subtitle_generate", { params }),
+  transcribe: (
+    mediaPath: string,
+    config?: AsrConfig | null,
+  ): Promise<TranscriptResult> =>
+    callIpc("subtitle_asr_transcribe", {
+      mediaPath,
+      config: config ?? null,
+    }),
 } as const;
 
 export const videoIpc = {
@@ -353,6 +514,58 @@ export const agentIpc = {
     callIpc("agent_rollback_script", { version }),
 } as const;
 
+// ─────────────────────────────────────────────────────────────────────────
+// batch · 批处理任务队列 (P2-1)
+// ─────────────────────────────────────────────────────────────────────────
+
+export const batchIpc = {
+  createJob: (
+    payload: string,
+    jobType: BatchJobType,
+    projectId?: string | null,
+    priority?: number | null,
+    bundlePath?: string | null,
+  ): Promise<BatchJob> =>
+    callIpc("batch_create_job", {
+      payload,
+      jobType,
+      projectId: projectId ?? null,
+      priority: priority ?? null,
+      bundlePath: bundlePath ?? null,
+    }),
+  listJobs: (
+    status?: BatchJobStatus | null,
+    projectId?: string | null,
+    limit?: number | null,
+    bundlePath?: string | null,
+  ): Promise<BatchJob[]> =>
+    callIpc("batch_list_jobs", {
+      status: status ?? null,
+      projectId: projectId ?? null,
+      limit: limit ?? null,
+      bundlePath: bundlePath ?? null,
+    }),
+  getJob: (
+    id: string,
+    bundlePath?: string | null,
+  ): Promise<BatchJob | null> =>
+    callIpc("batch_get_job", { id, bundlePath: bundlePath ?? null }),
+  cancelJob: (
+    id: string,
+    bundlePath?: string | null,
+  ): Promise<void> =>
+    callIpc("batch_cancel_job", { id, bundlePath: bundlePath ?? null }),
+} as const;
+
+// ─────────────────────────────────────────────────────────────────────────
+// compute · 局域网/私有 GPU 算力节点 (P2-3)
+// ─────────────────────────────────────────────────────────────────────────
+
+export const computeIpc = {
+  checkHealth: (config: ComputeNodeConfig): Promise<ComputeHealth> =>
+    callIpc("compute_check_health", { config }),
+} as const;
+
 export const ipc = {
   app: appIpc,
   project: projectIpc,
@@ -369,6 +582,8 @@ export const ipc = {
   detect: detectIpc,
   subtitle: subtitleIpc,
   agent: agentIpc,
+  batch: batchIpc,
+  compute: computeIpc,
 } as const;
 
 export type IpcFacade = typeof ipc;

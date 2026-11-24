@@ -35,6 +35,12 @@ use dramaxis_core::domain::ExportStrategy;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+pub mod proxy;
+pub use proxy::{
+    compute_fast_fingerprint, downsample_pcm_s16le_peaks, evict_cache_lru, extract_audio_peaks,
+    generate_proxy_video, ProxyArtifact, ProxyConfig, WaveformPeaks,
+};
+
 // ════════════════════════════════════════════════════════════════════════
 // 错误类型
 // ════════════════════════════════════════════════════════════════════════
