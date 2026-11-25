@@ -561,7 +561,7 @@ export interface IpcContracts {
     };
     result: AlignmentPlan;
   };
-  // ─────── batch · 4 个 ───────
+  // ─────── batch · 5 个 ───────
   batch_cancel_job: {
     args: {
       id: string;
@@ -594,6 +594,12 @@ export interface IpcContracts {
       bundlePath: string | null;
     };
     result: BatchJob[];
+  };
+  batch_process_next: {
+    args: {
+      bundlePath: string | null;
+    };
+    result: BatchJob | null;
   };
   // ─────── compute · 1 个 ───────
   compute_check_health: {

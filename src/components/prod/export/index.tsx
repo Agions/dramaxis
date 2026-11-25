@@ -12,7 +12,7 @@
 
 import { memo, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import {
   exportIpc,
   type ProjectRecord,
@@ -23,11 +23,14 @@ import {
   type CapcutDraftResult,
   type SubtitleMaskMode,
   type PreFlightDedupReport,
+  type DramaxisPack,
+  type FcpxmlOptions,
 } from "@dramaxis/ipc";
 import { useTauriEvent } from "@hooks/event";
 import { CapcutDraftCard } from "./draft";
 import { DedupMatrixCard } from "./master";
 import { PlatformRenderCard } from "./render";
+import { ProExportCard } from "./pro";
 import { parseCutPoint } from "@dramaxis/utils";
 
 export interface ExportStudioPanelProps {
@@ -88,6 +91,13 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
   const [aiComplianceBadge, setAiComplianceBadge] = useState(true);
   const [preflightReport, setPreflightReport] = useState<PreFlightDedupReport | null>(null);
   const [isEvaluatingPreflight, setIsEvaluatingPreflight] = useState(false);
+
+  // 专业 NLE 交接与创作者资产模板包状态
+  const [isExportingFcpxml, setIsExportingFcpxml] = useState(false);
+  const [exportedFcpxmlPath, setExportedFcpxmlPath] = useState<string | null>(null);
+  const [isExportingPack, setIsExportingPack] = useState(false);
+  const [isImportingPack, setIsImportingPack] = useState(false);
+  const [importedPackName, setImportedPackName] = useState<string | null>(null);
 
   const handleRunPreflight = useCallback(async () => {
     setIsEvaluatingPreflight(true);
@@ -478,6 +488,164 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
     }
   };
 
+  // 导出 FCPXML 1.10 专业五轨工程
+  const handleExportFcpxml = async () => {
+    if (!currentProject) {
+      toast.error("请先打开或创建一个解说工程");
+      return;
+    }
+    try {
+      const target = await saveDialog({
+        title: "导出 FCPXML 1.10 专业时间线",
+        defaultPath: `${currentProject.project.name || "dramaxis"}.fcpxml`,
+        filters: [{ name: "Final Cut Pro XML", extensions: ["fcpxml"] }],
+      });
+      if (!target) return;
+
+      setIsExportingFcpxml(true);
+      const options: FcpxmlOptions = {
+        projectName: currentProject.project.name || "Dramaxis Project",
+        fps: currentProject.project.settings?.fps ?? 30,
+        width: 1080,
+        height: 1920,
+      };
+      const savedPath = await exportIpc.fcpxml(
+        currentProject.project.timeline,
+        currentProject.project.media_files,
+        options,
+        target,
+      );
+      setExportedFcpxmlPath(savedPath);
+      toast.success("FCPXML 1.10 工程导出成功！", {
+        description: `可在 DaVinci Resolve / Final Cut Pro / Premiere 中导入：${savedPath}`,
+      });
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      toast.error("导出 FCPXML 失败", {
+        description: err?.message ?? String(e),
+      });
+    } finally {
+      setIsExportingFcpxml(false);
+    }
+  };
+
+  // 打包导出创作者资产模板包 (.dramaxis-pack)
+  const handleExportPack = async () => {
+    try {
+      const target = await saveDialog({
+        title: "导出创作者资产模板包",
+        defaultPath: `${currentProject?.project.name || "studio-style"}.dramaxis-pack`,
+        filters: [{ name: "Dramaxis Pack", extensions: ["dramaxis-pack", "json"] }],
+      });
+      if (!target) return;
+
+      setIsExportingPack(true);
+      const currentMaster: DedupOptions = {
+        intensity: dedupIntensity,
+        enableZoom: antiDupZoom > 1.001,
+        zoomRate: antiDupZoom,
+        enableSpeed,
+        speedRate,
+        enableMirror,
+        enableNoise,
+        noiseStrength,
+        enableFpsDrift,
+        fpsDriftVal: 30.05,
+        enablePitchShift,
+        pitchShiftRate,
+        enableBgmReverb,
+        reverbDecay: 0.3,
+        enableMetadataScrub,
+        subtitleMaskMode,
+        enableDynamicKenBurns,
+        aiComplianceBadge,
+      };
+      const hooks =
+        currentProject?.project.scripts
+          ?.filter((s) => s.is_hook)
+          .map((s) => s.text) ?? [];
+      const pack: DramaxisPack = {
+        schemaVersion: "1.0",
+        name: currentProject?.project.name
+          ? `${currentProject.project.name} 风格包`
+          : "工作室短剧模板包",
+        author: "Dramaxis Studio",
+        version: "1.0.0",
+        description: "包含当前工程的爆款 Hook 模版、花字样式与多维母带消重参数",
+        tags: ["短剧", "解说", "模板包"],
+        createdAt: new Date().toISOString(),
+        scriptPromptTemplate: null,
+        hookTemplates:
+          hooks.length > 0
+            ? hooks
+            : ["注意看，眼前这个被退婚的男人，竟掌握着整座城市的命脉！"],
+        subtitleStylePreset: subtitleStyle,
+        masterOptions: currentMaster,
+      };
+      const saved = await exportIpc.exportPack(pack, target);
+      toast.success("模板包打包成功！", { description: saved });
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      toast.error("打包模板失败", { description: err?.message ?? String(e) });
+    } finally {
+      setIsExportingPack(false);
+    }
+  };
+
+  // 导入创作者资产模板包 (.dramaxis-pack) 并应用预设
+  const handleImportPack = async () => {
+    try {
+      const selected = await openDialog({
+        title: "选择创作者资产模板包 (.dramaxis-pack)",
+        multiple: false,
+        filters: [{ name: "Dramaxis Pack", extensions: ["dramaxis-pack", "json"] }],
+      });
+      if (!selected || typeof selected !== "string") return;
+
+      setIsImportingPack(true);
+      const pack = await exportIpc.importPack(selected);
+      if (
+        pack.subtitleStylePreset &&
+        ["cinema_amber", "yellow_black", "retro_red", "minimal_white"].includes(
+          pack.subtitleStylePreset,
+        )
+      ) {
+        setSubtitleStyle(
+          pack.subtitleStylePreset as
+            | "cinema_amber"
+            | "yellow_black"
+            | "retro_red"
+            | "minimal_white",
+        );
+      }
+      if (pack.masterOptions) {
+        const m = pack.masterOptions;
+        setDedupIntensity(m.intensity);
+        onAntiDupZoomChange(m.zoomRate);
+        setEnableSpeed(m.enableSpeed);
+        setSpeedRate(m.speedRate);
+        setEnableMirror(m.enableMirror);
+        setEnableNoise(m.enableNoise);
+        setNoiseStrength(m.noiseStrength);
+        setEnableFpsDrift(m.enableFpsDrift);
+        setEnablePitchShift(m.enablePitchShift);
+        setPitchShiftRate(m.pitchShiftRate);
+        setEnableBgmReverb(m.enableBgmReverb);
+        setEnableMetadataScrub(m.enableMetadataScrub);
+        setSubtitleMaskMode(m.subtitleMaskMode);
+        setEnableDynamicKenBurns(m.enableDynamicKenBurns);
+        setAiComplianceBadge(m.aiComplianceBadge);
+      }
+      setImportedPackName(`${pack.name} (v${pack.version})`);
+      toast.success(`已成功导入并应用模板包「${pack.name}」`);
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      toast.error("导入模板包失败", { description: err?.message ?? String(e) });
+    } finally {
+      setIsImportingPack(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3">
       {/* 剪映原生草稿卡片 */}
@@ -563,6 +731,19 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
         onRenderPreset={handleRenderVideo}
         onOpenVideoFolder={handleOpenVideoFolder}
       />
+
+      {/* 专业 NLE 交接 (FCPXML 1.10) 与创作者资产模板包 (.dramaxis-pack) */}
+      <ProExportCard
+        isExportingFcpxml={isExportingFcpxml}
+        exportedFcpxmlPath={exportedFcpxmlPath}
+        onExportFcpxml={handleExportFcpxml}
+        onOpenFcpxmlFolder={handleOpenVideoFolder}
+        isExportingPack={isExportingPack}
+        isImportingPack={isImportingPack}
+        importedPackName={importedPackName}
+        onExportPack={handleExportPack}
+        onImportPack={handleImportPack}
+      />
     </div>
   );
 });
@@ -570,3 +751,4 @@ export const ExportStudioPanel = memo(function ExportStudioPanel({
 export { CapcutDraftCard } from "./draft";
 export { MasteringOptionsCard, DedupMatrixCard } from "./master";
 export { PlatformRenderCard } from "./render";
+export { ProExportCard } from "./pro";

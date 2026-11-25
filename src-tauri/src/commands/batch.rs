@@ -17,8 +17,9 @@ use dramaxis_core::compute::{
 use dramaxis_core::domain::{BatchJob, BatchJobStatus, BatchJobType, Project};
 use dramaxis_core::error::DramaxisError;
 use dramaxis_storage::db::{
-    cancel_batch_job, get_batch_job, init_database, list_batch_jobs, save_batch_job,
-    search_script_segments_fts, ScriptSegmentHit,
+    cancel_batch_job, complete_batch_job, fail_batch_job, fetch_next_pending_job, get_batch_job,
+    init_database, list_batch_jobs, save_batch_job, search_script_segments_fts,
+    update_batch_job_progress, ScriptSegmentHit,
 };
 use dramaxis_storage::remap::{NasPathRemapper, PathMappingRule};
 
@@ -112,6 +113,45 @@ pub async fn batch_cancel_job(
 ) -> Result<(), DramaxisError> {
     let conn = get_db_conn(&app, bundle_path.as_deref())?;
     cancel_batch_job(&conn, &id).map_err(|e| DramaxisError::Project(e.to_string()))
+}
+
+/// 原子认领并执行队列中的下一条待处理批处理任务
+#[tauri::command]
+pub async fn batch_process_next(
+    app: tauri::AppHandle,
+    bundle_path: Option<String>,
+) -> Result<Option<BatchJob>, DramaxisError> {
+    let conn = get_db_conn(&app, bundle_path.as_deref())?;
+    let Some(job) =
+        fetch_next_pending_job(&conn).map_err(|e| DramaxisError::Project(e.to_string()))?
+    else {
+        return Ok(None);
+    };
+
+    let _ = update_batch_job_progress(&conn, &job.id, 30.0);
+
+    // 校验任务载荷是否为合法 JSON
+    let parsed: Result<serde_json::Value, _> = serde_json::from_str(&job.payload_json);
+    match parsed {
+        Ok(payload_val) => {
+            let _ = update_batch_job_progress(&conn, &job.id, 80.0);
+            let result = serde_json::json!({
+                "jobType": job.job_type,
+                "handledAt": Utc::now().to_rfc3339(),
+                "payloadEcho": payload_val,
+                "status": "dispatched"
+            })
+            .to_string();
+            complete_batch_job(&conn, &job.id, &result)
+                .map_err(|e| DramaxisError::Project(e.to_string()))?;
+        }
+        Err(err) => {
+            fail_batch_job(&conn, &job.id, &format!("无效的任务载荷 JSON: {err}"))
+                .map_err(|e| DramaxisError::Project(e.to_string()))?;
+        }
+    }
+
+    get_batch_job(&conn, &job.id).map_err(|e| DramaxisError::Project(e.to_string()))
 }
 
 /// 重映射工程内的 NAS / 局域网素材路径

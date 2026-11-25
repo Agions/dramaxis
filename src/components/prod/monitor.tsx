@@ -18,6 +18,8 @@
 
 import { memo, useRef, useEffect, useMemo, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { assetsIpc } from "@dramaxis/ipc";
+import { toast } from "sonner";
 import { AudioVisualizerCanvas } from "./visual";
 
 export type SubtitleStylePreset =
@@ -97,7 +99,63 @@ export const CinemaMonitor = memo(function CinemaMonitor({
   const [playbackRate, setPlaybackRate] = useState<number>(1.0);
   const [videoLoadError, setVideoLoadError] = useState(false);
 
-  const videoSrc = mediaPath ? convertFileSrc(mediaPath) : undefined;
+  // 720p Proxy 代理剪辑与真实波形峰值状态 (P1-3)
+  const [proxyPath, setProxyPath] = useState<string | null>(null);
+  const [useProxy, setUseProxy] = useState(false);
+  const [isGeneratingProxy, setIsGeneratingProxy] = useState(false);
+  const [waveformPeaks, setWaveformPeaks] = useState<number[]>([]);
+
+  useEffect(() => {
+    setProxyPath(null);
+    setUseProxy(false);
+  }, [mediaPath]);
+
+  useEffect(() => {
+    const audioSource = voiceAudioPath || mediaPath;
+    if (!audioSource) {
+      setWaveformPeaks([]);
+      return;
+    }
+    let cancelled = false;
+    assetsIpc
+      .getWaveformPeaks(audioSource, 48)
+      .then((res) => {
+        if (!cancelled && Array.isArray(res.peaks)) {
+          setWaveformPeaks(res.peaks);
+        }
+      })
+      .catch(() => {
+        // 测试环境或无 FFmpeg 时静默回退
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [voiceAudioPath, mediaPath]);
+
+  const handleToggleProxy = async () => {
+    if (!mediaPath) return;
+    if (proxyPath) {
+      setUseProxy((prev) => !prev);
+      return;
+    }
+    setIsGeneratingProxy(true);
+    try {
+      const artifact = await assetsIpc.generateProxy(mediaPath);
+      setProxyPath(artifact.proxyPath);
+      setUseProxy(true);
+      toast.success("已生成 720p 代理剪辑文件，拖拽预览更流畅");
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      toast.error("生成 720p 代理失败", {
+        description: err?.message ?? String(e),
+      });
+    } finally {
+      setIsGeneratingProxy(false);
+    }
+  };
+
+  const activeVideoPath = useProxy && proxyPath ? proxyPath : mediaPath;
+  const videoSrc = activeVideoPath ? convertFileSrc(activeVideoPath) : undefined;
   const voiceSrc = voiceAudioPath ? convertFileSrc(voiceAudioPath) : undefined;
   const bgmSrc = bgmAudioPath ? convertFileSrc(bgmAudioPath) : undefined;
 
@@ -285,9 +343,33 @@ export const CinemaMonitor = memo(function CinemaMonitor({
             <span>安全区</span>
           </button>
         )}
+
+        {/* 720p 代理剪辑切换按钮 */}
+        {hasUploadedVideo && mediaPath && (
+          <button
+            type="button"
+            disabled={isGeneratingProxy}
+            onClick={() => void handleToggleProxy()}
+            className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg border text-[9px] font-medium backdrop-blur-md transition-all cursor-pointer disabled:opacity-50 ${
+              useProxy
+                ? "bg-emerald-500/20 border-emerald-500 text-emerald-300 font-bold"
+                : "bg-surface-elevated/70 border-border/80 text-text-muted hover:text-text-primary"
+            }`}
+            title="生成或切换至 720p 低码率代理文件以加速 4K 拖拽预览"
+          >
+            <span>⚡</span>
+            <span>
+              {isGeneratingProxy
+                ? "代理生成中..."
+                : useProxy
+                ? "720p代理"
+                : "原画/代理"}
+            </span>
+          </button>
+        )}
       </div>
 
-      {/* 右上角: 电影级内嵌音频频谱仪 */}
+      {/* 右上角: 电影级内嵌音频频谱仪 + 真实波形峰值条 */}
       <div className="absolute top-2.5 right-3 hidden sm:flex flex-col items-end gap-1 pointer-events-none z-20">
         <span className="font-mono text-[8px] tracking-wider text-gold uppercase opacity-80">
           Neural Audio Visualizer · 48kHz
@@ -295,6 +377,17 @@ export const CinemaMonitor = memo(function CinemaMonitor({
         <div className="h-7 w-28 rounded-lg overflow-hidden border border-border bg-bg/80 p-0.5 backdrop-blur-md shadow-inner">
           <AudioVisualizerCanvas isPlaying={isPlaying} />
         </div>
+        {waveformPeaks.length > 0 && (
+          <div className="flex h-3 w-28 items-end gap-[1px] rounded bg-bg/70 px-1 py-0.5 border border-border/60">
+            {waveformPeaks.slice(0, 32).map((p, idx) => (
+              <span
+                key={idx}
+                className="flex-1 bg-gold/70 rounded-t-[1px]"
+                style={{ height: `${Math.max(15, Math.min(100, Math.round(p * 100)))}%` }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 视频主画幅 (动态比例与安全区层) */}

@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { LlmProvidersSection } from "@components/settings/llm";
 import { TtsVoicesSection } from "@components/settings/tts";
 import { AsrSection } from "@components/settings/asr";
+import { ComputeNodesSection } from "@components/settings/compute";
 import { EnvironmentSection } from "@components/settings/env";
 import { KeybindingsSection } from "@components/settings/keys";
 
@@ -87,6 +88,7 @@ function SettingsPage() {
     { id: "llm", label: "大语言模型", icon: "🤖", badge: "10" },
     { id: "tts", label: "TTS 配音引擎", icon: "🎙️", badge: "4" },
     { id: "asr", label: "ASR 语音转写", icon: "👂", badge: "Local" },
+    { id: "compute", label: "算力集群", icon: "🖥️", badge: "LAN" },
     { id: "env", label: "系统与硬件加速", icon: "⚡" },
     { id: "keys", label: "快捷键字典", icon: "⌨️" },
   ];
@@ -128,6 +130,7 @@ function SettingsPage() {
           {activeTab === "asr" && (
             <AsrSection form={form} setForm={setForm} />
           )}
+          {activeTab === "compute" && <ComputeNodesSection />}
           {activeTab === "env" && (
             <EnvironmentSection form={form} setForm={setForm} />
           )}

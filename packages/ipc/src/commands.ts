@@ -555,6 +555,8 @@ export const batchIpc = {
     bundlePath?: string | null,
   ): Promise<void> =>
     callIpc("batch_cancel_job", { id, bundlePath: bundlePath ?? null }),
+  processNext: (bundlePath?: string | null): Promise<BatchJob | null> =>
+    callIpc("batch_process_next", { bundlePath: bundlePath ?? null }),
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────

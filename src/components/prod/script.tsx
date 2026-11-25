@@ -14,7 +14,7 @@
 import { memo, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@dramaxis/ui";
-import { settingsIpc, type Blackboard } from "@dramaxis/ipc";
+import { settingsIpc, subtitleIpc, type Blackboard } from "@dramaxis/ipc";
 import { HookEngineCard } from "./script/hook";
 import { ReferenceDeconstructCard } from "./script/decon";
 import { RetentionArcCard } from "./script/arc";
@@ -35,6 +35,7 @@ interface ScriptStudioPanelProps {
   isGeneratingScript: boolean;
   onGenerateScript: () => void;
   blackboard?: Blackboard | null;
+  mediaPath?: string | null;
 }
 
 export const ScriptStudioPanel = memo(function ScriptStudioPanel({
@@ -49,11 +50,47 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
   isGeneratingScript,
   onGenerateScript,
   blackboard,
+  mediaPath,
 }: ScriptStudioPanelProps) {
   // 模型连通性快速测速
   const [testingModel, setTestingModel] = useState(false);
   const [modelLatency, setModelLatency] = useState<number | null>(null);
   const [editorMode, setEditorMode] = useState<"text" | "tbe">("text");
+  const [isTranscribingAsr, setIsTranscribingAsr] = useState(false);
+
+  const handleExtractAsrDialogue = async () => {
+    if (!mediaPath) {
+      toast.error("请先导入原片视频再提取 ASR 台词");
+      return;
+    }
+    setIsTranscribingAsr(true);
+    try {
+      const res = await subtitleIpc.transcribe(mediaPath);
+      if (!res.segments || res.segments.length === 0) {
+        toast.warning("ASR 未提取到有效原片台词", {
+          description: `引擎: ${res.provider}`,
+        });
+        return;
+      }
+      const lines = res.segments
+        .map((s) => `【原声】${s.text.trim()}`)
+        .join("\n");
+      const merged = scriptText.trim()
+        ? `${scriptText.trim()}\n${lines}`
+        : lines;
+      onScriptTextChange(merged);
+      toast.success(`已提取 ${res.segments.length} 条原片台词 (${res.provider})`, {
+        description: "已自动以【原声】标记注入剧本编辑器，可切换至 TBE 模式编排",
+      });
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      toast.error("ASR 提取台词失败", {
+        description: err?.message ?? String(e),
+      });
+    } finally {
+      setIsTranscribingAsr(false);
+    }
+  };
 
   const segments: TbeSegment[] = useMemo(() => {
     return scriptText
@@ -239,18 +276,30 @@ export const ScriptStudioPanel = memo(function ScriptStudioPanel({
               </button>
             </div>
           </div>
-          {scriptText && (
-            <button
-              type="button"
-              onClick={() => {
-                void navigator.clipboard.writeText(scriptText);
-                toast.success("文案已复制到剪贴板");
-              }}
-              className="text-[10px] text-gold hover:underline"
-            >
-              📋 复制
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {mediaPath && (
+              <button
+                type="button"
+                disabled={isTranscribingAsr}
+                onClick={() => void handleExtractAsrDialogue()}
+                className="text-[10px] rounded border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50"
+              >
+                {isTranscribingAsr ? "提取中..." : "👂 提取原片ASR"}
+              </button>
+            )}
+            {scriptText && (
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard.writeText(scriptText);
+                  toast.success("文案已复制到剪贴板");
+                }}
+                className="text-[10px] text-gold hover:underline"
+              >
+                📋 复制
+              </button>
+            )}
+          </div>
         </div>
 
         {editorMode === "text" ? (

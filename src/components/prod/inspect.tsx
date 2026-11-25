@@ -169,6 +169,7 @@ export const ProductionInspector = memo(function ProductionInspector({
               isGeneratingScript={isGeneratingScript}
               onGenerateScript={onGenerateScript}
               blackboard={blackboard}
+              mediaPath={currentProject?.project.media_files[0]?.path ?? null}
             />
           </div>
 
@@ -223,6 +224,7 @@ export const ProductionInspector = memo(function ProductionInspector({
               isGeneratingScript={isGeneratingScript}
               onGenerateScript={onGenerateScript}
               blackboard={blackboard}
+              mediaPath={currentProject?.project.media_files[0]?.path ?? null}
             />
           )}
 
