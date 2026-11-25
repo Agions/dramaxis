@@ -207,11 +207,15 @@ impl MasterOptions {
                 let mask_w = base_w.saturating_sub(mask_x * 2).max(4);
                 let mask_y = ((base_h as f64) * 0.80) as u32;
                 let mask_h = ((base_h as f64) * 0.12).max(4.0) as u32;
-                filters.push(format!("delogo=x={mask_x}:y={mask_y}:w={mask_w}:h={mask_h}"));
+                filters.push(format!(
+                    "delogo=x={mask_x}:y={mask_y}:w={mask_w}:h={mask_h}"
+                ));
             }
             SubtitleMaskMode::CropBottom => {
                 let crop_h = (((base_h as f64) * 0.86) as u32 / 2) * 2;
-                filters.push(format!("crop={base_w}:{crop_h}:0:0,scale={base_w}:{base_h}"));
+                filters.push(format!(
+                    "crop={base_w}:{crop_h}:0:0,scale={base_w}:{base_h}"
+                ));
             }
             SubtitleMaskMode::GradientBar => {
                 let bar_y = ((base_h as f64) * 0.80) as u32;
@@ -310,7 +314,11 @@ impl MasterOptions {
         let mut recs = Vec::new();
 
         if self.enable_zoom || self.enable_dynamic_ken_burns {
-            score += if self.enable_dynamic_ken_burns { 14.0 } else { 10.0 };
+            score += if self.enable_dynamic_ken_burns {
+                14.0
+            } else {
+                10.0
+            };
         } else {
             recs.push("建议开启微缩放或动态 Ken Burns 变焦以降低画面像素指纹重合度".into());
         }
@@ -335,10 +343,14 @@ impl MasterOptions {
             recs.push("适当穿插 15%~25% 原片高光原声金句可显著提升完播率与二次创作特征".into());
         }
 
-        let hard_subtitle_safe = !hard_sub_detected || self.subtitle_mask_mode != SubtitleMaskMode::None;
+        let hard_subtitle_safe =
+            !hard_sub_detected || self.subtitle_mask_mode != SubtitleMaskMode::None;
         if !hard_subtitle_safe {
             score -= 15.0;
-            recs.push("检测到原片含底部硬字幕，建议开启 GradientBar 垫底或 BlurBox 遮罩避免双字幕重叠".into());
+            recs.push(
+                "检测到原片含底部硬字幕，建议开启 GradientBar 垫底或 BlurBox 遮罩避免双字幕重叠"
+                    .into(),
+            );
         }
         if !self.ai_compliance_badge {
             recs.push("建议保留 AI 合成内容合规元数据标识以满足主流平台审核要求".into());

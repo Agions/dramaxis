@@ -143,7 +143,7 @@ mod tests {
 
         // 假定原路径是另一台 Mac 上的离线路径
         let offline_path = Path::new("/Users/other_user/Movies/sample_clip.mp4");
-        let found = remapper.auto_locate(offline_path, &[temp_dir.clone()]);
+        let found = remapper.auto_locate(offline_path, std::slice::from_ref(&temp_dir));
 
         assert_eq!(found, Some(actual_file.clone()));
 

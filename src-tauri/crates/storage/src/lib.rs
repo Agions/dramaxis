@@ -34,8 +34,8 @@ pub use db::{
     list_episodes, list_series, list_variants, load_latest_agent_checkpoint,
     load_latest_project_checkpoint, load_project, load_story_bible, redo, save_agent_checkpoint,
     save_agent_checkpoint_at_path, save_batch_job, save_checkpoint, save_episode, save_project,
-    save_series, save_story_bible, save_variant, search_script_segments_fts,
-    update_batch_job_progress, undo, AgentCheckpointRecord, ScriptSegmentHit,
+    save_series, save_story_bible, save_variant, search_script_segments_fts, undo,
+    update_batch_job_progress, AgentCheckpointRecord, ScriptSegmentHit,
 };
 pub use remap::{NasPathRemapper, PathMappingRule};
 pub use vault::CredentialVault;

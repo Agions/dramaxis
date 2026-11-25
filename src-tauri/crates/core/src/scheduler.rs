@@ -236,7 +236,9 @@ mod tests {
             t2.cancel();
         });
 
-        let p2 = sched.acquire_cancellable(ResourceSlot::Ffmpeg, &token).await;
+        let p2 = sched
+            .acquire_cancellable(ResourceSlot::Ffmpeg, &token)
+            .await;
         assert!(p2.is_none());
 
         drop(p1);

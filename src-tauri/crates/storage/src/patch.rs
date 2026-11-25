@@ -104,9 +104,9 @@ pub fn apply_patch(base: &Value, ops: &[PatchOp]) -> Result<Value, String> {
 
 fn apply_single(doc: &mut Value, op: &PatchOp) -> Result<(), String> {
     let path = match op {
-        PatchOp::Add { path, .. }
-        | PatchOp::Remove { path }
-        | PatchOp::Replace { path, .. } => path.as_str(),
+        PatchOp::Add { path, .. } | PatchOp::Remove { path } | PatchOp::Replace { path, .. } => {
+            path.as_str()
+        }
     };
 
     if path.is_empty() {

@@ -98,7 +98,8 @@ mod tests {
     fn test_pack_serde_roundtrip() {
         let original = DramaxisPack::default();
         let serialized = export_pack_to_string(&original).expect("pack serialization should work");
-        let restored = import_pack_from_string(&serialized).expect("pack deserialization should work");
+        let restored =
+            import_pack_from_string(&serialized).expect("pack deserialization should work");
 
         assert_eq!(original.name, restored.name);
         assert_eq!(original.hook_templates.len(), 2);

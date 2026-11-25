@@ -93,7 +93,11 @@ pub fn export_fcpxml_string(
         };
 
         // 判定媒体类型属性
-        let has_video = if media.resolution.is_some() || path_str.ends_with(".mp4") || path_str.ends_with(".mov") || path_str.ends_with(".mkv") {
+        let has_video = if media.resolution.is_some()
+            || path_str.ends_with(".mp4")
+            || path_str.ends_with(".mov")
+            || path_str.ends_with(".mkv")
+        {
             "1"
         } else {
             "0"
@@ -162,11 +166,32 @@ pub fn export_fcpxml_string(
         ));
 
         // 挂载旁白 (A1: lane="-1")
-        append_audio_clips_xml(&mut spine_xml, &voice_clips, &media_asset_map, "-1", "Voice", fps);
+        append_audio_clips_xml(
+            &mut spine_xml,
+            &voice_clips,
+            &media_asset_map,
+            "-1",
+            "Voice",
+            fps,
+        );
         // 挂载音效 (A2: lane="-2")
-        append_audio_clips_xml(&mut spine_xml, &ambient_clips, &media_asset_map, "-2", "Ambient", fps);
+        append_audio_clips_xml(
+            &mut spine_xml,
+            &ambient_clips,
+            &media_asset_map,
+            "-2",
+            "Ambient",
+            fps,
+        );
         // 挂载 BGM (A3: lane="-3")
-        append_audio_clips_xml(&mut spine_xml, &bgm_clips, &media_asset_map, "-3", "BGM", fps);
+        append_audio_clips_xml(
+            &mut spine_xml,
+            &bgm_clips,
+            &media_asset_map,
+            "-3",
+            "BGM",
+            fps,
+        );
         // 挂载字幕 (S1: lane="1")
         append_subtitle_clips_xml(&mut spine_xml, &subtitle_clips, fps);
 
@@ -190,9 +215,30 @@ pub fn export_fcpxml_string(
 
             // 首个视频片段作为所有并行音轨与字幕的锚点容器
             if idx == 0 {
-                append_audio_clips_xml(&mut spine_xml, &voice_clips, &media_asset_map, "-1", "Voice", fps);
-                append_audio_clips_xml(&mut spine_xml, &ambient_clips, &media_asset_map, "-2", "Ambient", fps);
-                append_audio_clips_xml(&mut spine_xml, &bgm_clips, &media_asset_map, "-3", "BGM", fps);
+                append_audio_clips_xml(
+                    &mut spine_xml,
+                    &voice_clips,
+                    &media_asset_map,
+                    "-1",
+                    "Voice",
+                    fps,
+                );
+                append_audio_clips_xml(
+                    &mut spine_xml,
+                    &ambient_clips,
+                    &media_asset_map,
+                    "-2",
+                    "Ambient",
+                    fps,
+                );
+                append_audio_clips_xml(
+                    &mut spine_xml,
+                    &bgm_clips,
+                    &media_asset_map,
+                    "-3",
+                    "BGM",
+                    fps,
+                );
                 append_subtitle_clips_xml(&mut spine_xml, &subtitle_clips, fps);
             }
 

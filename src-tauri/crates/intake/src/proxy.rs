@@ -59,7 +59,9 @@ pub struct WaveformPeaks {
 /// 快速文件指纹（文件大小 + 头尾 4KB 采样哈希，4GB 视频亦可 < 1ms 完成）
 pub fn compute_fast_fingerprint(path: &Path) -> Result<String, String> {
     let mut file = std::fs::File::open(path).map_err(|e| format!("打开素材失败: {e}"))?;
-    let meta = file.metadata().map_err(|e| format!("读取元数据失败: {e}"))?;
+    let meta = file
+        .metadata()
+        .map_err(|e| format!("读取元数据失败: {e}"))?;
     let len = meta.len();
 
     let mut hasher = DefaultHasher::new();
@@ -178,7 +180,9 @@ pub fn downsample_pcm_s16le_peaks(pcm_bytes: &[u8], buckets: usize) -> Vec<f32> 
     let mut peaks = Vec::with_capacity(target_buckets);
     for b in 0..target_buckets {
         let start = b * sample_count / target_buckets;
-        let end = ((b + 1) * sample_count / target_buckets).max(start + 1).min(sample_count);
+        let end = ((b + 1) * sample_count / target_buckets)
+            .max(start + 1)
+            .min(sample_count);
         let mut max_amp: f32 = 0.0;
         for i in start..end {
             let lo = pcm_bytes[i * 2];

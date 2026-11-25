@@ -38,9 +38,7 @@ pub use capcut::{
     create_capcut_draft, detect_jianying_draft_root, CapcutDraftOptions, CapcutDraftResult,
     CapcutSubtitleItem,
 };
-pub use fcpxml::{
-    export_fcpxml_file, export_fcpxml_string, format_rational_time, FcpxmlOptions,
-};
+pub use fcpxml::{export_fcpxml_file, export_fcpxml_string, format_rational_time, FcpxmlOptions};
 pub use master::{
     generate_fission_variants, generate_master_variants, DedupIntensity, DedupOptions,
     MasterIntensity, MasterOptions,

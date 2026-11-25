@@ -20,9 +20,7 @@ pub use dramaxis_export::capcut::{CapcutDraftOptions, CapcutDraftResult};
 pub use dramaxis_export::dedup::{DedupIntensity, DedupOptions};
 pub use dramaxis_export::fcpxml::{export_fcpxml_file, FcpxmlOptions};
 pub use dramaxis_export::master::{MasterOptions, PreFlightDedupReport};
-pub use dramaxis_export::pack::{
-    export_pack_file, import_pack_file, DramaxisPack,
-};
+pub use dramaxis_export::pack::{export_pack_file, import_pack_file, DramaxisPack};
 pub use dramaxis_export::renderer::{
     BatchFissionParams, BatchFissionResult, FissionProgressPayload, RenderProgressPayload,
     RenderVideoParams, RenderVideoResult,
@@ -344,9 +342,7 @@ pub async fn export_template_pack(
 
 /// 导入并解析创作者资产模板包 (.dramaxis-pack)
 #[tauri::command]
-pub async fn import_template_pack(
-    pack_path: String,
-) -> Result<DramaxisPack, DramaxisError> {
+pub async fn import_template_pack(pack_path: String) -> Result<DramaxisPack, DramaxisError> {
     let path = PathBuf::from(&pack_path);
     import_pack_file(&path).map_err(|e| DramaxisError::Other(e.to_string()))
 }

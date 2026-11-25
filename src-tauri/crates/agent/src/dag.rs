@@ -667,13 +667,41 @@ impl DagOrchestrator {
             WorkflowProfile::DeterministicLinear => {
                 // P0-3: 收编原 7 步线性流水线为确定性 StateGraph Profile（顺序执行、无反思回路、无 HITL 阻塞）
                 let linear_specs: [(&'static str, &'static str, AgentRole); 7] = [
-                    ("director_plan", "🎬 步骤 1 · 媒体校验与总控策划", AgentRole::Director),
-                    ("visual_analysis", "👁️ 步骤 2 · 场景切点与视觉分析", AgentRole::VisualCritic),
-                    ("dialogue_probe", "🎧 步骤 3 · 原片 VAD 与 ASR 台词提取", AgentRole::SoundEngineer),
-                    ("screenwriter_draft", "✍️ 步骤 4 · 确定性解说剧本生成", AgentRole::Screenwriter),
-                    ("voice_synthesis", "🎙️ 步骤 5 · 48kHz 配音合成", AgentRole::VoiceArtist),
-                    ("timeline_compose", "🎛️ 步骤 6 · 5 轨声画对齐与混流", AgentRole::SoundEngineer),
-                    ("quality_gate", "🛡️ 步骤 7 · 成片合规质检与交付准备", AgentRole::QualityReviewer),
+                    (
+                        "director_plan",
+                        "🎬 步骤 1 · 媒体校验与总控策划",
+                        AgentRole::Director,
+                    ),
+                    (
+                        "visual_analysis",
+                        "👁️ 步骤 2 · 场景切点与视觉分析",
+                        AgentRole::VisualCritic,
+                    ),
+                    (
+                        "dialogue_probe",
+                        "🎧 步骤 3 · 原片 VAD 与 ASR 台词提取",
+                        AgentRole::SoundEngineer,
+                    ),
+                    (
+                        "screenwriter_draft",
+                        "✍️ 步骤 4 · 确定性解说剧本生成",
+                        AgentRole::Screenwriter,
+                    ),
+                    (
+                        "voice_synthesis",
+                        "🎙️ 步骤 5 · 48kHz 配音合成",
+                        AgentRole::VoiceArtist,
+                    ),
+                    (
+                        "timeline_compose",
+                        "🎛️ 步骤 6 · 5 轨声画对齐与混流",
+                        AgentRole::SoundEngineer,
+                    ),
+                    (
+                        "quality_gate",
+                        "🛡️ 步骤 7 · 成片合规质检与交付准备",
+                        AgentRole::QualityReviewer,
+                    ),
                 ];
 
                 let mut dag_nodes = Vec::with_capacity(linear_specs.len());
@@ -681,12 +709,12 @@ impl DagOrchestrator {
 
                 for (id, name, role) in linear_specs {
                     let d = deps.clone();
-                    graph.add_node(
-                        GraphNode::new(id, name, role).with_handler(Arc::new(move |ctx| {
+                    graph.add_node(GraphNode::new(id, name, role).with_handler(Arc::new(
+                        move |ctx| {
                             let current_deps = Arc::new(d.read().unwrap().clone());
                             Box::pin(Self::execute_static_node_logic(ctx, id, current_deps))
-                        })),
-                    );
+                        },
+                    )));
                     if let Some(prev) = prev_id {
                         graph.add_edge(prev, id);
                     }
@@ -766,7 +794,14 @@ impl DagOrchestrator {
             )
         };
         let profile_str = format!("{:?}", self.profile).to_lowercase();
-        hook(&session_id, &project_id, node_id, &profile_str, &bb_json, &dag_json);
+        hook(
+            &session_id,
+            &project_id,
+            node_id,
+            &profile_str,
+            &bb_json,
+            &dag_json,
+        );
     }
 
     /// 同步 StateGraph 节点状态至对外暴露的 nodes 视图切片
@@ -1269,14 +1304,11 @@ mod tests {
         let rec_clone = recorded.clone();
 
         let ctx = AgentContext::new(proj, false); // 即使 auto_mode=false 也不应被 HITL 阻塞
-        let mut orch =
-            DagOrchestrator::with_profile(ctx, WorkflowProfile::DeterministicLinear)
-                .with_checkpoint_hook(Arc::new(
-                    move |_sid, _pid, node_id, profile, _bb, _dag| {
-                        assert_eq!(profile, "deterministiclinear");
-                        rec_clone.lock().unwrap().push(node_id.to_string());
-                    },
-                ));
+        let mut orch = DagOrchestrator::with_profile(ctx, WorkflowProfile::DeterministicLinear)
+            .with_checkpoint_hook(Arc::new(move |_sid, _pid, node_id, profile, _bb, _dag| {
+                assert_eq!(profile, "deterministiclinear");
+                rec_clone.lock().unwrap().push(node_id.to_string());
+            }));
 
         let bp = orch.run_dag().await.expect("run deterministic linear");
         assert!(bp.is_none(), "DeterministicLinear 不应挂起 HITL 断点");

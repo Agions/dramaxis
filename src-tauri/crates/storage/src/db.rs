@@ -202,10 +202,7 @@ pub fn init_database(conn: &Connection) -> SqlResult<()> {
         "ALTER TABLE undo_redo_log ADD COLUMN is_keyframe INTEGER NOT NULL DEFAULT 1",
         [],
     );
-    let _ = conn.execute(
-        "ALTER TABLE undo_redo_log ADD COLUMN patch_json TEXT",
-        [],
-    );
+    let _ = conn.execute("ALTER TABLE undo_redo_log ADD COLUMN patch_json TEXT", []);
 
     Ok(())
 }
@@ -1597,7 +1594,9 @@ mod tests {
             project.scripts.push(ScriptSegment {
                 id: format!("seg-{i}"),
                 step_index: 2,
-                text: format!("第 {i} 段影视解说初始文案内容，包含足够多的文本用于验证增量差分体积。"),
+                text: format!(
+                    "第 {i} 段影视解说初始文案内容，包含足够多的文本用于验证增量差分体积。"
+                ),
                 ..Default::default()
             });
         }
@@ -1782,12 +1781,16 @@ mod tests {
         assert_eq!(list[0].id, "job-001");
 
         // 队列原子消费
-        let next = fetch_next_pending_job(&conn).expect("fetch next").expect("job");
+        let next = fetch_next_pending_job(&conn)
+            .expect("fetch next")
+            .expect("job");
         assert_eq!(next.id, "job-001");
         assert_eq!(next.status, BatchJobStatus::Running);
 
         // 再次抓取为空
-        assert!(fetch_next_pending_job(&conn).expect("fetch empty").is_none());
+        assert!(fetch_next_pending_job(&conn)
+            .expect("fetch empty")
+            .is_none());
 
         // 进度更新
         update_batch_job_progress(&conn, "job-001", 50.0).expect("progress");

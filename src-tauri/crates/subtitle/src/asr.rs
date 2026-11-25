@@ -6,6 +6,7 @@
 //! 2. **本地离线 `whisper-cli` (`whisper.cpp`)**：通过 `MediaScheduler(ResourceSlot::Asr)` 并发背压与
 //!    `CancelToken` 子进程级取消，离线零成本提取带毫秒时间戳的原片台词流；
 //! 3. **OpenAI 兼容 Whisper / SenseVoice HTTP 接口**：支持局域网 GPU 算力节点或云端 API。
+//!
 //! 若上述通道均未就绪，则以 `tracing::warn!` 明确降级为空结果，严禁静默伪造假台词。
 
 use crate::SubtitleError;
@@ -71,7 +72,11 @@ impl TranscriptResult {
         }
         let mut out = String::new();
         for seg in &self.segments {
-            let tag = if seg.is_golden_quote { " ★金句" } else { "" };
+            let tag = if seg.is_golden_quote {
+                " ★金句"
+            } else {
+                ""
+            };
             let line = format!(
                 "[{:.1}s-{:.1}s{}] {}\n",
                 seg.start_sec, seg.end_sec, tag, seg.text
@@ -101,10 +106,24 @@ fn detect_golden_quote(seg: &TranscriptSegment) -> bool {
     if t.chars().count() < 4 {
         return false;
     }
-    let has_strong_punct = t.contains('！') || t.contains('!') || t.contains('？') || t.contains('?');
+    let has_strong_punct =
+        t.contains('！') || t.contains('!') || t.contains('？') || t.contains('?');
     let dramatic_keywords = [
-        "滚", "绝不", "后悔", "凭什么", "不可能", "真相", "背叛", "离婚", "原来", "竟然",
-        "死", "救命", "跪下", "秘密", "没想到",
+        "滚",
+        "绝不",
+        "后悔",
+        "凭什么",
+        "不可能",
+        "真相",
+        "背叛",
+        "离婚",
+        "原来",
+        "竟然",
+        "死",
+        "救命",
+        "跪下",
+        "秘密",
+        "没想到",
     ];
     has_strong_punct || dramatic_keywords.iter().any(|kw| t.contains(kw))
 }
@@ -502,16 +521,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_auto_asr_loads_sidecar_srt() {
-        let tmp_dir = std::env::temp_dir().join(format!("dramaxis_asr_test_{}", std::process::id()));
+        let tmp_dir =
+            std::env::temp_dir().join(format!("dramaxis_asr_test_{}", std::process::id()));
         let _ = std::fs::create_dir_all(&tmp_dir);
         let mp4 = tmp_dir.join("ep01.mp4");
         let srt = tmp_dir.join("ep01.srt");
         std::fs::write(&mp4, b"dummy").unwrap();
-        std::fs::write(
-            &srt,
-            "1\n00:00:00,500 --> 00:00:03,000\n真相终于大白了！\n",
-        )
-        .unwrap();
+        std::fs::write(&srt, "1\n00:00:00,500 --> 00:00:03,000\n真相终于大白了！\n").unwrap();
 
         let engine = AutoAsrEngine::new(AsrConfig::default());
         let res = engine

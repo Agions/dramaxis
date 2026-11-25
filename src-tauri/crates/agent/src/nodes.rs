@@ -118,7 +118,7 @@ async fn execute_visual_analysis(
                 .await;
             if _permit.is_some() {
                 let provider = dramaxis_script::factory_custom(kind, api_key, base_url);
-                let prompt = rag.build_contact_sheet_vlm_prompt(shot_count.min(9).max(1), 1);
+                let prompt = rag.build_contact_sheet_vlm_prompt(shot_count.clamp(1, 9), 1);
                 let req = LlmRequest {
                     system: "你是专业影视视觉分析师，严格按要求输出 JSON 数组。".into(),
                     user: prompt,

@@ -171,7 +171,11 @@ impl DualDrivenAligner {
         for seg in segments {
             match seg.kind {
                 SegmentKind::OriginalClip => {
-                    let src_in = seg.source_in_sec.or(seg.start_seconds).unwrap_or(0.0).max(0.0);
+                    let src_in = seg
+                        .source_in_sec
+                        .or(seg.start_seconds)
+                        .unwrap_or(0.0)
+                        .max(0.0);
                     let src_out = seg
                         .source_out_sec
                         .or(seg.end_seconds)

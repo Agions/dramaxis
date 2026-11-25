@@ -219,7 +219,11 @@ impl SceneRagEngine {
     }
 
     /// 构造供多模态 VLM 分析网格拼图的结构化 Prompt
-    pub fn build_contact_sheet_vlm_prompt(&self, shot_count: usize, start_scene_id: usize) -> String {
+    pub fn build_contact_sheet_vlm_prompt(
+        &self,
+        shot_count: usize,
+        start_scene_id: usize,
+    ) -> String {
         format!(
             "这是一张按从左到右、从上到下顺序拼接的影视关键帧网格图，共包含 {shot_count} 个镜头（编号从 {start_scene_id} 到 {}）。\
             请逐格观察真实画面内容，严格输出 JSON 数组（不要附加多余解释），每个元素格式如下：\

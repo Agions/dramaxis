@@ -310,7 +310,10 @@ impl StoryBible {
     pub fn to_prompt_context(&self) -> String {
         let mut buf = String::new();
         if !self.worldview.trim().is_empty() {
-            buf.push_str(&format!("【世界观与主线冲突】{} / {}\n", self.worldview, self.core_conflict));
+            buf.push_str(&format!(
+                "【世界观与主线冲突】{} / {}\n",
+                self.worldview, self.core_conflict
+            ));
         }
         if !self.characters.is_empty() {
             buf.push_str("【核心人物档案（严禁改名或混淆关系）】\n");
@@ -335,7 +338,10 @@ impl StoryBible {
                     .as_deref()
                     .map(|h| format!(" | 遗留悬念: {h}"))
                     .unwrap_or_default();
-                buf.push_str(&format!("- 第 {} 集: {}{}\n", r.episode_number, r.summary, hook));
+                buf.push_str(&format!(
+                    "- 第 {} 集: {}{}\n",
+                    r.episode_number, r.summary, hook
+                ));
             }
         }
         buf
