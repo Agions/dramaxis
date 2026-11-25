@@ -14,6 +14,9 @@ import { useSettingsStore, t } from "@dramaxis/core";
 import { BatchImportDialog } from "@components/dialogs/import";
 import { AssetExplorerToolbar } from "@components/assets/tools";
 import { AssetMediaGrid } from "@components/assets/grid";
+import { StudioToolsPanel } from "@components/assets/studio";
+import { BatchQueuePanel } from "@components/assets/batch";
+import { SeriesManagerPanel } from "@components/assets/series";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/assets")({
@@ -101,6 +104,15 @@ function AssetsPage() {
           mediaList={displayedMedia}
           onRemoveMedia={handleRemoveMedia}
         />
+
+        {/* 微短剧连载与设定集面板 */}
+        <SeriesManagerPanel />
+
+        {/* 工作室 NAS 路径重映射与跨集台词检索 */}
+        <StudioToolsPanel />
+
+        {/* 批量矩阵排产与持久化队列 */}
+        <BatchQueuePanel />
 
         {/* 历史项目归档 */}
         {recents && recents.length > 0 && (

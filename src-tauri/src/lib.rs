@@ -155,6 +155,7 @@ pub fn run() {
             commands::batch::batch_list_jobs,
             commands::batch::batch_get_job,
             commands::batch::batch_cancel_job,
+            commands::batch::batch_process_next,
             commands::batch::project_remap_nas_paths,
             commands::batch::project_search_script_segments,
             commands::batch::compute_check_health,
